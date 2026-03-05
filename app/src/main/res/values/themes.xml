@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.ProInspect" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
+```
+
+Commit. Then immediately do the next two:
+
+---
+
+**Second:** **Add file** → **Create new file**
+
+Filename:
+```
+app/src/main/res/values/colors.xml
