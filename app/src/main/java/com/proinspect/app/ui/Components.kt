@@ -6,6 +6,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -14,8 +16,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -52,6 +58,45 @@ fun RatingRow(
     }
 }
 
+@Composable
+fun ProTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    placeholder: String = "",
+    minLines: Int = 1,
+    singleLine: Boolean = true
+) {
+    val textStyle = TextStyle(
+        fontSize = 14.sp,
+        color = Color(0xFF1F2937)
+    )
+    Box(
+        modifier = modifier
+            .background(Color(0xFFF3F4F6), RoundedCornerShape(8.dp))
+            .border(1.5.dp, if (value.isNotBlank()) Gold.copy(alpha = 0.5f) else Color(0xFFE5E7EB), RoundedCornerShape(8.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+    ) {
+        if (value.isEmpty()) {
+            Text(placeholder, style = textStyle.copy(color = Color(0xFF9CA3AF)))
+        }
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            textStyle = textStyle,
+            singleLine = singleLine,
+            minLines = if (singleLine) 1 else minLines,
+            cursorBrush = SolidColor(Gold),
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Sentences,
+                keyboardType = KeyboardType.Text,
+                autoCorrect = true
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DefectDropdown(
@@ -77,23 +122,28 @@ fun DefectDropdown(
             expanded = expanded,
             onExpandedChange = { expanded = !expanded }
         ) {
-            OutlinedTextField(
-                value = selectedLabel.ifBlank { "Select a defect description..." },
-                onValueChange = {},
-                readOnly = true,
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Gold.copy(alpha = 0.5f),
-                    focusedBorderColor = Gold,
-                    unfocusedContainerColor = Color(0xFFFDF9F2),
-                    focusedContainerColor = Color(0xFFFDF9F2)
-                ),
-                textStyle = LocalTextStyle.current.copy(
-                    fontSize = 13.sp,
-                    color = if (selectedLabel.isBlank()) Color(0xFF9CA3AF) else Color(0xFF1F2937)
-                ),
-                modifier = Modifier.fillMaxWidth().menuAnchor()
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor()
+                    .background(Color(0xFFFDF9F2), RoundedCornerShape(8.dp))
+                    .border(1.5.dp, Gold.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        selectedLabel.ifBlank { "Select a defect description..." },
+                        fontSize = 13.sp,
+                        color = if (selectedLabel.isBlank()) Color(0xFF9CA3AF) else Color(0xFF1F2937),
+                        modifier = Modifier.weight(1f)
+                    )
+                    Icon(
+                        if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = null,
+                        tint = Gold
+                    )
+                }
+            }
             ExposedDropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
@@ -150,8 +200,10 @@ fun PhotoStrip(
 
     Column(modifier = modifier) {
         if (!compact) {
-            Text("📷 Photos", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF6B7280), modifier = Modifier.padding(bottom = 8.dp))
+            Text(
+                "📷 Photos", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF6B7280), modifier = Modifier.padding(bottom = 8.dp)
+            )
         }
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
@@ -191,12 +243,16 @@ fun PhotoStrip(
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp))
                     )
-                    IconButton(onClick = { onDeletePhoto(photo.id) },
-                        modifier = Modifier.align(Alignment.TopEnd).size(24.dp)) {
-                        Icon(Icons.Default.Cancel, contentDescription = "Delete",
+                    IconButton(
+                        onClick = { onDeletePhoto(photo.id) },
+                        modifier = Modifier.align(Alignment.TopEnd).size(24.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Cancel, contentDescription = "Delete",
                             tint = Color.White,
                             modifier = Modifier.size(20.dp)
-                                .background(RatingRed.copy(alpha = 0.85f), RoundedCornerShape(50)))
+                                .background(RatingRed.copy(alpha = 0.85f), RoundedCornerShape(50))
+                        )
                     }
                 }
             }
@@ -213,41 +269,46 @@ fun NarrativeBox(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+        modifier = modifier.fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
             .background(Color(0xFFFDF9F2))
-            .border(1.5.dp, Gold, RoundedCornerShape(10.dp)).padding(12.dp)
+            .border(1.5.dp, Gold, RoundedCornerShape(10.dp))
+            .padding(12.dp)
     ) {
-        Text(label, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Gold,
-            modifier = Modifier.padding(bottom = 6.dp))
-        OutlinedTextField(
-            value = value, onValueChange = onValueChange,
-            placeholder = { Text(placeholder, fontSize = 13.sp, color = Color(0xFF9CA3AF)) },
-            modifier = Modifier.fillMaxWidth(),
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = Color.Transparent, focusedBorderColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent, focusedContainerColor = Color.Transparent
-            ),
+        Text(
+            label, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Gold,
+            modifier = Modifier.padding(bottom = 6.dp)
+        )
+        ProTextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = placeholder,
+            singleLine = false,
             minLines = 3,
-            textStyle = LocalTextStyle.current.copy(fontSize = 14.sp)
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
 
 @Composable
 fun FormField(
-    label: String, value: String, onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier, singleLine: Boolean = true
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    singleLine: Boolean = true
 ) {
     Column(modifier = modifier) {
-        Text(label, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF6B7280),
-            modifier = Modifier.padding(bottom = 4.dp))
-        OutlinedTextField(
-            value = value, onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth(), singleLine = singleLine,
-            textStyle = LocalTextStyle.current.copy(fontSize = 14.sp),
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = Color(0xFFF3F4F6), focusedBorderColor = Gold
-            )
+        Text(
+            label, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF6B7280),
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+        ProTextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = label,
+            singleLine = singleLine,
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
@@ -280,10 +341,15 @@ fun ChecklistItemCard(
                 Spacer(Modifier.width(8.dp))
                 Text(item.title, fontSize = 13.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
                 if (hasDefects) {
-                    Surface(color = Gold.copy(alpha = 0.15f), shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.padding(end = 4.dp)) {
-                        Text("Templates", fontSize = 9.sp, color = Gold, fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp))
+                    Surface(
+                        color = Gold.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.padding(end = 4.dp)
+                    ) {
+                        Text(
+                            "Templates", fontSize = 9.sp, color = Gold, fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                        )
                     }
                 }
                 IconButton(onClick = { expanded = !expanded }, modifier = Modifier.size(28.dp)) {
@@ -295,9 +361,9 @@ fun ChecklistItemCard(
                 }
             }
             Spacer(Modifier.height(8.dp))
-            RatingRow(current = rating, onRatingSelected = {
-                onRatingChanged(it)
-                if (it != Rating.NOT_RATED && it != Rating.GOOD) expanded = true
+            RatingRow(current = rating, onRatingSelected = { r ->
+                onRatingChanged(r)
+                if (r != Rating.NOT_RATED && r != Rating.GOOD) expanded = true
             })
             if (expanded) {
                 Spacer(Modifier.height(12.dp))
@@ -310,11 +376,20 @@ fun ChecklistItemCard(
                     })
                     Spacer(Modifier.height(10.dp))
                 }
-                PhotoStrip(photos = photos, onCameraClick = onCameraClick,
-                    onGalleryPick = onGalleryPick, onDeletePhoto = onDeletePhoto, compact = true)
+                PhotoStrip(
+                    photos = photos,
+                    onCameraClick = onCameraClick,
+                    onGalleryPick = onGalleryPick,
+                    onDeletePhoto = onDeletePhoto,
+                    compact = true
+                )
                 Spacer(Modifier.height(8.dp))
-                NarrativeBox(value = narrative, onValueChange = onNarrativeChanged,
-                    label = "📝 Item Notes", placeholder = "Describe findings for: ${item.title}...")
+                NarrativeBox(
+                    value = narrative,
+                    onValueChange = onNarrativeChanged,
+                    label = "📝 Item Notes",
+                    placeholder = "Describe findings for: ${item.title}..."
+                )
             }
         }
     }
