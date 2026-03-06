@@ -44,14 +44,18 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
     }
     val sectionItems = InspectionSections.items[section] ?: emptyList()
     val sectionName = InspectionSections.sectionNames[section] ?: section
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         item {
-            Card(colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(2.dp), shape = RoundedCornerShape(12.dp)) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(2.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
                 Column(Modifier.padding(14.dp)) {
                     Text("$sectionName — Overview Photos", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Navy)
                     Spacer(Modifier.height(10.dp))
@@ -131,60 +135,142 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         viewModel.onPhotoCaptured(success)
     }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item {
-            Card(colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Property Information", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-                    FormField(label = "Property Address", value = r.propertyAddress, onValueChange = { v -> viewModel.saveReport(r.copy(propertyAddress = v)) })
-                    FormField(label = "City, State, ZIP", value = r.propertyCity, onValueChange = { v -> viewModel.saveReport(r.copy(propertyCity = v)) })
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        FormField(label = "Year Built", value = r.yearBuilt, onValueChange = { v -> viewModel.saveReport(r.copy(yearBuilt = v)) }, modifier = Modifier.weight(1f))
-                        FormField(label = "Sq Ft", value = r.squareFootage, onValueChange = { v -> viewModel.saveReport(r.copy(squareFootage = v)) }, modifier = Modifier.weight(1f))
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        FormField(label = "Inspection Date", value = r.inspectionDate, onValueChange = { v -> viewModel.saveReport(r.copy(inspectionDate = v)) }, modifier = Modifier.weight(1f))
-                        FormField(label = "Weather", value = r.weatherConditions, onValueChange = { v -> viewModel.saveReport(r.copy(weatherConditions = v)) }, modifier = Modifier.weight(1f))
-                    }
-                }
-            }
-        }
-        item {
-            Card(colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Client & Inspector", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-                    FormField(label = "Client Name", value = r.clientName, onValueChange = { v -> viewModel.saveReport(r.copy(clientName = v)) })
-                    FormField(label = "Client Email", value = r.clientEmail, onValueChange = { v -> viewModel.saveReport(r.copy(clientEmail = v)) })
-                    FormField(label = "Inspector Name", value = r.inspectorName, onValueChange = { v -> viewModel.saveReport(r.copy(inspectorName = v)) })
-                    FormField(label = "InterNACHI Cert #", value = r.inspectorCert, onValueChange = { v -> viewModel.saveReport(r.copy(inspectorCert = v)) })
-                    FormField(label = "Company", value = r.inspectorCompany, onValueChange = { v -> viewModel.saveReport(r.copy(inspectorCompany = v)) })
-                    FormField(label = "Phone", value = r.inspectorPhone, onValueChange = { v -> viewModel.saveReport(r.copy(inspectorPhone = v)) })
-                }
-            }
-        }
-        item {
-            Card(colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Property Photos", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-                    PhotoStrip(
-                        photos = photos.filter { photo -> photo.section == "info" && photo.itemId == null },
-                        onCameraClick = {
-                            val uri = viewModel.prepareCameraUri(context, "info", null)
-                            cameraLauncher.launch(uri)
-                        },
-                        onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, "info", null) },
-                        onDeletePhoto = { id -> viewModel.deletePhoto(id) }
+        // Property Information Card
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(2.dp)
+        ) {
+            Column(
+                Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text("Property Information", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
+                FormField(
+                    label = "Property Address",
+                    value = r.propertyAddress,
+                    onValueChange = { v -> viewModel.saveReport(r.copy(propertyAddress = v)) }
+                )
+                FormField(
+                    label = "City, State, ZIP",
+                    value = r.propertyCity,
+                    onValueChange = { v -> viewModel.saveReport(r.copy(propertyCity = v)) }
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FormField(
+                        label = "Year Built",
+                        value = r.yearBuilt,
+                        onValueChange = { v -> viewModel.saveReport(r.copy(yearBuilt = v)) },
+                        modifier = Modifier.weight(1f)
                     )
-                    NarrativeBox(value = r.overviewNarrative, onValueChange = { v -> viewModel.saveReport(r.copy(overviewNarrative = v)) },
-                        label = "📝 Property Overview Notes")
-                    FormField(label = "Access Limitations", value = r.limitations, onValueChange = { v -> viewModel.saveReport(r.copy(limitations = v)) }, singleLine = false)
+                    FormField(
+                        label = "Sq Ft",
+                        value = r.squareFootage,
+                        onValueChange = { v -> viewModel.saveReport(r.copy(squareFootage = v)) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FormField(
+                        label = "Inspection Date",
+                        value = r.inspectionDate,
+                        onValueChange = { v -> viewModel.saveReport(r.copy(inspectionDate = v)) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    FormField(
+                        label = "Weather",
+                        value = r.weatherConditions,
+                        onValueChange = { v -> viewModel.saveReport(r.copy(weatherConditions = v)) },
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }
+
+        // Client & Inspector Card
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(2.dp)
+        ) {
+            Column(
+                Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text("Client & Inspector", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
+                FormField(
+                    label = "Client Name",
+                    value = r.clientName,
+                    onValueChange = { v -> viewModel.saveReport(r.copy(clientName = v)) }
+                )
+                FormField(
+                    label = "Client Email",
+                    value = r.clientEmail,
+                    onValueChange = { v -> viewModel.saveReport(r.copy(clientEmail = v)) }
+                )
+                FormField(
+                    label = "Inspector Name",
+                    value = r.inspectorName,
+                    onValueChange = { v -> viewModel.saveReport(r.copy(inspectorName = v)) }
+                )
+                FormField(
+                    label = "InterNACHI Cert #",
+                    value = r.inspectorCert,
+                    onValueChange = { v -> viewModel.saveReport(r.copy(inspectorCert = v)) }
+                )
+                FormField(
+                    label = "Company",
+                    value = r.inspectorCompany,
+                    onValueChange = { v -> viewModel.saveReport(r.copy(inspectorCompany = v)) }
+                )
+                FormField(
+                    label = "Phone",
+                    value = r.inspectorPhone,
+                    onValueChange = { v -> viewModel.saveReport(r.copy(inspectorPhone = v)) }
+                )
+            }
+        }
+
+        // Photos & Notes Card
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(2.dp)
+        ) {
+            Column(
+                Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text("Property Photos & Notes", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
+                PhotoStrip(
+                    photos = photos.filter { photo -> photo.section == "info" && photo.itemId == null },
+                    onCameraClick = {
+                        val uri = viewModel.prepareCameraUri(context, "info", null)
+                        cameraLauncher.launch(uri)
+                    },
+                    onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, "info", null) },
+                    onDeletePhoto = { id -> viewModel.deletePhoto(id) }
+                )
+                NarrativeBox(
+                    value = r.overviewNarrative,
+                    onValueChange = { v -> viewModel.saveReport(r.copy(overviewNarrative = v)) },
+                    label = "📝 Property Overview Notes"
+                )
+                FormField(
+                    label = "Access Limitations",
+                    value = r.limitations,
+                    onValueChange = { v -> viewModel.saveReport(r.copy(limitations = v)) },
+                    singleLine = false
+                )
+            }
+        }
+        Spacer(Modifier.height(20.dp))
     }
 }
 
@@ -196,10 +282,12 @@ fun SummaryScreen(viewModel: InspectionViewModel) {
     val items by viewModel.items.collectAsState()
     val photos by viewModel.photos.collectAsState()
     var isGenerating by remember { mutableStateOf(false) }
+
     val counts = Rating.values().associateWith { r -> items.values.count { item -> item.rating == r } }
     val findings = items.values
         .filter { item -> item.rating == Rating.SAFETY || item.rating == Rating.MAJOR || item.rating == Rating.MONITOR }
         .sortedWith(compareBy { item -> when (item.rating) { Rating.SAFETY -> 0; Rating.MAJOR -> 1; else -> 2 } })
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
