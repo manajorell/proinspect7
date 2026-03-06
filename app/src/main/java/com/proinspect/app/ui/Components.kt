@@ -1,13 +1,15 @@
 package com.proinspect.app.ui
 
+import android.graphics.Color as AndroidColor
 import android.net.Uri
+import android.text.Editable
+import android.text.TextWatcher
+import android.widget.EditText
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -16,14 +18,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import com.proinspect.app.data.DefectLibrary
 import com.proinspect.app.data.Rating
@@ -64,34 +63,47 @@ fun ProTextField(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     placeholder: String = "",
-    minLines: Int = 1,
-    singleLine: Boolean = true
+    singleLine: Boolean = true,
+    minLines: Int = 1
 ) {
-    val textStyle = TextStyle(
-        fontSize = 14.sp,
-        color = Color(0xFF1F2937)
-    )
     Box(
         modifier = modifier
             .background(Color(0xFFF3F4F6), RoundedCornerShape(8.dp))
-            .border(1.5.dp, if (value.isNotBlank()) Gold.copy(alpha = 0.5f) else Color(0xFFE5E7EB), RoundedCornerShape(8.dp))
-            .padding(horizontal = 12.dp, vertical = 10.dp)
+            .border(
+                1.5.dp,
+                if (value.isNotBlank()) Gold.copy(alpha = 0.5f) else Color(0xFFE5E7EB),
+                RoundedCornerShape(8.dp)
+            )
+            .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
-        if (value.isEmpty()) {
-            Text(placeholder, style = textStyle.copy(color = Color(0xFF9CA3AF)))
-        }
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            textStyle = textStyle,
-            singleLine = singleLine,
-            minLines = if (singleLine) 1 else minLines,
-            cursorBrush = SolidColor(Gold),
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.Sentences,
-                keyboardType = KeyboardType.Text,
-                autoCorrect = true
-            ),
+        AndroidView(
+            factory = { ctx ->
+                EditText(ctx).apply {
+                    background = null
+                    textSize = 14f
+                    setTextColor(AndroidColor.parseColor("#1F2937"))
+                    setHintTextColor(AndroidColor.parseColor("#9CA3AF"))
+                    hint = placeholder
+                    isSingleLine = singleLine
+                    if (!singleLine) minLines = minLines
+                    setPadding(0, 8, 0, 8)
+                    setText(value)
+                    addTextChangedListener(object : TextWatcher {
+                        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                        override fun afterTextChanged(s: Editable?) {
+                            val newText = s?.toString() ?: ""
+                            if (newText != value) onValueChange(newText)
+                        }
+                    })
+                }
+            },
+            update = { editText ->
+                if (editText.text.toString() != value) {
+                    editText.setText(value)
+                    editText.setSelection(value.length)
+                }
+            },
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -171,7 +183,12 @@ fun DefectDropdown(
                 }
                 DropdownMenuItem(
                     text = {
-                        Text("✏️ Write custom note...", fontSize = 13.sp, color = Navy, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "✏️ Write custom note...",
+                            fontSize = 13.sp,
+                            color = Navy,
+                            fontWeight = FontWeight.SemiBold
+                        )
                     },
                     onClick = {
                         selectedLabel = ""
@@ -210,28 +227,43 @@ fun PhotoStrip(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Box(
-                modifier = Modifier.size(size).clip(RoundedCornerShape(8.dp))
+                modifier = Modifier
+                    .size(size)
+                    .clip(RoundedCornerShape(8.dp))
                     .background(Gold.copy(alpha = 0.12f))
                     .border(1.5.dp, Gold, RoundedCornerShape(8.dp))
                     .clickable { onCameraClick() },
                 contentAlignment = Alignment.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(Icons.Default.CameraAlt, contentDescription = "Camera", tint = Gold,
-                        modifier = Modifier.size(if (compact) 20.dp else 28.dp))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        Icons.Default.CameraAlt, contentDescription = "Camera", tint = Gold,
+                        modifier = Modifier.size(if (compact) 20.dp else 28.dp)
+                    )
                     if (!compact) Text("Camera", fontSize = 10.sp, color = Gold, fontWeight = FontWeight.SemiBold)
                 }
             }
             Box(
-                modifier = Modifier.size(size).clip(RoundedCornerShape(8.dp))
+                modifier = Modifier
+                    .size(size)
+                    .clip(RoundedCornerShape(8.dp))
                     .background(NavyLight.copy(alpha = 0.08f))
                     .border(1.5.dp, Color(0xFFD1D5DB), RoundedCornerShape(8.dp))
                     .clickable { galleryLauncher.launch("image/*") },
                 contentAlignment = Alignment.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(Icons.Default.PhotoLibrary, contentDescription = "Gallery", tint = Color(0xFF6B7280),
-                        modifier = Modifier.size(if (compact) 20.dp else 28.dp))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        Icons.Default.PhotoLibrary, contentDescription = "Gallery",
+                        tint = Color(0xFF6B7280),
+                        modifier = Modifier.size(if (compact) 20.dp else 28.dp)
+                    )
                     if (!compact) Text("Gallery", fontSize = 10.sp, color = Color(0xFF6B7280), fontWeight = FontWeight.SemiBold)
                 }
             }
@@ -250,7 +282,8 @@ fun PhotoStrip(
                         Icon(
                             Icons.Default.Cancel, contentDescription = "Delete",
                             tint = Color.White,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier
+                                .size(20.dp)
                                 .background(RatingRed.copy(alpha = 0.85f), RoundedCornerShape(50))
                         )
                     }
@@ -269,15 +302,16 @@ fun NarrativeBox(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
             .background(Color(0xFFFDF9F2))
             .border(1.5.dp, Gold, RoundedCornerShape(10.dp))
             .padding(12.dp)
     ) {
         Text(
-            label, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Gold,
-            modifier = Modifier.padding(bottom = 6.dp)
+            label, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+            color = Gold, modifier = Modifier.padding(bottom = 6.dp)
         )
         ProTextField(
             value = value,
@@ -300,8 +334,8 @@ fun FormField(
 ) {
     Column(modifier = modifier) {
         Text(
-            label, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF6B7280),
-            modifier = Modifier.padding(bottom = 4.dp)
+            label, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+            color = Color(0xFF6B7280), modifier = Modifier.padding(bottom = 4.dp)
         )
         ProTextField(
             value = value,
@@ -337,9 +371,18 @@ fun ChecklistItemCard(
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(10.dp).clip(RoundedCornerShape(50)).background(rColor))
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(rColor)
+                )
                 Spacer(Modifier.width(8.dp))
-                Text(item.title, fontSize = 13.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+                Text(
+                    item.title, fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f)
+                )
                 if (hasDefects) {
                     Surface(
                         color = Gold.copy(alpha = 0.15f),
@@ -347,12 +390,16 @@ fun ChecklistItemCard(
                         modifier = Modifier.padding(end = 4.dp)
                     ) {
                         Text(
-                            "Templates", fontSize = 9.sp, color = Gold, fontWeight = FontWeight.Bold,
+                            "Templates", fontSize = 9.sp, color = Gold,
+                            fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
                         )
                     }
                 }
-                IconButton(onClick = { expanded = !expanded }, modifier = Modifier.size(28.dp)) {
+                IconButton(
+                    onClick = { expanded = !expanded },
+                    modifier = Modifier.size(28.dp)
+                ) {
                     Icon(
                         if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                         contentDescription = null,
@@ -368,12 +415,16 @@ fun ChecklistItemCard(
             if (expanded) {
                 Spacer(Modifier.height(12.dp))
                 if (hasDefects) {
-                    DefectDropdown(itemId = item.id, onDefectSelected = { description ->
-                        if (description.isNotBlank()) {
-                            val newNarrative = if (narrative.isBlank()) description else "$narrative\n\n$description"
-                            onNarrativeChanged(newNarrative)
+                    DefectDropdown(
+                        itemId = item.id,
+                        onDefectSelected = { description ->
+                            if (description.isNotBlank()) {
+                                val newNarrative = if (narrative.isBlank()) description
+                                else "$narrative\n\n$description"
+                                onNarrativeChanged(newNarrative)
+                            }
                         }
-                    })
+                    )
                     Spacer(Modifier.height(10.dp))
                 }
                 PhotoStrip(
