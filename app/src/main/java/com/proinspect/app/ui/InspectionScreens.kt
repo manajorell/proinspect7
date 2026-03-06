@@ -79,7 +79,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                 onNarrativeChanged = { text -> viewModel.setItemNarrative(ci.id, section, text) },
                 onCameraClick = { launchCamera(section, ci.id) },
                 onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, section, ci.id) },
-                onDeletePhoto = { id -> viewModel.deletePhoto(id) }
+                onDeletePhoto = { photo -> viewModel.deletePhoto(photo) }
             )
         }
         item {
@@ -177,7 +177,7 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
                             cameraLauncher.launch(uri)
                         },
                         onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, "info", null) },
-                        onDeletePhoto = { id -> viewModel.deletePhoto(id) }
+                        onDeletePhoto = { photo -> viewModel.deletePhoto(photo) }
                     )
                     NarrativeBox(value = r.overviewNarrative, onValueChange = { v -> viewModel.saveReport(r.copy(overviewNarrative = v)) },
                         label = "📝 Property Overview Notes")
