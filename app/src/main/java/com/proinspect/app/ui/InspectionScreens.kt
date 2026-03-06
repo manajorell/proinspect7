@@ -121,7 +121,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                 placeholder = "Summarize overall $sectionName findings..."
             )
         }
-        item { Spacer(Modifier.height(20.dp)) }
+      item { Spacer(Modifier.height(20.dp)) }
     }
 }
 
