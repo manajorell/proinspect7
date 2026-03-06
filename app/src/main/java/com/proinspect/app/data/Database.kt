@@ -4,27 +4,16 @@ import android.content.Context
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 
-class Converters {
-    @TypeConverter fun fromRating(r: Rating): String = r.name
-    @TypeConverter fun toRating(s: String): Rating = Rating.valueOf(s)
-}
-
 @Dao
 interface ReportDao {
-    @Query("SELECT * FROM reports ORDER BY updatedAt DESC")
+    @Query("SELECT * FROM reports ORDER BY createdAt DESC")
     fun getAllReports(): Flow<List<Report>>
 
     @Query("SELECT * FROM reports WHERE id = :id")
-    fun getReportFlow(id: Long): Flow<Report?>
-
-    @Query("SELECT * FROM reports WHERE id = :id")
-    suspend fun getReportById(id: Long): Report?
+    suspend fun getReport(id: Long): Report?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertReport(report: Report): Long
-
-    @Update
-    suspend fun updateReport(report: Report)
 
     @Delete
     suspend fun deleteReport(report: Report)
@@ -35,80 +24,55 @@ interface InspectionItemDao {
     @Query("SELECT * FROM inspection_items WHERE reportId = :reportId")
     fun getItemsForReport(reportId: Long): Flow<List<InspectionItem>>
 
-    @Query("SELECT * FROM inspection_items WHERE reportId = :reportId")
-    suspend fun getItemsForReportSync(reportId: Long): List<InspectionItem>
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItem(item: InspectionItem)
 
-    @Delete
-    suspend fun deleteItem(item: InspectionItem)
+    @Query("DELETE FROM inspection_items WHERE reportId = :reportId")
+    suspend fun deleteItemsForReport(reportId: Long)
 }
 
 @Dao
-interface PhotoDao {
-    @Query("SELECT * FROM photos WHERE reportId = :reportId ORDER BY createdAt ASC")
+interface InspectionPhotoDao {
+    @Query("SELECT * FROM inspection_photos WHERE reportId = :reportId")
     fun getPhotosForReport(reportId: Long): Flow<List<InspectionPhoto>>
-
-    @Query("SELECT * FROM photos WHERE reportId = :reportId ORDER BY createdAt ASC")
-    suspend fun getPhotosForReportSync(reportId: Long): List<InspectionPhoto>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPhoto(photo: InspectionPhoto): Long
 
-    @Query("DELETE FROM photos WHERE id = :photoId")
-    suspend fun deletePhotoById(photoId: Long)
+    @Delete
+    suspend fun deletePhoto(photo: InspectionPhoto)
+
+    @Query("DELETE FROM inspection_photos WHERE reportId = :reportId")
+    suspend fun deletePhotosForReport(reportId: Long)
+}
+
+@Dao
+interface AppSettingsDao {
+    @Query("SELECT * FROM app_settings WHERE id = 1")
+    fun getSettings(): Flow<AppSettings?>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun saveSettings(settings: AppSettings)
 }
 
 @Database(
-    entities = [Report::class, InspectionItem::class, InspectionPhoto::class],
-    version = 1,
+    entities = [Report::class, InspectionItem::class, InspectionPhoto::class, AppSettings::class],
+    version = 2,
     exportSchema = false
 )
-@TypeConverters(Converters::class)
-abstract class InspectionDatabase : RoomDatabase() {
+abstract class ProInspectDatabase : RoomDatabase() {
     abstract fun reportDao(): ReportDao
-    abstract fun itemDao(): InspectionItemDao
-    abstract fun photoDao(): PhotoDao
+    abstract fun inspectionItemDao(): InspectionItemDao
+    abstract fun inspectionPhotoDao(): InspectionPhotoDao
+    abstract fun appSettingsDao(): AppSettingsDao
 
     companion object {
-        @Volatile private var INSTANCE: InspectionDatabase? = null
-        fun getDatabase(context: Context): InspectionDatabase {
-            return INSTANCE ?: synchronized(this) {
-                Room.databaseBuilder(
-                    context.applicationContext,
-                    InspectionDatabase::class.java,
-                    "inspection_db"
-                ).build().also { INSTANCE = it }
+        @Volatile private var INSTANCE: ProInspectDatabase? = null
+        fun getInstance(context: Context): ProInspectDatabase =
+            INSTANCE ?: synchronized(this) {
+                Room.databaseBuilder(context, ProInspectDatabase::class.java, "proinspect.db")
+                    .fallbackToDestructiveMigration()
+                    .build().also { INSTANCE = it }
             }
-        }
-    }
-}
-
-class InspectionRepository(private val db: InspectionDatabase) {
-    val allReports = db.reportDao().getAllReports()
-
-    fun getReportFlow(id: Long) = db.reportDao().getReportFlow(id)
-    suspend fun getReportById(id: Long): Report? = db.reportDao().getReportById(id)
-    suspend fun createReport(report: Report): Long = db.reportDao().insertReport(report)
-    suspend fun updateReport(report: Report) = db.reportDao().updateReport(report)
-    suspend fun deleteReport(report: Report) = db.reportDao().deleteReport(report)
-
-    fun getItemsForReport(reportId: Long) = db.itemDao().getItemsForReport(reportId)
-    suspend fun saveItem(item: InspectionItem) = db.itemDao().insertItem(item)
-
-    fun getPhotosForReport(reportId: Long) = db.photoDao().getPhotosForReport(reportId)
-    suspend fun addPhoto(photo: InspectionPhoto): Long = db.photoDao().insertPhoto(photo)
-    suspend fun deletePhoto(photoId: Long) = db.photoDao().deletePhotoById(photoId)
-
-    companion object {
-        @Volatile private var INSTANCE: InspectionRepository? = null
-        fun getInstance(context: Context): InspectionRepository {
-            return INSTANCE ?: synchronized(this) {
-                InspectionRepository(
-                    InspectionDatabase.getDatabase(context)
-                ).also { INSTANCE = it }
-            }
-        }
     }
 }
