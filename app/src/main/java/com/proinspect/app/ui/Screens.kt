@@ -124,37 +124,59 @@ fun ReportScreen(
                 TopAppBar(
                     title = {
                         Column {
-                            Text(report?.propertyAddress?.ifBlank { "New Inspection" } ?: "Inspection",
-                                color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                report?.propertyAddress?.ifBlank { "New Inspection" } ?: "Inspection",
+                                color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold
+                            )
                             Text(report?.reportNumber ?: "", fontSize = 11.sp, color = GoldLight)
                         }
                     },
                     navigationIcon = {
-                        IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null, tint = Color.White) }
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Default.ArrowBack, null, tint = Color.White)
+                        }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Navy)
                 )
-                ScrollableTabRow(
-                    selectedTabIndex = currentTab,
-                    containerColor = Color(0xFF243358),
-                    contentColor = GoldLight,
-                    edgePadding = 0.dp,
-                    indicator = { tabPositions ->
-                        TabRowDefaults.SecondaryIndicator(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = Gold
-                        )
-                    }
+                // Tab bar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF243358))
+                        .horizontalScroll(rememberScrollState())
                 ) {
                     tabs.forEachIndexed { i, tab ->
-                        Tab(
-                            selected = currentTab == i,
-                            onClick = { onTabChange(i) },
-                            text = { Text("${tabIcons[i]} $tab", fontSize = 11.sp,
-                                fontWeight = if (currentTab == i) FontWeight.Bold else FontWeight.Normal) },
-                            selectedContentColor = GoldLight,
-                            unselectedContentColor = Color.White.copy(alpha = 0.5f)
-                        )
+                        val selected = currentTab == i
+                        Box(
+                            modifier = Modifier
+                                .clickable { onTabChange(i) }
+                                .background(
+                                    if (selected) Color(0xFF1A2744) else Color.Transparent
+                                )
+                                .padding(horizontal = 12.dp, vertical = 10.dp)
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    tabIcons[i],
+                                    fontSize = 16.sp
+                                )
+                                Text(
+                                    tab,
+                                    fontSize = 10.sp,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (selected) GoldLight else Color.White.copy(alpha = 0.6f)
+                                )
+                                if (selected) {
+                                    Spacer(Modifier.height(2.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .width(32.dp)
+                                            .height(2.dp)
+                                            .background(Gold)
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
