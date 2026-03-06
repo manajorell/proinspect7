@@ -84,11 +84,11 @@ data class InspectionItem(
     val section: String = ""
 )
 
-@Entity(tableName = "photos", foreignKeys = [
+@Entity(tableName = "inspection_photos", foreignKeys = [
     ForeignKey(entity = Report::class, parentColumns = ["id"], childColumns = ["reportId"], onDelete = ForeignKey.CASCADE)
 ])
-@Entity(tableName = "inspection_photos")
 data class InspectionPhoto(
+
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val reportId: Long,
     val filePath: String,
