@@ -18,7 +18,7 @@ interface ReportDao {
     fun getReportFlow(id: Long): Flow<Report?>
 
     @Query("SELECT * FROM reports WHERE id = :id")
-    suspend fun getReportById(id: Long): Report?
+    suspend fun getReportById(id: Long): Report? = reportDao.getReportById(id)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertReport(report: Report): Long
