@@ -99,11 +99,11 @@ fun ProTextField(
                 }
             },
             update = { editText ->
-                if (editText.text.toString() != value) {
-                    editText.setText(value)
-                    editText.setSelection(value.length)
-                }
-            },
+    if (!editText.isFocused && editText.text.toString() != value) {
+        editText.setText(value)
+        editText.setSelection(value.length)
+    }
+},
             modifier = Modifier.fillMaxWidth()
         )
     }
