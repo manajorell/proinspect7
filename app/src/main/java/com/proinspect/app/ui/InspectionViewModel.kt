@@ -8,6 +8,8 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.proinspect.app.data.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.io.File
@@ -22,9 +24,9 @@ class InspectionViewModel(application: Application) : AndroidViewModel(applicati
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _currentReportId = MutableStateFlow<Long?>(null)
+    private val _currentReportLocal = MutableStateFlow<Report?>(null)
 
-    val currentReport: StateFlow<Report?> = _currentReportId
-        .flatMapLatest { id -> if (id == null) flowOf(null) else repo.getReportFlow(id) }
+    val currentReport: StateFlow<Report?> = _currentReportLocal
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     val items: StateFlow<Map<String, InspectionItem>> = _currentReportId
@@ -42,9 +44,14 @@ class InspectionViewModel(application: Application) : AndroidViewModel(applicati
     private var tempPhotoPath: String? = null
     private var tempPhotoSection: String = ""
     private var tempPhotoItemId: String? = null
+    private var saveJob: Job? = null
 
     fun loadReport(reportId: Long) {
         _currentReportId.value = reportId
+        viewModelScope.launch {
+            val report = repo.getReportById(reportId)
+            _currentReportLocal.value = report
+        }
     }
 
     fun createNewReport() {
@@ -55,12 +62,16 @@ class InspectionViewModel(application: Application) : AndroidViewModel(applicati
             )
             val newId = repo.createReport(report)
             _currentReportId.value = newId
+            _currentReportLocal.value = report.copy(id = newId)
             _navigateToReport.emit(Unit)
         }
     }
 
     fun saveReport(report: Report) {
-        viewModelScope.launch {
+        _currentReportLocal.value = report
+        saveJob?.cancel()
+        saveJob = viewModelScope.launch {
+            delay(300)
             repo.updateReport(report.copy(updatedAt = System.currentTimeMillis()))
         }
     }
