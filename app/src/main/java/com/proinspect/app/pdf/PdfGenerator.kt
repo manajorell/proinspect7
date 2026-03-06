@@ -43,19 +43,12 @@ object PdfGenerator {
         Rating.NOT_RATED -> cGray
     }
 
-    private fun pad(cell: PdfPCell, p: Float): PdfPCell {
-        cell.paddingTop = p
-        cell.paddingBottom = p
-        cell.paddingLeft = p
-        cell.paddingRight = p
-        return cell
-    }
-
     suspend fun generate(
         context: Context,
         report: Report,
         items: List<InspectionItem>,
-        photos: List<InspectionPhoto>
+        photos: List<InspectionPhoto>,
+        settings: AppSettings
     ): File {
         val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) ?: context.filesDir
@@ -64,20 +57,23 @@ object PdfGenerator {
         val writer = PdfWriter.getInstance(doc, FileOutputStream(file))
         writer.pageEvent = PageEvent(report)
         doc.open()
-        pageCover(doc, report, items)
+        pageCover(doc, report, items, settings)
         pageExecutiveSummary(doc, report, items, photos)
         pageFullDetails(doc, report, items, photos)
-        pageDisclaimer(doc, report)
+        pageCertifications(doc, report, settings)
         doc.close()
         return file
     }
 
-    private fun pageCover(doc: Document, report: Report, items: List<InspectionItem>) {
-        val hdr = PdfPTable(1).apply { widthPercentage = 100f }
+    private fun pageCover(doc: Document, report: Report, items: List<InspectionItem>, settings: AppSettings) {
+        // Header with optional logo
+        val hdr = PdfPTable(if (settings.companyLogoPath.isNotBlank()) 2 else 1).apply {
+            widthPercentage = 100f
+            if (settings.companyLogoPath.isNotBlank()) setWidths(floatArrayOf(2f, 1f))
+        }
         val hCell = PdfPCell().apply {
-            backgroundColor = cNavy
-            border = Rectangle.NO_BORDER
-            paddingTop = 40f; paddingBottom = 36f; paddingLeft = 30f; paddingRight = 30f
+            backgroundColor = cNavy; border = Rectangle.NO_BORDER
+            paddingTop = 40f; paddingBottom = 36f; paddingLeft = 30f; paddingRight = 16f
         }
         hCell.addElement(Paragraph("ProInspect", Font(Font.FontFamily.HELVETICA, 32f, Font.BOLD, cGold)))
         hCell.addElement(Paragraph("HOME INSPECTION REPORT", fWhiteSm))
@@ -88,17 +84,37 @@ object PdfGenerator {
             hCell.addElement(Paragraph(report.propertyCity,
                 Font(Font.FontFamily.HELVETICA, 12f, Font.NORMAL, BaseColor(180, 190, 210))))
         hdr.addCell(hCell)
+
+        if (settings.companyLogoPath.isNotBlank()) {
+            val logoCell = PdfPCell().apply {
+                backgroundColor = cNavy; border = Rectangle.NO_BORDER
+                paddingTop = 20f; paddingBottom = 20f; paddingLeft = 8f; paddingRight = 20f
+                verticalAlignment = Element.ALIGN_MIDDLE
+            }
+            try {
+                val bmp = BitmapFactory.decodeFile(settings.companyLogoPath)
+                if (bmp != null) {
+                    val stream = java.io.ByteArrayOutputStream()
+                    bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
+                    val img = Image.getInstance(stream.toByteArray())
+                    img.scaleToFit(140f, 100f)
+                    img.alignment = Element.ALIGN_RIGHT
+                    logoCell.addElement(img)
+                }
+            } catch (_: Exception) {}
+            hdr.addCell(logoCell)
+        }
         doc.add(hdr)
         doc.add(Chunk(LineSeparator(3f, 100f, cGold, Element.ALIGN_CENTER, 0f)))
 
+        // Info grid
         val grid = PdfPTable(4).apply {
             widthPercentage = 100f; spacingBefore = 20f; spacingAfter = 24f
             setWidths(floatArrayOf(1f, 1.5f, 1f, 1.5f))
         }
         fun lbl(t: String): PdfPCell {
             val c = PdfPCell(Phrase(t, fSmallB))
-            c.border = Rectangle.NO_BORDER
-            c.paddingBottom = 2f; c.paddingTop = 8f
+            c.border = Rectangle.NO_BORDER; c.paddingBottom = 2f; c.paddingTop = 8f
             return c
         }
         fun value(t: String): PdfPCell {
@@ -107,17 +123,19 @@ object PdfGenerator {
             c.paddingBottom = 6f; c.paddingTop = 0f
             return c
         }
-        grid.addCell(lbl("CLIENT"));    grid.addCell(value(report.clientName))
-        grid.addCell(lbl("DATE"));      grid.addCell(value(report.inspectionDate))
-        grid.addCell(lbl("PROPERTY"));  grid.addCell(value(report.propertyAddress))
-        grid.addCell(lbl("INSPECTOR")); grid.addCell(value(report.inspectorName))
-        grid.addCell(lbl("YEAR BUILT"));grid.addCell(value(report.yearBuilt))
-        grid.addCell(lbl("CERT #"));    grid.addCell(value(report.inspectorCert))
-        grid.addCell(lbl("SQ FT"));     grid.addCell(value(report.squareFootage))
-        grid.addCell(lbl("COMPANY"));   grid.addCell(value(report.inspectorCompany))
+        grid.addCell(lbl("CLIENT"));     grid.addCell(value(report.clientName))
+        grid.addCell(lbl("DATE"));       grid.addCell(value(report.inspectionDate))
+        grid.addCell(lbl("PROPERTY"));   grid.addCell(value(report.propertyAddress))
+        grid.addCell(lbl("INSPECTOR"));  grid.addCell(value(report.inspectorName))
+        grid.addCell(lbl("YEAR BUILT")); grid.addCell(value(report.yearBuilt))
+        grid.addCell(lbl("CERT #"));     grid.addCell(value(report.inspectorCert))
+        grid.addCell(lbl("SQ FT"));      grid.addCell(value(report.squareFootage))
+        grid.addCell(lbl("COMPANY"));    grid.addCell(value(report.inspectorCompany))
         doc.add(grid)
 
         doc.add(Chunk(LineSeparator(0.5f, 100f, cBorder, Element.ALIGN_CENTER, -2f)))
+
+        // Rating legend
         val legend = PdfPTable(5).apply {
             widthPercentage = 80f; spacingBefore = 12f; spacingAfter = 8f
             horizontalAlignment = Element.ALIGN_CENTER
@@ -233,7 +251,6 @@ object PdfGenerator {
             if (item.narrative.isNotBlank())
                 textCell.addElement(Paragraph(item.narrative, fBody).apply { spacingBefore = 4f })
             row.addCell(textCell)
-
             if (itemPhotos.isNotEmpty()) {
                 val photoCell = PdfPCell()
                 photoCell.border = Rectangle.NO_BORDER; photoCell.paddingLeft = 4f
@@ -310,12 +327,10 @@ object PdfGenerator {
                 val found  = items.find { it.itemId == ci.id }
                 val rating = found?.rating ?: Rating.NOT_RATED
                 val color  = rColor(rating)
-
                 val nameCell = PdfPCell(Phrase(ci.title, fBody))
                 nameCell.border = Rectangle.BOTTOM; nameCell.borderColorBottom = cBorder
                 nameCell.paddingTop = 7f; nameCell.paddingBottom = 7f; nameCell.paddingLeft = 7f; nameCell.paddingRight = 7f
                 tbl.addCell(nameCell)
-
                 val rCell = PdfPCell()
                 rCell.border = Rectangle.BOTTOM; rCell.borderColorBottom = cBorder
                 rCell.paddingTop = 7f; rCell.paddingBottom = 7f; rCell.paddingLeft = 7f; rCell.paddingRight = 7f
@@ -323,10 +338,8 @@ object PdfGenerator {
                 rCell.backgroundColor = if (rating != Rating.NOT_RATED)
                     BaseColor(color.red, color.green, color.blue, 25) else cWhite
                 rCell.addElement(Paragraph(rating.short,
-                    Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, color)).apply {
-                    alignment = Element.ALIGN_CENTER })
+                    Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, color)).apply { alignment = Element.ALIGN_CENTER })
                 tbl.addCell(rCell)
-
                 val narrative = found?.narrative?.ifBlank { null }
                 val nCell = PdfPCell(Phrase(narrative ?: "—", if (narrative != null) fBody else fSmall))
                 nCell.border = Rectangle.BOTTOM; nCell.borderColorBottom = cBorder
@@ -376,8 +389,10 @@ object PdfGenerator {
         }
     }
 
-    private fun pageDisclaimer(doc: Document, report: Report) {
+    private fun pageCertifications(doc: Document, report: Report, settings: AppSettings) {
         doc.newPage()
+
+        // Disclaimer section
         val hdrTbl = PdfPTable(1).apply { widthPercentage = 100f; spacingAfter = 16f }
         val h = PdfPCell()
         h.backgroundColor = cNavy; h.border = Rectangle.NO_BORDER
@@ -385,6 +400,7 @@ object PdfGenerator {
         h.addElement(Paragraph("Scope & Limitations", fWhite))
         hdrTbl.addCell(h)
         doc.add(hdrTbl)
+
         val text = buildString {
             if (report.limitations.isNotBlank()) { append(report.limitations); append("\n\n") }
             append("This inspection report was prepared in accordance with the InterNACHI Standards of Practice. ")
@@ -398,6 +414,56 @@ object PdfGenerator {
         doc.add(Chunk(LineSeparator(1f, 100f, cGold, Element.ALIGN_CENTER, -2f)))
         doc.add(Paragraph("\nInspection performed in accordance with InterNACHI Standards of Practice  |  www.nachi.org",
             Font(Font.FontFamily.HELVETICA, 8f, Font.ITALIC, cGray)).apply { alignment = Element.ALIGN_CENTER })
+
+        // Certification badges section
+        val badgePaths = listOf(
+            settings.badge1Path, settings.badge2Path,
+            settings.badge3Path, settings.badge4Path
+        ).filter { it.isNotBlank() && File(it).exists() }
+
+        if (badgePaths.isNotEmpty()) {
+            doc.add(Paragraph(" "))
+            doc.add(Paragraph(" "))
+            doc.add(Chunk(LineSeparator(0.5f, 100f, cBorder, Element.ALIGN_CENTER, -2f)))
+            doc.add(Paragraph(" "))
+
+            val certHdr = PdfPTable(1).apply { widthPercentage = 100f; spacingAfter = 12f }
+            val ch = PdfPCell(Phrase("Inspector Certifications & Credentials",
+                Font(Font.FontFamily.HELVETICA, 11f, Font.BOLD, cNavy)))
+            ch.border = Rectangle.NO_BORDER
+            ch.paddingBottom = 4f
+            ch.horizontalAlignment = Element.ALIGN_CENTER
+            certHdr.addCell(ch)
+            doc.add(certHdr)
+
+            val cols = minOf(badgePaths.size, 4)
+            val badgeTbl = PdfPTable(cols).apply {
+                widthPercentage = 70f
+                spacingAfter = 16f
+                horizontalAlignment = Element.ALIGN_CENTER
+            }
+            badgePaths.forEach { path ->
+                try {
+                    val bmp = BitmapFactory.decodeFile(path)
+                    if (bmp != null) {
+                        val stream = java.io.ByteArrayOutputStream()
+                        bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
+                        val img = Image.getInstance(stream.toByteArray())
+                        img.scaleToFit(110f, 110f)
+                        val bc = PdfPCell(img)
+                        bc.border = Rectangle.NO_BORDER
+                        bc.paddingTop = 8f; bc.paddingBottom = 8f
+                        bc.paddingLeft = 12f; bc.paddingRight = 12f
+                        bc.horizontalAlignment = Element.ALIGN_CENTER
+                        badgeTbl.addCell(bc)
+                    }
+                } catch (_: Exception) {}
+            }
+            repeat(cols - badgePaths.size) {
+                badgeTbl.addCell(PdfPCell().apply { border = Rectangle.NO_BORDER })
+            }
+            doc.add(badgeTbl)
+        }
     }
 
     class PageEvent(private val report: Report) : PdfPageEventHelper() {
