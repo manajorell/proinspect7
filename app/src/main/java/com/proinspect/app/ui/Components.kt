@@ -66,12 +66,20 @@ fun ProTextField(
     singleLine: Boolean = true,
     minLines: Int = 1
 ) {
+    var localValue by remember { mutableStateOf(value) }
+
+    LaunchedEffect(value) {
+        if (value != localValue) {
+            localValue = value
+        }
+    }
+
     Box(
         modifier = modifier
             .background(Color(0xFFF3F4F6), RoundedCornerShape(8.dp))
             .border(
                 1.5.dp,
-                if (value.isNotBlank()) Gold.copy(alpha = 0.5f) else Color(0xFFE5E7EB),
+                if (localValue.isNotBlank()) Gold.copy(alpha = 0.5f) else Color(0xFFE5E7EB),
                 RoundedCornerShape(8.dp)
             )
             .padding(horizontal = 12.dp, vertical = 6.dp)
@@ -87,23 +95,24 @@ fun ProTextField(
                     isSingleLine = singleLine
                     if (!singleLine) setLines(minLines)
                     setPadding(0, 8, 0, 8)
-                    setText(value)
+                    setText(localValue)
                     addTextChangedListener(object : TextWatcher {
                         override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
                         override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
                         override fun afterTextChanged(s: Editable?) {
                             val newText = s?.toString() ?: ""
-                            if (newText != value) onValueChange(newText)
+                            localValue = newText
+                            onValueChange(newText)
                         }
                     })
                 }
             },
             update = { editText ->
-    if (!editText.isFocused && editText.text.toString() != value) {
-        editText.setText(value)
-        editText.setSelection(value.length)
-    }
-},
+                if (!editText.isFocused && editText.text.toString() != localValue) {
+                    editText.setText(localValue)
+                    editText.setSelection(localValue.length)
+                }
+            },
             modifier = Modifier.fillMaxWidth()
         )
     }
