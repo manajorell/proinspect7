@@ -348,3 +348,4 @@ fun SummaryScreen(viewModel: InspectionViewModel) {
         item { Spacer(Modifier.height(20.dp)) }
     }
 }
+}
