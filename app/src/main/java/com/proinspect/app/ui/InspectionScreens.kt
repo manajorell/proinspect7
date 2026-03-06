@@ -1,6 +1,7 @@
 package com.proinspect.app.ui
 
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,21 +33,17 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
     val report by viewModel.currentReport.collectAsState()
     val items by viewModel.items.collectAsState()
     val photos by viewModel.photos.collectAsState()
-
-    var cameraUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var cameraUri by remember { mutableStateOf<Uri?>(null) }
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         viewModel.onPhotoCaptured(success)
     }
-
     fun launchCamera(sec: String, itemId: String?) {
         val uri = viewModel.prepareCameraUri(context, sec, itemId)
         cameraUri = uri
         cameraLauncher.launch(uri)
     }
-
     val sectionItems = InspectionSections.items[section] ?: emptyList()
     val sectionName = InspectionSections.sectionNames[section] ?: section
-
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -59,10 +56,10 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                     Text("$sectionName — Overview Photos", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Navy)
                     Spacer(Modifier.height(10.dp))
                     PhotoStrip(
-                        photos = photos.filter { it.section == section && it.itemId == null },
+                        photos = photos.filter { photo -> photo.section == section && photo.itemId == null },
                         onCameraClick = { launchCamera(section, null) },
                         onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, section, null) },
-                        onDeletePhoto = { viewModel.deletePhoto(it) }
+                        onDeletePhoto = { id -> viewModel.deletePhoto(id) }
                     )
                 }
             }
@@ -77,12 +74,12 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                 item = ci,
                 rating = itemState?.rating ?: Rating.NOT_RATED,
                 narrative = itemState?.narrative ?: "",
-                photos = photos.filter { it.itemId == ci.id },
-                onRatingChanged = { viewModel.setItemRating(ci.id, section, it) },
-                onNarrativeChanged = { viewModel.setItemNarrative(ci.id, section, it) },
+                photos = photos.filter { photo -> photo.itemId == ci.id },
+                onRatingChanged = { rating -> viewModel.setItemRating(ci.id, section, rating) },
+                onNarrativeChanged = { text -> viewModel.setItemNarrative(ci.id, section, text) },
                 onCameraClick = { launchCamera(section, ci.id) },
                 onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, section, ci.id) },
-                onDeletePhoto = { viewModel.deletePhoto(it) }
+                onDeletePhoto = { id -> viewModel.deletePhoto(id) }
             )
         }
         item {
@@ -121,7 +118,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                 placeholder = "Summarize overall $sectionName findings..."
             )
         }
-      item { Spacer(Modifier.height(20.dp)) }
+        item { Spacer(Modifier.height(20.dp)) }
     }
 }
 
@@ -129,72 +126,62 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
 fun PropertyInfoScreen(viewModel: InspectionViewModel) {
     val report by viewModel.currentReport.collectAsState()
     val r = report ?: return
+    val photos by viewModel.photos.collectAsState()
     val context = LocalContext.current
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         viewModel.onPhotoCaptured(success)
     }
-    val photos by viewModel.photos.collectAsState()
-
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Card(colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(2.dp)) {
+            Card(colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Property Information", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-                    FormField("Property Address", r.propertyAddress) { viewModel.saveReport(r.copy(propertyAddress = it)) }
-                    FormField("City, State, ZIP", r.propertyCity) { viewModel.saveReport(r.copy(propertyCity = it)) }
+                    FormField(label = "Property Address", value = r.propertyAddress, onValueChange = { v -> viewModel.saveReport(r.copy(propertyAddress = v)) })
+                    FormField(label = "City, State, ZIP", value = r.propertyCity, onValueChange = { v -> viewModel.saveReport(r.copy(propertyCity = v)) })
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-  Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-    FormField(label = "Year Built", value = r.yearBuilt, onValueChange = { v -> viewModel.saveReport(r.copy(yearBuilt = v)) }, modifier = Modifier.weight(1f))
-    FormField(label = "Sq Ft", value = r.squareFootage, onValueChange = { v -> viewModel.saveReport(r.copy(squareFootage = v)) }, modifier = Modifier.weight(1f))
-}
-Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-    FormField(label = "Inspection Date", value = r.inspectionDate, onValueChange = { v -> viewModel.saveReport(r.copy(inspectionDate = v)) }, modifier = Modifier.weight(1f))
-    FormField(label = "Weather", value = r.weatherConditions, onValueChange = { v -> viewModel.saveReport(r.copy(weatherConditions = v)) }, modifier = Modifier.weight(1f))
-}
-                   Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-    FormField("Inspection Date", r.inspectionDate, onValueChange = { v -> viewModel.saveReport(r.copy(inspectionDate = v)) }, modifier = Modifier.weight(1f))
-    FormField("Weather", r.weatherConditions, onValueChange = { v -> viewModel.saveReport(r.copy(weatherConditions = v)) }, modifier = Modifier.weight(1f))
-}
+                        FormField(label = "Year Built", value = r.yearBuilt, onValueChange = { v -> viewModel.saveReport(r.copy(yearBuilt = v)) }, modifier = Modifier.weight(1f))
+                        FormField(label = "Sq Ft", value = r.squareFootage, onValueChange = { v -> viewModel.saveReport(r.copy(squareFootage = v)) }, modifier = Modifier.weight(1f))
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        FormField(label = "Inspection Date", value = r.inspectionDate, onValueChange = { v -> viewModel.saveReport(r.copy(inspectionDate = v)) }, modifier = Modifier.weight(1f))
+                        FormField(label = "Weather", value = r.weatherConditions, onValueChange = { v -> viewModel.saveReport(r.copy(weatherConditions = v)) }, modifier = Modifier.weight(1f))
+                    }
                 }
             }
         }
         item {
-            Card(colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(2.dp)) {
+            Card(colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Client & Inspector", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-                    FormField("Client Name", r.clientName) { viewModel.saveReport(r.copy(clientName = it)) }
-                    FormField("Client Email", r.clientEmail) { viewModel.saveReport(r.copy(clientEmail = it)) }
-                    FormField("Inspector Name", r.inspectorName) { viewModel.saveReport(r.copy(inspectorName = it)) }
-                    FormField("InterNACHI Cert #", r.inspectorCert) { viewModel.saveReport(r.copy(inspectorCert = it)) }
-                    FormField("Company", r.inspectorCompany) { viewModel.saveReport(r.copy(inspectorCompany = it)) }
-                    FormField("Phone", r.inspectorPhone) { viewModel.saveReport(r.copy(inspectorPhone = it)) }
+                    FormField(label = "Client Name", value = r.clientName, onValueChange = { v -> viewModel.saveReport(r.copy(clientName = v)) })
+                    FormField(label = "Client Email", value = r.clientEmail, onValueChange = { v -> viewModel.saveReport(r.copy(clientEmail = v)) })
+                    FormField(label = "Inspector Name", value = r.inspectorName, onValueChange = { v -> viewModel.saveReport(r.copy(inspectorName = v)) })
+                    FormField(label = "InterNACHI Cert #", value = r.inspectorCert, onValueChange = { v -> viewModel.saveReport(r.copy(inspectorCert = v)) })
+                    FormField(label = "Company", value = r.inspectorCompany, onValueChange = { v -> viewModel.saveReport(r.copy(inspectorCompany = v)) })
+                    FormField(label = "Phone", value = r.inspectorPhone, onValueChange = { v -> viewModel.saveReport(r.copy(inspectorPhone = v)) })
                 }
             }
         }
         item {
-            Card(colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(2.dp)) {
+            Card(colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Property Photos", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
                     PhotoStrip(
-                        photos = photos.filter { it.section == "info" && it.itemId == null },
+                        photos = photos.filter { photo -> photo.section == "info" && photo.itemId == null },
                         onCameraClick = {
                             val uri = viewModel.prepareCameraUri(context, "info", null)
                             cameraLauncher.launch(uri)
                         },
                         onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, "info", null) },
-                        onDeletePhoto = { viewModel.deletePhoto(it) }
+                        onDeletePhoto = { id -> viewModel.deletePhoto(id) }
                     )
-                    NarrativeBox(r.overviewNarrative, { viewModel.saveReport(r.copy(overviewNarrative = it)) },
+                    NarrativeBox(value = r.overviewNarrative, onValueChange = { v -> viewModel.saveReport(r.copy(overviewNarrative = v)) },
                         label = "📝 Property Overview Notes")
-                    FormField("Access Limitations", r.limitations, { viewModel.saveReport(r.copy(limitations = it)) },
-                        singleLine = false)
+                    FormField(label = "Access Limitations", value = r.limitations, onValueChange = { v -> viewModel.saveReport(r.copy(limitations = v)) }, singleLine = false)
                 }
             }
         }
@@ -209,20 +196,17 @@ fun SummaryScreen(viewModel: InspectionViewModel) {
     val items by viewModel.items.collectAsState()
     val photos by viewModel.photos.collectAsState()
     var isGenerating by remember { mutableStateOf(false) }
-
-    val counts = Rating.values().associateWith { r -> items.values.count { it.rating == r } }
+    val counts = Rating.values().associateWith { r -> items.values.count { item -> item.rating == r } }
     val findings = items.values
-        .filter { it.rating == Rating.SAFETY || it.rating == Rating.MAJOR || it.rating == Rating.MONITOR }
-        .sortedWith(compareBy { when (it.rating) { Rating.SAFETY -> 0; Rating.MAJOR -> 1; else -> 2 } })
-
+        .filter { item -> item.rating == Rating.SAFETY || item.rating == Rating.MAJOR || item.rating == Rating.MONITOR }
+        .sortedWith(compareBy { item -> when (item.rating) { Rating.SAFETY -> 0; Rating.MAJOR -> 1; else -> 2 } })
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Box(modifier = Modifier.fillMaxWidth()
-                .background(Navy, RoundedCornerShape(12.dp)).padding(20.dp)) {
+            Box(modifier = Modifier.fillMaxWidth().background(Navy, RoundedCornerShape(12.dp)).padding(20.dp)) {
                 Column {
                     Text("Inspection Summary", fontWeight = FontWeight.Bold, fontSize = 22.sp, color = GoldLight)
                     Text(report?.propertyAddress?.ifBlank { "Address not set" } ?: "", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
@@ -251,23 +235,20 @@ fun SummaryScreen(viewModel: InspectionViewModel) {
         }
         if (findings.isNotEmpty()) {
             item { Text("Priority Findings", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy) }
-            items(findings) { item ->
-                val ci = InspectionSections.allItems().find { it.id == item.itemId }
-                val color = when (item.rating) { Rating.SAFETY -> RatingRed; Rating.MAJOR -> RatingOrange; else -> RatingYellow }
-                Card(colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(2.dp)) {
+            items(findings) { finding ->
+                val ci = InspectionSections.allItems().find { it.id == finding.itemId }
+                val color = when (finding.rating) { Rating.SAFETY -> RatingRed; Rating.MAJOR -> RatingOrange; else -> RatingYellow }
+                Card(colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
                     Row(Modifier.padding(12.dp)) {
                         Box(Modifier.width(4.dp).fillMaxHeight().background(color))
                         Spacer(Modifier.width(10.dp))
                         Column(Modifier.weight(1f)) {
-                            Text(item.section.replaceFirstChar { it.uppercase() }, fontSize = 10.sp,
-                                color = Color(0xFF9CA3AF), fontWeight = FontWeight.Bold)
-                            Text(ci?.title ?: item.itemId, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                            if (item.narrative.isNotBlank())
-                                Text(item.narrative, fontSize = 12.sp, color = Color(0xFF6B7280))
+                            Text(finding.section.replaceFirstChar { it.uppercase() }, fontSize = 10.sp, color = Color(0xFF9CA3AF), fontWeight = FontWeight.Bold)
+                            Text(ci?.title ?: finding.itemId, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                            if (finding.narrative.isNotBlank()) Text(finding.narrative, fontSize = 12.sp, color = Color(0xFF6B7280))
                         }
                         Surface(color = color, shape = RoundedCornerShape(4.dp)) {
-                            Text(item.rating.short, Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            Text(finding.rating.short, Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                 color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
                     }
@@ -281,9 +262,7 @@ fun SummaryScreen(viewModel: InspectionViewModel) {
                     scope.launch {
                         try {
                             val r = report ?: return@launch
-                            val file = withContext(Dispatchers.IO) {
-                                PdfGenerator.generate(context, r, items.values.toList(), photos)
-                            }
+                            val file = withContext(Dispatchers.IO) { PdfGenerator.generate(context, r, items.values.toList(), photos) }
                             val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
                             val intent = Intent(Intent.ACTION_VIEW).apply {
                                 setDataAndType(uri, "application/pdf")
@@ -318,9 +297,7 @@ fun SummaryScreen(viewModel: InspectionViewModel) {
                     scope.launch {
                         try {
                             val r = report ?: return@launch
-                            val file = withContext(Dispatchers.IO) {
-                                PdfGenerator.generate(context, r, items.values.toList(), photos)
-                            }
+                            val file = withContext(Dispatchers.IO) { PdfGenerator.generate(context, r, items.values.toList(), photos) }
                             val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
                             val intent = Intent(Intent.ACTION_SEND).apply {
                                 type = "application/pdf"
@@ -347,5 +324,4 @@ fun SummaryScreen(viewModel: InspectionViewModel) {
         }
         item { Spacer(Modifier.height(20.dp)) }
     }
-}
 }
