@@ -6,6 +6,8 @@ import android.os.Environment
 import com.itextpdf.text.*
 import com.itextpdf.text.pdf.*
 import com.itextpdf.text.pdf.draw.LineSeparator
+import com.itextpdf.text.pdf.PdfPageEventHelper
+import com.itextpdf.text.pdf.ColumnText
 import com.proinspect.app.data.*
 import java.io.File
 import java.io.FileOutputStream
@@ -461,5 +463,21 @@ object PdfGenerator {
        doc.add(Paragraph("\nInspection performed in accordance with InterNACHI Standards of Practice  |  www.nachi.org",
             Font(Font.FontFamily.HELVETICA, 8f, Font.ITALIC, cGray)).apply { alignment = Element.ALIGN_CENTER })
     }
+    private inner class HeaderFooterEvent(private val report: Report) : PdfPageEventHelper() {
+    override fun onEndPage(writer: PdfWriter, document: Document) {
+        val cb = writer.directContent
+        // Footer
+        val footer = Phrase(
+            "ProInspect  |  ${report.propertyAddress}  |  Page ${writer.pageNumber}",
+            Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, cGray)
+        )
+        ColumnText.showTextAligned(
+            cb, Element.ALIGN_CENTER, footer,
+            (document.left() + document.right()) / 2,
+            document.bottom() - 15f,
+            0f
+        )
+    }
 }
+
            
