@@ -55,7 +55,7 @@ object PdfGenerator {
         val file = File(dir, "ProInspect_${stamp}.pdf")
         val doc = Document(PageSize.LETTER, 50f, 50f, 55f, 55f)
         val writer = PdfWriter.getInstance(doc, FileOutputStream(file))
-        writer.pageEvent = PageEvent(report)
+        writer.pageEvent = HeaderFooterEvent(report)
         doc.open()
         pageCover(doc, report, items, settings)
         pageExecutiveSummary(doc, report, items, photos)
