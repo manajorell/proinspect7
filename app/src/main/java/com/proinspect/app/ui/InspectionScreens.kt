@@ -34,6 +34,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
+val settings by viewModel.appSettings.collectAsState()
+```
+
+Commit → Run workflow → download new APK → test. Also need to add `coil` dependency for the logo image display in Settings. Go to `gradle/libs.versions.toml` → pencil ✏️ → find the `[versions]` section and add:
+```
+coil = "2.6.0"
+```
+
+Then in the `[libraries]` section add:
+```
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
     val context = LocalContext.current
     val report by viewModel.currentReport.collectAsState()
@@ -344,7 +355,7 @@ fun SummaryScreen(viewModel: InspectionViewModel) {
                         try {
                             val r = report ?: return@launch
                             val file = withContext(Dispatchers.IO) {
-                                PdfGenerator.generate(context, r, items.values.toList(), photos) }
+                                PdfGenerator.generate(context, r, items.values.toList(), photos, settings) }
                             val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
                             val intent = Intent(Intent.ACTION_VIEW).apply {
                                 setDataAndType(uri, "application/pdf")
@@ -380,7 +391,7 @@ fun SummaryScreen(viewModel: InspectionViewModel) {
                         try {
                             val r = report ?: return@launch
                             val file = withContext(Dispatchers.IO) {
-                                PdfGenerator.generate(context, r, items.values.toList(), photos) }
+                                PdfGenerator.generate(context, r, items.values.toList(), photos, settings) }
                             val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
                             val intent = Intent(Intent.ACTION_SEND).apply {
                                 type = "application/pdf"
