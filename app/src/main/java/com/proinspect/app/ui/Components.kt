@@ -215,7 +215,7 @@ fun PhotoStrip(
     photos: List<com.proinspect.app.data.InspectionPhoto>,
     onCameraClick: () -> Unit,
     onGalleryPick: (Uri) -> Unit,
-    onDeletePhoto: (Long) -> Unit,
+    onDeletePhoto: (InspectionPhoto) -> Unit,
     modifier: Modifier = Modifier,
     compact: Boolean = false
 ) {
@@ -366,7 +366,7 @@ fun ChecklistItemCard(
     onNarrativeChanged: (String) -> Unit,
     onCameraClick: () -> Unit,
     onGalleryPick: (Uri) -> Unit,
-    onDeletePhoto: (Long) -> Unit
+    onDeletePhoto: (InspectionPhoto) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val rColor = ratingColor(rating)
@@ -440,7 +440,7 @@ fun ChecklistItemCard(
                     photos = photos,
                     onCameraClick = onCameraClick,
                     onGalleryPick = onGalleryPick,
-                    onDeletePhoto = onDeletePhoto,
+                    onDeletePhoto = onDeletePhoto(photo),
                     compact = true
                 )
                 Spacer(Modifier.height(8.dp))
