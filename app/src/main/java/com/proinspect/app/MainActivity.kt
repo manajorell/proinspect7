@@ -46,17 +46,18 @@ fun ProInspectApp(viewModel: InspectionViewModel) {
             )
         }
         composable("report") {
-           val tabSections = listOf("info") + InspectionSections.sections + listOf("summary")
             val report by viewModel.currentReport.collectAsState()
+            val tabSections = listOf("info") + InspectionSections.sections + listOf("summary")
             ReportScreen(
                 report = report,
                 currentTab = currentTab,
                 onTabChange = { currentTab = it },
                 onBack = { navController.popBackStack() }
             ) {
-                when (tabSections.getOrNull(currentTab) ?: "info") {
+                when (tabSections.getOrNull(currentTab)) {
                     "info"    -> PropertyInfoScreen(viewModel)
                     "summary" -> SummaryScreen(viewModel)
+                    null      -> PropertyInfoScreen(viewModel)
                     else      -> InspectionSectionScreen(
                         section = tabSections[currentTab],
                         viewModel = viewModel
