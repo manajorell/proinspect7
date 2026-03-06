@@ -85,7 +85,7 @@ fun ProTextField(
                     setHintTextColor(AndroidColor.parseColor("#9CA3AF"))
                     hint = placeholder
                     isSingleLine = singleLine
-                    if (!singleLine) minLines = minLines
+                    if (!singleLine) setLines(minLines)
                     setPadding(0, 8, 0, 8)
                     setText(value)
                     addTextChangedListener(object : TextWatcher {
