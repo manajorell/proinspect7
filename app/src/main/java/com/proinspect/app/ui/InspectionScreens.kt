@@ -59,7 +59,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                         photos = photos.filter { photo -> photo.section == section && photo.itemId == null },
                         onCameraClick = { launchCamera(section, null) },
                         onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, section, null) },
-                        onDeletePhoto = { photo -> viewModel.deletePhoto(photo) } 
+                        onDeletePhoto = { photo -> viewModel.deletePhoto(photo) }  
                     )
                 }
             }
