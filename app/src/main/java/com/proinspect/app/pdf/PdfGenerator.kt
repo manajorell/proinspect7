@@ -10,6 +10,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
+import com.itextpdf.text.pdf.draw.LineSeparator
 
 object PdfGenerator {
 
