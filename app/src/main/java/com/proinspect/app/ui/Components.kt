@@ -285,7 +285,7 @@ fun PhotoStrip(
                         modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp))
                     )
                     IconButton(
-                        onClick = { onDeletePhoto(photo.id) },
+                        onClick = { onDeletePhoto(photo) },
                         modifier = Modifier.align(Alignment.TopEnd).size(24.dp)
                     ) {
                         Icon(
@@ -440,7 +440,7 @@ fun ChecklistItemCard(
                     photos = photos,
                     onCameraClick = onCameraClick,
                     onGalleryPick = onGalleryPick,
-                    onDeletePhoto = onDeletePhoto(photo),
+                    onDeletePhoto = { onDeletePhoto(photo) },
                     compact = true
                 )
                 Spacer(Modifier.height(8.dp))
