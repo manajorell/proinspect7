@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import com.proinspect.app.data.DefectLibrary
-import com.proinspect.app.data.Rating
+import com.proinspect.app.data.*
 import java.io.File
 
 @Composable
@@ -440,7 +440,7 @@ fun ChecklistItemCard(
                     photos = photos,
                     onCameraClick = onCameraClick,
                     onGalleryPick = onGalleryPick,
-                    onDeletePhoto = { onDeletePhoto(photo) },
+                    onDeletePhoto = onDeletePhoto,
                     compact = true
                 )
                 Spacer(Modifier.height(8.dp))
