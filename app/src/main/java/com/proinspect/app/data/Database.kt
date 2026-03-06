@@ -18,7 +18,7 @@ interface ReportDao {
     fun getReportFlow(id: Long): Flow<Report?>
 
     @Query("SELECT * FROM reports WHERE id = :id")
-    suspend fun getReportById(id: Long): Report? = reportDao.getReportById(id)
+    suspend fun getReportById(id: Long): Report?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertReport(report: Report): Long
@@ -35,14 +35,23 @@ interface InspectionItemDao {
     @Query("SELECT * FROM inspection_items WHERE reportId = :reportId")
     fun getItemsForReport(reportId: Long): Flow<List<InspectionItem>>
 
+    @Query("SELECT * FROM inspection_items WHERE reportId = :reportId")
+    suspend fun getItemsForReportSync(reportId: Long): List<InspectionItem>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItem(item: InspectionItem)
+
+    @Delete
+    suspend fun deleteItem(item: InspectionItem)
 }
 
 @Dao
 interface PhotoDao {
     @Query("SELECT * FROM photos WHERE reportId = :reportId ORDER BY createdAt ASC")
     fun getPhotosForReport(reportId: Long): Flow<List<InspectionPhoto>>
+
+    @Query("SELECT * FROM photos WHERE reportId = :reportId ORDER BY createdAt ASC")
+    suspend fun getPhotosForReportSync(reportId: Long): List<InspectionPhoto>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPhoto(photo: InspectionPhoto): Long
@@ -80,6 +89,7 @@ class InspectionRepository(private val db: InspectionDatabase) {
     val allReports = db.reportDao().getAllReports()
 
     fun getReportFlow(id: Long) = db.reportDao().getReportFlow(id)
+    suspend fun getReportById(id: Long): Report? = db.reportDao().getReportById(id)
     suspend fun createReport(report: Report): Long = db.reportDao().insertReport(report)
     suspend fun updateReport(report: Report) = db.reportDao().updateReport(report)
     suspend fun deleteReport(report: Report) = db.reportDao().deleteReport(report)
