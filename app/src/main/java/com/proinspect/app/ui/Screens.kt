@@ -141,7 +141,7 @@ fun ReportScreen(
                     edgePadding = 0.dp,
                     indicator = { tabPositions ->
                         TabRowDefaults.SecondaryIndicator(
-                            modifier = Modifier.tabIndicatorOffset(tabPositions[currentTab]),
+                            modifier = Modifier.fillMaxWidth(),
                             color = Gold
                         )
                     }
