@@ -46,7 +46,7 @@ fun ProInspectApp(viewModel: InspectionViewModel) {
             )
         }
         composable("report") {
-            val tabSections = listOf("info") + InspectionSections.sections + listOf("summary")
+           val tabSections = listOf("info") + InspectionSections.sections + listOf("summary")
             val report by viewModel.currentReport.collectAsState()
             ReportScreen(
                 report = report,
