@@ -87,13 +87,13 @@ data class InspectionItem(
 @Entity(tableName = "photos", foreignKeys = [
     ForeignKey(entity = Report::class, parentColumns = ["id"], childColumns = ["reportId"], onDelete = ForeignKey.CASCADE)
 ])
+@Entity(tableName = "inspection_photos")
 data class InspectionPhoto(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val reportId: Long,
-    val itemId: String?,
-    val section: String,
     val filePath: String,
-    val caption: String = "",
+    val section: String,
+    val itemId: String? = null,
     val createdAt: Long = System.currentTimeMillis()
 )
 
