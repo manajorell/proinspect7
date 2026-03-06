@@ -148,13 +148,13 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
                     FormField("Property Address", r.propertyAddress) { viewModel.saveReport(r.copy(propertyAddress = it)) }
                     FormField("City, State, ZIP", r.propertyCity) { viewModel.saveReport(r.copy(propertyCity = it)) }
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-   FormField(
-    label = "Year Built",
-    value = r.yearBuilt,
-    onValueChange = { v -> viewModel.saveReport(r.copy(yearBuilt = v)) },
-    modifier = Modifier.weight(1f)
-)
-    FormField("Sq Ft", r.squareFootage, onValueChange = { v -> viewModel.saveReport(r.copy(squareFootage = v)) }, modifier = Modifier.weight(1f))
+  Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    FormField(label = "Year Built", value = r.yearBuilt, onValueChange = { v -> viewModel.saveReport(r.copy(yearBuilt = v)) }, modifier = Modifier.weight(1f))
+    FormField(label = "Sq Ft", value = r.squareFootage, onValueChange = { v -> viewModel.saveReport(r.copy(squareFootage = v)) }, modifier = Modifier.weight(1f))
+}
+Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    FormField(label = "Inspection Date", value = r.inspectionDate, onValueChange = { v -> viewModel.saveReport(r.copy(inspectionDate = v)) }, modifier = Modifier.weight(1f))
+    FormField(label = "Weather", value = r.weatherConditions, onValueChange = { v -> viewModel.saveReport(r.copy(weatherConditions = v)) }, modifier = Modifier.weight(1f))
 }
                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
     FormField("Inspection Date", r.inspectionDate, onValueChange = { v -> viewModel.saveReport(r.copy(inspectionDate = v)) }, modifier = Modifier.weight(1f))
