@@ -8,8 +8,6 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.proinspect.app.data.*
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.io.File
@@ -44,7 +42,6 @@ class InspectionViewModel(application: Application) : AndroidViewModel(applicati
     private var tempPhotoPath: String? = null
     private var tempPhotoSection: String = ""
     private var tempPhotoItemId: String? = null
-    private var saveJob: Job? = null
 
     fun loadReport(reportId: Long) {
         _currentReportId.value = reportId
@@ -69,9 +66,7 @@ class InspectionViewModel(application: Application) : AndroidViewModel(applicati
 
     fun saveReport(report: Report) {
         _currentReportLocal.value = report
-        saveJob?.cancel()
-        saveJob = viewModelScope.launch {
-            delay(300)
+        viewModelScope.launch {
             repo.updateReport(report.copy(updatedAt = System.currentTimeMillis()))
         }
     }
