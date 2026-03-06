@@ -148,7 +148,12 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
                     FormField("Property Address", r.propertyAddress) { viewModel.saveReport(r.copy(propertyAddress = it)) }
                     FormField("City, State, ZIP", r.propertyCity) { viewModel.saveReport(r.copy(propertyCity = it)) }
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-    FormField("Year Built", r.yearBuilt, onValueChange = { v -> viewModel.saveReport(r.copy(yearBuilt = v)) }, modifier = Modifier.weight(1f))
+   FormField(
+    label = "Year Built",
+    value = r.yearBuilt,
+    onValueChange = { v -> viewModel.saveReport(r.copy(yearBuilt = v)) },
+    modifier = Modifier.weight(1f)
+)
     FormField("Sq Ft", r.squareFootage, onValueChange = { v -> viewModel.saveReport(r.copy(squareFootage = v)) }, modifier = Modifier.weight(1f))
 }
                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
