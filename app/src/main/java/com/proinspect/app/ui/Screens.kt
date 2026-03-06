@@ -49,7 +49,10 @@ fun ReportsListScreen(
     ) { padding ->
         if (reports.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     Text("🏠", fontSize = 64.sp)
                     Text("No Inspections Yet", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Navy)
                     Text("Tap + to start a new inspection report", color = Color(0xFF6B7280))
@@ -62,7 +65,11 @@ fun ReportsListScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(reports) { report ->
-                    ReportCard(report = report, onOpen = { onOpenReport(report.id) }, onDelete = { onDeleteReport(report) })
+                    ReportCard(
+                        report = report,
+                        onOpen = { onOpenReport(report.id) },
+                        onDelete = { onDeleteReport(report) }
+                    )
                 }
                 item { Spacer(Modifier.height(72.dp)) }
             }
@@ -80,13 +87,18 @@ fun ReportCard(report: Report, onOpen: () -> Unit, onDelete: () -> Unit) {
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(48.dp).background(Navy, RoundedCornerShape(10.dp)),
-                contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier.size(48.dp).background(Navy, RoundedCornerShape(10.dp)),
+                contentAlignment = Alignment.Center
+            ) {
                 Text("🏠", fontSize = 22.sp)
             }
             Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(report.propertyAddress.ifBlank { "New Inspection" }, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text(
+                    report.propertyAddress.ifBlank { "New Inspection" },
+                    fontWeight = FontWeight.Bold, fontSize = 15.sp
+                )
                 Text(report.clientName.ifBlank { "No client" }, fontSize = 13.sp, color = Color(0xFF6B7280))
                 Text(report.reportNumber, fontSize = 11.sp, color = Gold, fontWeight = FontWeight.SemiBold)
             }
@@ -100,8 +112,14 @@ fun ReportCard(report: Report, onOpen: () -> Unit, onDelete: () -> Unit) {
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("Delete Report?") },
             text = { Text("This will permanently delete this inspection report.") },
-            confirmButton = { TextButton(onClick = { onDelete(); showDeleteDialog = false }) { Text("Delete", color = RatingRed) } },
-            dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") } }
+            confirmButton = {
+                TextButton(onClick = { onDelete(); showDeleteDialog = false }) {
+                    Text("Delete", color = RatingRed)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
+            }
         )
     }
 }
@@ -115,8 +133,8 @@ fun ReportScreen(
     onBack: () -> Unit,
     content: @Composable () -> Unit
 ) {
-    val tabs = listOf("Info","Roof","Exterior","Structure","Electrical","HVAC","Plumbing","Interior","Insulation","Garage","Summary")
-    val tabIcons = listOf("📋","🏠","🧱","🏗","⚡","🌡","🔧","🪟","🌿","🚗","📊")
+    val tabs = listOf("Info", "Roof", "Exterior", "Structure", "Electrical", "HVAC", "Plumbing", "Interior", "Insulation", "Garage", "Summary")
+    val tabIcons = listOf("📋", "🏠", "🧱", "🏗", "⚡", "🌡", "🔧", "🪟", "🌿", "🚗", "📊")
 
     Scaffold(
         topBar = {
@@ -138,45 +156,27 @@ fun ReportScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Navy)
                 )
-                // Tab bar
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFF243358))
-                        .horizontalScroll(rememberScrollState())
+                ScrollableTabRow(
+                    selectedTabIndex = currentTab,
+                    containerColor = Color(0xFF0F1A35),
+                    contentColor = GoldLight,
+                    edgePadding = 8.dp,
+                    divider = {}
                 ) {
                     tabs.forEachIndexed { i, tab ->
-                        val selected = currentTab == i
-                        Box(
-                            modifier = Modifier
-                                .clickable { onTabChange(i) }
-                                .background(
-                                    if (selected) Color(0xFF1A2744) else Color.Transparent
-                                )
-                                .padding(horizontal = 12.dp, vertical = 10.dp)
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Tab(
+                            selected = currentTab == i,
+                            onClick = { onTabChange(i) },
+                            text = {
                                 Text(
-                                    tabIcons[i],
-                                    fontSize = 16.sp
+                                    "${tabIcons[i]} $tab",
+                                    fontSize = 11.sp,
+                                    fontWeight = if (currentTab == i) FontWeight.Bold else FontWeight.Normal
                                 )
-                                Text(
-                                    tab,
-                                    fontSize = 10.sp,
-                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (selected) GoldLight else Color.White.copy(alpha = 0.6f)
-                                )
-                                if (selected) {
-                                    Spacer(Modifier.height(2.dp))
-                                    Box(
-                                        modifier = Modifier
-                                            .width(32.dp)
-                                            .height(2.dp)
-                                            .background(Gold)
-                                    )
-                                }
-                            }
-                        }
+                            },
+                            selectedContentColor = GoldLight,
+                            unselectedContentColor = Color.White.copy(alpha = 0.75f)
+                        )
                     }
                 }
             }
