@@ -160,6 +160,52 @@ object PdfGenerator {
             legend.addCell(cell)
         }
         doc.add(legend)
+        
+        // Certification badges
+        val badgePaths = listOf(
+            settings.badge1Path, settings.badge2Path,
+            settings.badge3Path, settings.badge4Path
+        ).filter { it.isNotBlank() && File(it).exists() }
+
+        if (badgePaths.isNotEmpty()) {
+            doc.add(Paragraph(" "))
+            doc.add(Chunk(LineSeparator(0.5f, 100f, cBorder, Element.ALIGN_CENTER, -2f)))
+            doc.add(Paragraph(" "))
+            val certHdr = PdfPTable(1).apply { widthPercentage = 100f; spacingAfter = 8f }
+            val ch = PdfPCell(Phrase("Inspector Certifications & Credentials",
+                Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cNavy)))
+            ch.border = Rectangle.NO_BORDER
+            ch.horizontalAlignment = Element.ALIGN_CENTER
+            ch.paddingBottom = 4f
+            certHdr.addCell(ch)
+            doc.add(certHdr)
+            val cols = minOf(badgePaths.size, 4)
+            val badgeTbl = PdfPTable(cols).apply {
+                widthPercentage = 60f; spacingAfter = 12f
+                horizontalAlignment = Element.ALIGN_CENTER
+            }
+            badgePaths.forEach { path ->
+                try {
+                    val bmp = BitmapFactory.decodeFile(path)
+                    if (bmp != null) {
+                        val stream = java.io.ByteArrayOutputStream()
+                        bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
+                        val img = Image.getInstance(stream.toByteArray())
+                        img.scaleToFit(100f, 100f)
+                        val bc = PdfPCell(img)
+                        bc.border = Rectangle.NO_BORDER
+                        bc.paddingTop = 6f; bc.paddingBottom = 6f
+                        bc.paddingLeft = 10f; bc.paddingRight = 10f
+                        bc.horizontalAlignment = Element.ALIGN_CENTER
+                        badgeTbl.addCell(bc)
+                    }
+                } catch (_: Exception) {}
+            }
+            repeat(cols - badgePaths.size) {
+                badgeTbl.addCell(PdfPCell().apply { border = Rectangle.NO_BORDER })
+            }
+            doc.add(badgeTbl)
+        }
         doc.newPage()
     }
 
@@ -412,72 +458,8 @@ object PdfGenerator {
         }
         doc.add(Paragraph(text, fBody).apply { spacingAfter = 20f })
         doc.add(Chunk(LineSeparator(1f, 100f, cGold, Element.ALIGN_CENTER, -2f)))
-        doc.add(Paragraph("\nInspection performed in accordance with InterNACHI Standards of Practice  |  www.nachi.org",
+       doc.add(Paragraph("\nInspection performed in accordance with InterNACHI Standards of Practice  |  www.nachi.org",
             Font(Font.FontFamily.HELVETICA, 8f, Font.ITALIC, cGray)).apply { alignment = Element.ALIGN_CENTER })
-
-        // Certification badges section
-        val badgePaths = listOf(
-            settings.badge1Path, settings.badge2Path,
-            settings.badge3Path, settings.badge4Path
-        ).filter { it.isNotBlank() && File(it).exists() }
-
-        if (badgePaths.isNotEmpty()) {
-            doc.add(Paragraph(" "))
-            doc.add(Paragraph(" "))
-            doc.add(Chunk(LineSeparator(0.5f, 100f, cBorder, Element.ALIGN_CENTER, -2f)))
-            doc.add(Paragraph(" "))
-
-            val certHdr = PdfPTable(1).apply { widthPercentage = 100f; spacingAfter = 12f }
-            val ch = PdfPCell(Phrase("Inspector Certifications & Credentials",
-                Font(Font.FontFamily.HELVETICA, 11f, Font.BOLD, cNavy)))
-            ch.border = Rectangle.NO_BORDER
-            ch.paddingBottom = 4f
-            ch.horizontalAlignment = Element.ALIGN_CENTER
-            certHdr.addCell(ch)
-            doc.add(certHdr)
-
-            val cols = minOf(badgePaths.size, 4)
-            val badgeTbl = PdfPTable(cols).apply {
-                widthPercentage = 70f
-                spacingAfter = 16f
-                horizontalAlignment = Element.ALIGN_CENTER
-            }
-            badgePaths.forEach { path ->
-                try {
-                    val bmp = BitmapFactory.decodeFile(path)
-                    if (bmp != null) {
-                        val stream = java.io.ByteArrayOutputStream()
-                        bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
-                        val img = Image.getInstance(stream.toByteArray())
-                        img.scaleToFit(110f, 110f)
-                        val bc = PdfPCell(img)
-                        bc.border = Rectangle.NO_BORDER
-                        bc.paddingTop = 8f; bc.paddingBottom = 8f
-                        bc.paddingLeft = 12f; bc.paddingRight = 12f
-                        bc.horizontalAlignment = Element.ALIGN_CENTER
-                        badgeTbl.addCell(bc)
-                    }
-                } catch (_: Exception) {}
-            }
-            repeat(cols - badgePaths.size) {
-                badgeTbl.addCell(PdfPCell().apply { border = Rectangle.NO_BORDER })
-            }
-            doc.add(badgeTbl)
-        }
-    }
-
-    class PageEvent(private val report: Report) : PdfPageEventHelper() {
-        override fun onEndPage(writer: PdfWriter, document: Document) {
-            val cb   = writer.directContent
-            val font = Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, BaseColor(150, 155, 165))
-            val address = report.propertyAddress.ifBlank { "ProInspect Report" }
-            ColumnText.showTextAligned(cb, Element.ALIGN_LEFT,
-                Phrase(address, font), document.left(), document.bottom() - 12, 0f)
-            ColumnText.showTextAligned(cb, Element.ALIGN_RIGHT,
-                Phrase("Page ${document.pageNumber}", font), document.right(), document.bottom() - 12, 0f)
-            ColumnText.showTextAligned(cb, Element.ALIGN_CENTER,
-                Phrase("ProInspect  |  InterNACHI Standards", font),
-                (document.left() + document.right()) / 2, document.bottom() - 12, 0f)
-        }
     }
 }
+           
