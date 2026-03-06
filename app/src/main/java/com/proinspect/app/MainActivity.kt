@@ -42,7 +42,8 @@ fun ProInspectApp(viewModel: InspectionViewModel) {
                     currentTab = 0
                     navController.navigate("report")
                 },
-                onDeleteReport = { viewModel.deleteReport(it) }
+                onDeleteReport = { viewModel.deleteReport(it) },
+                onSettings = { navController.navigate("settings") }
             )
         }
         composable("report") {
@@ -64,6 +65,12 @@ fun ProInspectApp(viewModel: InspectionViewModel) {
                     )
                 }
             }
+        }
+        composable("settings") {
+            SettingsScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }
