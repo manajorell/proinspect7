@@ -68,7 +68,6 @@ object PdfGenerator {
     }
 
     private fun pageCover(doc: Document, report: Report, items: List<InspectionItem>, settings: AppSettings) {
-        // Header with optional logo
         val hdr = PdfPTable(if (settings.companyLogoPath.isNotBlank()) 2 else 1).apply {
             widthPercentage = 100f
             if (settings.companyLogoPath.isNotBlank()) setWidths(floatArrayOf(2f, 1f))
@@ -109,7 +108,6 @@ object PdfGenerator {
         doc.add(hdr)
         doc.add(Chunk(LineSeparator(3f, 100f, cGold, Element.ALIGN_CENTER, 0f)))
 
-        // Info grid
         val grid = PdfPTable(4).apply {
             widthPercentage = 100f; spacingBefore = 20f; spacingAfter = 24f
             setWidths(floatArrayOf(1f, 1.5f, 1f, 1.5f))
@@ -137,7 +135,6 @@ object PdfGenerator {
 
         doc.add(Chunk(LineSeparator(0.5f, 100f, cBorder, Element.ALIGN_CENTER, -2f)))
 
-        // Rating legend
         val legend = PdfPTable(5).apply {
             widthPercentage = 80f; spacingBefore = 12f; spacingAfter = 8f
             horizontalAlignment = Element.ALIGN_CENTER
@@ -162,8 +159,7 @@ object PdfGenerator {
             legend.addCell(cell)
         }
         doc.add(legend)
-        
-        // Certification badges
+
         val badgePaths = listOf(
             settings.badge1Path, settings.badge2Path,
             settings.badge3Path, settings.badge4Path
@@ -439,8 +435,6 @@ object PdfGenerator {
 
     private fun pageCertifications(doc: Document, report: Report, settings: AppSettings) {
         doc.newPage()
-
-        // Disclaimer section
         val hdrTbl = PdfPTable(1).apply { widthPercentage = 100f; spacingAfter = 16f }
         val h = PdfPCell()
         h.backgroundColor = cNavy; h.border = Rectangle.NO_BORDER
@@ -460,16 +454,17 @@ object PdfGenerator {
         }
         doc.add(Paragraph(text, fBody).apply { spacingAfter = 20f })
         doc.add(Chunk(LineSeparator(1f, 100f, cGold, Element.ALIGN_CENTER, -2f)))
-       doc.add(Paragraph("\nInspection performed in accordance with InterNACHI Standards of Practice  |  www.nachi.org",
+        doc.add(Paragraph("\nInspection performed in accordance with InterNACHI Standards of Practice  |  www.nachi.org",
             Font(Font.FontFamily.HELVETICA, 8f, Font.ITALIC, cGray)).apply { alignment = Element.ALIGN_CENTER })
     }
-    private inner class HeaderFooterEvent(private val report: Report) : PdfPageEventHelper() {
+}
+
+private class HeaderFooterEvent(private val report: Report) : PdfPageEventHelper() {
     override fun onEndPage(writer: PdfWriter, document: Document) {
         val cb = writer.directContent
-        // Footer
         val footer = Phrase(
             "ProInspect  |  ${report.propertyAddress}  |  Page ${writer.pageNumber}",
-            Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, cGray)
+            Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, BaseColor(100, 110, 120))
         )
         ColumnText.showTextAligned(
             cb, Element.ALIGN_CENTER, footer,
@@ -479,5 +474,3 @@ object PdfGenerator {
         )
     }
 }
-
-           
