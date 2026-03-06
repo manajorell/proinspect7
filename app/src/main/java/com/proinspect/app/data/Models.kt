@@ -218,3 +218,12 @@ object InspectionSections {
     )
     fun allItems() = items.values.flatten()
 }
+@Entity(tableName = "app_settings")
+data class AppSettings(
+    @PrimaryKey val id: Int = 1,
+    val companyLogoPath: String = "",
+    val badge1Path: String = "",
+    val badge2Path: String = "",
+    val badge3Path: String = "",
+    val badge4Path: String = ""
+)
