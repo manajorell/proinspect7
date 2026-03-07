@@ -475,7 +475,7 @@ fun ChecklistItemCard(
                                             .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
                                             .build()
                                         val json = org.json.JSONObject().apply {
-                                            put("model", "claude-opus-4-5")
+                                            put("model", "claude-opus-4-5-20251101")
                                             put("max_tokens", 300)
                                             put("messages", org.json.JSONArray().put(
                                                 org.json.JSONObject().apply {
