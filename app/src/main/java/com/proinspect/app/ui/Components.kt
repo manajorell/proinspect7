@@ -553,7 +553,7 @@ fun ChecklistItemCard(
                 Text("📋 Decoded Information", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Navy)
                 Text(result, fontSize = 12.sp, color = Color(0xFF374151))
                 Spacer(Modifier.height(4.dp))
-                Button(
+               Button(
                     onClick = { onNarrativeChanged(result) },
                     colors = ButtonDefaults.buttonColors(containerColor = Navy),
                     modifier = Modifier.fillMaxWidth()
@@ -563,5 +563,4 @@ fun ChecklistItemCard(
             }
         }
     }
-}
 }
