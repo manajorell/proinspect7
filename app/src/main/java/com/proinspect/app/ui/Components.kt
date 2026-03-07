@@ -377,32 +377,34 @@ fun ChecklistItemCard(
         shape = RoundedCornerShape(10.dp)
     ) 
         Column(modifier = Modifier.padding(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(rColor)
-                )
-                Spacer(Modifier.width(8.dp))
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .clip(RoundedCornerShape(50))
+                .background(rColor)
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            item.title, fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f)
+        )
+        if (hasDefects) {
+            Surface(
+                color = Gold.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(4.dp),
+                modifier = Modifier.padding(end = 4.dp)
+            ) {
                 Text(
-                    item.title, fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.weight(1f)
+                    "Templates", fontSize = 9.sp, color = Gold,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
                 )
-                if (hasDefects) {
-                    Surface(
-                        color = Gold.copy(alpha = 0.15f),
-                        shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.padding(end = 4.dp)
-                    ) {
-                        Text(
-                            "Templates", fontSize = 9.sp, color = Gold,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
-                        )
-                    }
-                }
+            }
+        }
+    }
+} 
                 IconButton(
                     onClick = { expanded = !expanded },
                     modifier = Modifier.size(28.dp)
