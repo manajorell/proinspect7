@@ -196,7 +196,6 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
         item { Spacer(Modifier.height(20.dp)) }
     }
 }
-}
     
 @Composable
 fun PropertyInfoScreen(viewModel: InspectionViewModel) {
