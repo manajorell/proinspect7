@@ -375,7 +375,7 @@ fun ChecklistItemCard(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(2.dp),
         shape = RoundedCornerShape(10.dp)
-    ) { // <--- ADD THIS
+    ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
@@ -390,26 +390,23 @@ fun ChecklistItemCard(
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.weight(1f)
                 )
-            }
-        }
-    } 
-} 
 
-        if (hasDefects) {
-            Surface(
-                color = Gold.copy(alpha = 0.15f),
-                shape = RoundedCornerShape(4.dp),
-                modifier = Modifier.padding(end = 4.dp)
-            ) {
-                Text(
-                    "Templates", fontSize = 9.sp, color = Gold,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
-                )
-            }
-        }
-    }
-} 
+                // The "Templates" label stays INSIDE the Row
+                if (hasDefects) {
+                    Surface(
+                        color = Gold.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.padding(end = 4.dp)
+                    ) {
+                        Text(
+                            "Templates", fontSize = 9.sp, color = Gold,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+
+                // The IconButton stays INSIDE the Row
                 IconButton(
                     onClick = { expanded = !expanded },
                     modifier = Modifier.size(28.dp)
@@ -420,7 +417,11 @@ fun ChecklistItemCard(
                         tint = if (photos.isNotEmpty() || narrative.isNotBlank()) Gold else Color(0xFF9CA3AF)
                     )
                 }
-            }
+            } 
+        } 
+    } 
+} 
+
             Spacer(Modifier.height(8.dp))
             RatingRow(current = rating, onRatingSelected = { r ->
                 onRatingChanged(r)
