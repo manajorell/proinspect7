@@ -227,5 +227,6 @@ data class AppSettings(
     val badge1Path: String = "",
     val badge2Path: String = "",
     val badge3Path: String = "",
-    val badge4Path: String = ""
+    val badge4Path: String = "",
+    val anthropicApiKey: String = ""
 )
