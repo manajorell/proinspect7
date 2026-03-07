@@ -1,5 +1,7 @@
 package com.proinspect.app.ui
 
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import android.graphics.Color as AndroidColor
 import android.net.Uri
 import android.text.Editable
@@ -24,7 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.rememberCoroutineScope
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -501,7 +503,7 @@ fun ChecklistItemCard(
                                             ))
                                         }
                                         val body = okhttp3.RequestBody.create(
-                                            okhttp3.MediaType.parse("application/json"), json.toString())
+                                            json.toString().toRequestBody("application/json".toMediaType())
                                         val request = okhttp3.Request.Builder()
                                             .url("https://api.anthropic.com/v1/messages")
                                             .addHeader("x-api-key", "YOUR_API_KEY_HERE")
@@ -510,7 +512,7 @@ fun ChecklistItemCard(
                                             .post(body)
                                             .build()
                                         val resp = client.newCall(request).execute()
-                                        val respJson = org.json.JSONObject(resp.body()!!.string())
+                                        val respJson = org.json.JSONObject(resp.body!!.string())
                                         respJson.getJSONArray("content").getJSONObject(0).getString("text")
                                     }
                                     decodedResult = response
