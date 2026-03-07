@@ -422,90 +422,61 @@ fun ChecklistItemCard(
     } 
 } 
 
-            Spacer(Modifier.height(8.dp))
-            RatingRow(current = rating, onRatingSelected = { r ->
-                onRatingChanged(r)
-                if (r != Rating.NOT_RATED && r != Rating.GOOD) expanded = true
-            })
-            if (expanded) {
-                Spacer(Modifier.height(12.dp))
-                if (hasDefects) {
-                    DefectDropdown(
-                        itemId = item.id,
-                        onDefectSelected = { description ->
-                            if (description.isNotBlank()) {
-                                val newNarrative = if (narrative.isBlank()) description
-                                else "$narrative\n\n$description"
-                                onNarrativeChanged(newNarrative)
-                            }
-                        }
-                    )
-                    Spacer(Modifier.height(10.dp))
+            val serialGalleryLauncher = rememberLauncherForActivityResult(
+    ActivityResultContracts.GetContent()
+) { uri ->
+    uri?.let {
+        isDecoding = true
+        scope.launch {
+            try {
+                val inputStream = context.contentResolver.openInputStream(uri)
+                val bytes = inputStream?.readBytes() ?: return@launch
+                inputStream.close()
+                val base64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                
+                val result = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                    val client = okhttp3.OkHttpClient.Builder()
+                        .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                        .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                        .build()
+                        
+                    val json = org.json.JSONObject().apply {
+                        put("model", "claude-opus-4-5-20251101")
+                        put("max_tokens", 300)
+                        put("messages", org.json.JSONArray().put(
+                            org.json.JSONObject().apply {
+                                put("role", "user")
+                                put("content", org.json.JSONArray().apply {
+                                    put(org.json.JSONObject().apply {
+                                        put("type", "image")
+                                        put("source", org.json.JSONObject().apply {
+                                            put("type", "base64")
+                                            put("media_type", "image/jpeg")
+                                            put("data", base64)
+                                        })
+                                    })
+                                    put(org.json.JSONObject().apply {
+                                        put("type", "text")
+                                        put("text", "This is a serial number plate from a $equipmentName. Extract details...")
+                                    })
+                                }) // End Content Array
+                            } // End Message Object
+                        )) // End Messages Array
+                    } // End Root JSON Object
+                    
+                    // TODO: Add your network request call here (e.g., client.newCall(request).execute())
+                    "Success" 
                 }
-                PhotoStrip(
-                    photos = photos,
-                    onCameraClick = onCameraClick,
-                    onGalleryPick = onGalleryPick,
-                    onDeletePhoto = onDeletePhoto,
-                    compact = true
-                )
-                Spacer(Modifier.height(8.dp))
-                NarrativeBox(
-                    value = narrative,
-                    onValueChange = onNarrativeChanged,
-                    label = "📝 Item Notes",
-                    placeholder = "Describe findings for: ${item.title}..."
-                )
-                if (item.id in listOf("pl3", "hv1", "hv2")) {
-                    val equipmentName = when (item.id) {
-                        "pl3" -> "Water Heater"
-                        "hv1" -> "Furnace / Air Handler"
-                        "hv2" -> "AC Condenser"
-                        else -> "Equipment"
-                    }
-                    var isDecoding by remember { mutableStateOf(false) }
-                    var decodedResult by remember { mutableStateOf<String?>(null) }
-                    val context = LocalContext.current
-                    val scope = rememberCoroutineScope()
-                    val serialGalleryLauncher = rememberLauncherForActivityResult(
-                        ActivityResultContracts.GetContent()
-                    ) { uri ->
-                        uri?.let {
-                            isDecoding = true
-                            scope.launch {
-                                try {
-                                    val inputStream = context.contentResolver.openInputStream(uri)
-                                    val bytes = inputStream?.readBytes() ?: return@launch
-                                    inputStream.close()
-                                    val base64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
-                                    val result = kotlinx.coroutines.withContext(Dispatchers.IO) {
-                                        val client = okhttp3.OkHttpClient.Builder()
-                                            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                                            .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-                                            .build()
-                                        val json = org.json.JSONObject().apply {
-                                            put("model", "claude-opus-4-5-20251101")
-                                            put("max_tokens", 300)
-                                            put("messages", org.json.JSONArray().put(
-                                                org.json.JSONObject().apply {
-                                                    put("role", "user")
-                                                    put("content", org.json.JSONArray().apply {
-                                                        put(org.json.JSONObject().apply {
-                                                            put("type", "image")
-                                                            put("source", org.json.JSONObject().apply {
-                                                                put("type", "base64")
-                                                                put("media_type", "image/jpeg")
-                                                                put("data", base64)
-                                                            })
-                                                        })
-                                                        put(org.json.JSONObject().apply {
-                                                            put("type", "text")
-                                                            put("text", "This is a serial number plate from a $equipmentName. Extract: 1) Manufacturer, 2) Model number, 3) Serial number, 4) Manufacture date or age, 5) Capacity (BTU, gallons, or tons). Reply in this exact format:\nManufacturer: \nModel: \nSerial: \nYear/Age: \nCapacity: ")
-                                                        })
-                                                    })
-                                                }
-                                            ))
-                                        }
+                decodedResult = result
+            } catch (e: Exception) {
+                decodedResult = "Error: ${e.localizedMessage}"
+            } finally {
+                isDecoding = false
+            }
+        }
+    }
+}
+
                                         val body = json.toString().toRequestBody("application/json".toMediaType())
                                         val request = okhttp3.Request.Builder()
                                             .url("https://api.anthropic.com/v1/messages")
