@@ -376,7 +376,7 @@ fun ChecklistItemCard(
         elevation = CardDefaults.cardElevation(2.dp),
         shape = RoundedCornerShape(10.dp)
     ) 
-        Column(modifier = Modifier.padding(12.dp)) {
+       Column(modifier = Modifier.padding(12.dp)) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             modifier = Modifier
