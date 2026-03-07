@@ -125,12 +125,14 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
 @Composable
 fun PropertyInfoScreen(viewModel: InspectionViewModel) {
     val report by viewModel.currentReport.collectAsState()
-    val r = report ?: return
     val photos by viewModel.photos.collectAsState()
     val context = LocalContext.current
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         viewModel.onPhotoCaptured(success)
     }
+
+    if (report == null) return  // <-- guard here instead
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -140,15 +142,15 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
             Card(colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Property Information", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-                    FormField(label = "Property Address", value = r.propertyAddress, onValueChange = { v -> viewModel.saveReport(r.copy(propertyAddress = v)) })
-                    FormField(label = "City, State, ZIP", value = r.propertyCity, onValueChange = { v -> viewModel.saveReport(r.copy(propertyCity = v)) })
+                    FormField(label = "Property Address", value = report?.propertyAddress ?: "", onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(propertyAddress = v)) } })
+                    FormField(label = "City, State, ZIP", value = report?.propertyCity ?: "", onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(propertyCity = v)) } })
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        FormField(label = "Year Built", value = r.yearBuilt, onValueChange = { v -> viewModel.saveReport(r.copy(yearBuilt = v)) }, modifier = Modifier.weight(1f))
-                        FormField(label = "Sq Ft", value = r.squareFootage, onValueChange = { v -> viewModel.saveReport(r.copy(squareFootage = v)) }, modifier = Modifier.weight(1f))
+                        FormField(label = "Year Built", value = report?.yearBuilt ?: "", onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(yearBuilt = v)) } }, modifier = Modifier.weight(1f))
+                        FormField(label = "Sq Ft", value = report?.squareFootage ?: "", onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(squareFootage = v)) } }, modifier = Modifier.weight(1f))
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        FormField(label = "Inspection Date", value = r.inspectionDate, onValueChange = { v -> viewModel.saveReport(r.copy(inspectionDate = v)) }, modifier = Modifier.weight(1f))
-                        FormField(label = "Weather", value = r.weatherConditions, onValueChange = { v -> viewModel.saveReport(r.copy(weatherConditions = v)) }, modifier = Modifier.weight(1f))
+                        FormField(label = "Inspection Date", value = report?.inspectionDate ?: "", onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(inspectionDate = v)) } }, modifier = Modifier.weight(1f))
+                        FormField(label = "Weather", value = report?.weatherConditions ?: "", onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(weatherConditions = v)) } }, modifier = Modifier.weight(1f))
                     }
                 }
             }
@@ -157,12 +159,12 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
             Card(colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Client & Inspector", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-                    FormField(label = "Client Name", value = r.clientName, onValueChange = { v -> viewModel.saveReport(r.copy(clientName = v)) })
-                    FormField(label = "Client Email", value = r.clientEmail, onValueChange = { v -> viewModel.saveReport(r.copy(clientEmail = v)) })
-                    FormField(label = "Inspector Name", value = r.inspectorName, onValueChange = { v -> viewModel.saveReport(r.copy(inspectorName = v)) })
-                    FormField(label = "InterNACHI Cert #", value = r.inspectorCert, onValueChange = { v -> viewModel.saveReport(r.copy(inspectorCert = v)) })
-                    FormField(label = "Company", value = r.inspectorCompany, onValueChange = { v -> viewModel.saveReport(r.copy(inspectorCompany = v)) })
-                    FormField(label = "Phone", value = r.inspectorPhone, onValueChange = { v -> viewModel.saveReport(r.copy(inspectorPhone = v)) })
+                    FormField(label = "Client Name", value = report?.clientName ?: "", onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(clientName = v)) } })
+                    FormField(label = "Client Email", value = report?.clientEmail ?: "", onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(clientEmail = v)) } })
+                    FormField(label = "Inspector Name", value = report?.inspectorName ?: "", onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(inspectorName = v)) } })
+                    FormField(label = "InterNACHI Cert #", value = report?.inspectorCert ?: "", onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(inspectorCert = v)) } })
+                    FormField(label = "Company", value = report?.inspectorCompany ?: "", onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(inspectorCompany = v)) } })
+                    FormField(label = "Phone", value = report?.inspectorPhone ?: "", onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(inspectorPhone = v)) } })
                 }
             }
         }
@@ -179,15 +181,22 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
                         onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, "info", null) },
                         onDeletePhoto = { photo -> viewModel.deletePhoto(photo) }
                     )
-                    NarrativeBox(value = r.overviewNarrative, onValueChange = { v -> viewModel.saveReport(r.copy(overviewNarrative = v)) },
-                        label = "📝 Property Overview Notes")
-                    FormField(label = "Access Limitations", value = r.limitations, onValueChange = { v -> viewModel.saveReport(r.copy(limitations = v)) }, singleLine = false)
+                    NarrativeBox(
+                        value = report?.overviewNarrative ?: "",
+                        onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(overviewNarrative = v)) } },
+                        label = "📝 Property Overview Notes"
+                    )
+                    FormField(
+                        label = "Access Limitations",
+                        value = report?.limitations ?: "",
+                        onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(limitations = v)) } },
+                        singleLine = false
+                    )
                 }
             }
         }
     }
 }
-
 @Composable
 fun SummaryScreen(viewModel: InspectionViewModel) {
     val context = LocalContext.current
