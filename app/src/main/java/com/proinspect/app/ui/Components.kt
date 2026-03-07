@@ -503,7 +503,6 @@ fun ChecklistItemCard(
                                             ))
                                         }
                                       val body = json.toString().toRequestBody("application/json".toMediaType())
-val request = okhttp3.Request.Builder()
     .url("https://api.anthropic.com/v1/messages")
     .addHeader("x-api-key", "YOUR_API_KEY_HERE")
     .addHeader("anthropic-version", "2023-06-01")
