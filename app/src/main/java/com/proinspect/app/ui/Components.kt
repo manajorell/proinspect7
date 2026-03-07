@@ -365,7 +365,7 @@ fun ChecklistItemCard(
     onGalleryPick: (Uri) -> Unit,
     onDeletePhoto: (InspectionPhoto) -> Unit,
     apiKey: String = "",
-) 
+) { 
     var expanded by remember { mutableStateOf(false) }
     val rColor = ratingColor(rating)
     val hasDefects = DefectLibrary.getDefectsForItem(item.id).isNotEmpty()
@@ -375,21 +375,26 @@ fun ChecklistItemCard(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(2.dp),
         shape = RoundedCornerShape(10.dp)
-    ) 
-       Column(modifier = Modifier.padding(12.dp)) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            modifier = Modifier
-                .size(10.dp)
-                .clip(RoundedCornerShape(50))
-                .background(rColor)
-        )
-        Spacer(Modifier.width(8.dp))
-        Text(
-            item.title, fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.weight(1f)
-        )
+    ) { // <--- ADD THIS
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(rColor)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    item.title, fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    } 
+} 
+
         if (hasDefects) {
             Surface(
                 color = Gold.copy(alpha = 0.15f),
