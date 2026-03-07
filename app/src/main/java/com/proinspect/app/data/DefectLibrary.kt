@@ -1,8 +1,3 @@
-wc -l /home/claude/DefectLibrary.kt && echo "---" && cat /home/claude/DefectLibrary.kt
-Output
-
-523 /home/claude/DefectLibrary.kt
----
 package com.proinspect.app.data
 
 object DefectLibrary {
