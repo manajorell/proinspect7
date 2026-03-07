@@ -245,26 +245,25 @@ fun SummaryScreen(viewModel: InspectionViewModel) {
         }
         if (findings.isNotEmpty()) {
             item { Text("Priority Findings", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy) }
-            items(findings) { finding ->
-                val ci = InspectionSections.allItems().find { it.id == finding.itemId }
-                val color = when (finding.rating) { Rating.SAFETY -> RatingRed; Rating.MAJOR -> RatingOrange; else -> RatingYellow }
-                Card(colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
-                    Row(Modifier.padding(12.dp)) {
-                        Box(Modifier.width(4.dp).fillMaxHeight().background(color))
-                        Spacer(Modifier.width(10.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text(finding.section.replaceFirstChar { it.uppercase() }, fontSize = 10.sp, color = Color(0xFF9CA3AF), fontWeight = FontWeight.Bold)
-                            Text(ci?.title ?: finding.itemId, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                            if (finding.narrative.isNotBlank()) Text(finding.narrative, fontSize = 12.sp, color = Color(0xFF6B7280))
-                        }
-                        Surface(color = color, shape = RoundedCornerShape(4.dp)) {
-                            Text(finding.rating.short, Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
+          items(findings) { finding ->
+    val ci = InspectionSections.allItems().find { it.id == finding.itemId }
+    val color = when (finding.rating) { Rating.SAFETY -> RatingRed; Rating.MAJOR -> RatingOrange; else -> RatingYellow }
+    Card(colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
+        Row(Modifier.padding(12.dp)) {
+            Box(Modifier.width(4.dp).fillMaxHeight().background(color))
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text(finding.section.replaceFirstChar { it.uppercase() }, fontSize = 10.sp, color = Color(0xFF9CA3AF), fontWeight = FontWeight.Bold)
+                Text(ci?.title ?: finding.itemId, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                if (finding.narrative.isNotBlank()) Text(finding.narrative, fontSize = 12.sp, color = Color(0xFF6B7280))
+            }
+            Surface(color = color, shape = RoundedCornerShape(4.dp)) {
+                Text(finding.rating.short, Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                    color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
             }
         }
+    }
+}
         item {
             Button(
                 onClick = {
