@@ -557,10 +557,13 @@ fun ChecklistItemCard(
                     onClick = { onNarrativeChanged(result) },
                     colors = ButtonDefaults.buttonColors(containerColor = Navy),
                     modifier = Modifier.fillMaxWidth()
-                ) {
+               ) {
                     Text("Copy to Notes", fontSize = 12.sp)
                 }
             }
         }
     }
 }
+}
+}
+    }
