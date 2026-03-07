@@ -1,6 +1,10 @@
 package com.proinspect.app.ui
 
 import android.content.Intent
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
+import java.io.File
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -118,10 +122,82 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                 placeholder = "Summarize overall $sectionName findings..."
             )
         }
+       item {
+            val agreementLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.GetContent()
+            ) { uri ->
+                uri?.let {
+                    val r = report ?: return@let
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "application/pdf"
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        putExtra(Intent.EXTRA_SUBJECT, "Pre-Inspection Agreement — ${r.propertyAddress}")
+                        putExtra(Intent.EXTRA_EMAIL, arrayOf(r.clientEmail))
+                        putExtra(Intent.EXTRA_TEXT, "Please review and sign the attached pre-inspection agreement.\n\nInspector: ${r.inspectorName}\nProperty: ${r.propertyAddress}\nDate: ${r.inspectionDate}")
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    context.startActivity(Intent.createChooser(intent, "Send Agreement"))
+                    report?.id?.let { id -> viewModel.saveAgreementPath(id, uri.toString(), false) }
+                }
+            }
+            val signedLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.GetContent()
+            ) { uri ->
+                uri?.let {
+                    report?.id?.let { id -> viewModel.saveAgreementPath(id, uri.toString(), true) }
+                    Toast.makeText(context, "Signed agreement saved to report", Toast.LENGTH_SHORT).show()
+                }
+            }
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(2.dp),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("📄 Inspection Agreement", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Navy)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            if (report?.signedAgreementPath?.isNotBlank() == true) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                            null,
+                            tint = if (report?.signedAgreementPath?.isNotBlank() == true) RatingGreen else Color(0xFF9CA3AF),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            if (report?.signedAgreementPath?.isNotBlank() == true) "Signed agreement on file" else "No signed agreement yet",
+                            fontSize = 12.sp,
+                            color = if (report?.signedAgreementPath?.isNotBlank() == true) RatingGreen else Color(0xFF9CA3AF)
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = { agreementLauncher.launch("application/pdf") },
+                        modifier = Modifier.fillMaxWidth(),
+                        border = BorderStroke(1.5.dp, Gold),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(Icons.Default.Send, null, tint = Gold, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Select & Send Agreement to Client", color = Gold, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                    OutlinedButton(
+                        onClick = { signedLauncher.launch("application/pdf") },
+                        modifier = Modifier.fillMaxWidth(),
+                        border = BorderStroke(1.5.dp, Navy),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(Icons.Default.Upload, null, tint = Navy, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Upload Signed Agreement", color = Navy, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        }
         item { Spacer(Modifier.height(20.dp)) }
     }
 }
-
+}
+    
 @Composable
 fun PropertyInfoScreen(viewModel: InspectionViewModel) {
     val report by viewModel.currentReport.collectAsState()
