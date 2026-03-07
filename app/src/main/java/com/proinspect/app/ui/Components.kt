@@ -477,27 +477,46 @@ fun ChecklistItemCard(
     }
 }
 
-                                        val body = json.toString().toRequestBody("application/json".toMediaType())
-                                        val request = okhttp3.Request.Builder()
-                                            .url("https://api.anthropic.com/v1/messages")
-                                            .addHeader("x-api-key", "apiKey")
-                                            .addHeader("anthropic-version", "2023-06-01")
-                                            .addHeader("content-type", "application/json")
-                                            .post(body)
-                                            .build()
-                                        val resp = client.newCall(request).execute()
-                                        val respJson = org.json.JSONObject(resp.body!!.string())
-                                        respJson.getJSONArray("content").getJSONObject(0).getString("text")
-                                    }
-                                    decodedResult = result
-                                } catch (e: Exception) {
-                                    decodedResult = "Error: ${e.message}"
-                                } finally {
-                                    isDecoding = false
-                                }
-                            }
-                        }
-                    }
+                                        // 1. Build the correct JSON body
+val json = JSONObject().apply {
+    put("model", "claude-3-5-sonnet-20241022")
+    put("max_tokens", 1024)
+    put("messages", JSONArray().put(JSONObject().apply {
+        put("role", "user")
+        put("content", JSONArray().apply {
+            put(JSONObject().apply {
+                put("type", "image")
+                put("source", JSONObject().apply {
+                    put("type", "base64")
+                    put("media_type", "image/jpeg") // or image/png
+                    put("data", base64ImageData) // Your base64 string here
+                })
+            })
+            put(JSONObject().apply {
+                put("type", "text")
+                put("text", "Extract the serial number from this image.")
+            })
+        })
+    }))
+}
+
+// 2. Execute on IO thread
+val result = withContext(Dispatchers.IO) {
+    val body = json.toString().toRequestBody("application/json".toMediaType())
+    val request = okhttp3.Request.Builder()
+        .url("https://api.anthropic.com/v1/messages")
+        .addHeader("x-api-key", "YOUR_API_KEY")
+        .addHeader("anthropic-version", "2023-06-01")
+        .post(body)
+        .build()
+
+    client.newCall(request).execute().use { resp ->
+        if (!resp.isSuccessful) throw Exception("HTTP ${resp.code}: ${resp.message}")
+        val respJson = JSONObject(resp.body!!.string())
+        respJson.getJSONArray("content").getJSONObject(0).getString("text")
+    }
+}
+
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedButton(
                         onClick = { serialGalleryLauncher.launch("image/*") },
