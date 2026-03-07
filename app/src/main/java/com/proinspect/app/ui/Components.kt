@@ -20,6 +20,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.rememberCoroutineScope
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -442,6 +447,124 @@ fun ChecklistItemCard(
                     label = "📝 Item Notes",
                     placeholder = "Describe findings for: ${item.title}..."
                 )
+
+                // Serial decoder button for specific equipment
+                if (item.id in listOf("pl3", "hv1", "hv2")) {
+                    val equipmentName = when (item.id) {
+                        "pl3" -> "Water Heater"
+                        "hv1" -> "Furnace / Air Handler"
+                        "hv2" -> "AC Condenser"
+                        else -> "Equipment"
+                    }
+                    var isDecoding by remember { mutableStateOf(false) }
+                    var decodedResult by remember { mutableStateOf<String?>(null) }
+                    var photoUri by remember { mutableStateOf<Uri?>(null) }
+                    val context = LocalContext.current
+                    val scope = rememberCoroutineScope()
+
+                    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+                        if (success) {
+                            val path = photoUri?.path ?: return@rememberLauncherForActivityResult
+                            isDecoding = true
+                            scope.launch {
+                                try {
+                                    val bmp = android.graphics.BitmapFactory.decodeFile(path)
+                                    val stream = java.io.ByteArrayOutputStream()
+                                    bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 80, stream)
+                                    val base64 = android.util.Base64.encodeToString(stream.toByteArray(), android.util.Base64.NO_WRAP)
+                                    val response = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                        val client = okhttp3.OkHttpClient.Builder()
+                                            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                                            .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                                            .build()
+                                        val json = org.json.JSONObject().apply {
+                                            put("model", "claude-opus-4-5")
+                                            put("max_tokens", 300)
+                                            put("messages", org.json.JSONArray().put(
+                                                org.json.JSONObject().apply {
+                                                    put("role", "user")
+                                                    put("content", org.json.JSONArray().apply {
+                                                        put(org.json.JSONObject().apply {
+                                                            put("type", "image")
+                                                            put("source", org.json.JSONObject().apply {
+                                                                put("type", "base64")
+                                                                put("media_type", "image/jpeg")
+                                                                put("data", base64)
+                                                            })
+                                                        })
+                                                        put(org.json.JSONObject().apply {
+                                                            put("type", "text")
+                                                            put("text", "This is a serial number plate from a $equipmentName. Extract: 1) Manufacturer, 2) Model number, 3) Serial number, 4) Manufacture date or age, 5) Capacity (BTU, gallons, or tons). Reply in this exact format:\nManufacturer: \nModel: \nSerial: \nYear/Age: \nCapacity: ")
+                                                        })
+                                                    })
+                                                }
+                                            ))
+                                        }
+                                        val body = okhttp3.RequestBody.create(
+                                            okhttp3.MediaType.parse("application/json"), json.toString())
+                                        val request = okhttp3.Request.Builder()
+                                            .url("https://api.anthropic.com/v1/messages")
+                                            .addHeader("x-api-key", "YOUR_API_KEY_HERE")
+                                            .addHeader("anthropic-version", "2023-06-01")
+                                            .addHeader("content-type", "application/json")
+                                            .post(body)
+                                            .build()
+                                        val resp = client.newCall(request).execute()
+                                        val respJson = org.json.JSONObject(resp.body()!!.string())
+                                        respJson.getJSONArray("content").getJSONObject(0).getString("text")
+                                    }
+                                    decodedResult = response
+                                } catch (e: Exception) {
+                                    decodedResult = "Error: ${e.message}"
+                                } finally {
+                                    isDecoding = false
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = {
+                            val file = java.io.File(context.filesDir, "serial_${System.currentTimeMillis()}.jpg")
+                            photoUri = androidx.core.content.FileProvider.getUriForFile(
+                                context, "${context.packageName}.fileprovider", file)
+                            cameraLauncher.launch(photoUri!!)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        border = BorderStroke(1.dp, Gold),
+                        enabled = !isDecoding
+                    ) {
+                        if (isDecoding) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = Gold)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Decoding...", color = Gold)
+                        } else {
+                            Text("📷 Decode Serial Number", color = Gold)
+                        }
+                    }
+
+                    decodedResult?.let { result ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFBF0)),
+                            border = BorderStroke(1.dp, Gold)
+                        ) {
+                            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text("📋 Decoded Information", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Navy)
+                                Text(result, fontSize = 12.sp, color = Color(0xFF374151))
+                                Spacer(Modifier.height(4.dp))
+                                Button(
+                                    onClick = { onNarrativeChanged(result) },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Navy),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Copy to Notes", fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
