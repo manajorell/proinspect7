@@ -517,42 +517,62 @@ val result = withContext(Dispatchers.IO) {
     }
 }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedButton(
-                        onClick = { serialGalleryLauncher.launch("image/*") },
-                        modifier = Modifier.fillMaxWidth(),
-                        border = BorderStroke(1.dp, Gold),
-                        enabled = !isDecoding
-                    ) {
-                        if (isDecoding) {
-                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = Gold)
-                            Spacer(Modifier.width(8.dp))
-                            Text("Decoding...", color = Gold)
-                        } else {
-                            Text("📷 Decode Serial Number", color = Gold)
-                        }
+val context = LocalContext.current
+val scope = rememberCoroutineScope()
+
+val serialGalleryLauncher = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.GetContent()
+) { uri: Uri? ->
+    uri?.let {
+        scope.launch {
+            isDecoding = true
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    // 1. Convert Image to Base64 (Required for vision)
+                    val inputStream = context.contentResolver.openInputStream(uri)
+                    val bytes = inputStream?.readBytes() ?: throw Exception("Failed to read image")
+                    val base64Image = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+
+                    // 2. Build the correct Anthropic JSON structure
+                    val json = org.json.JSONObject().apply {
+                        put("model", "claude-3-5-sonnet-20241022")
+                        put("max_tokens", 1024)
+                        put("messages", org.json.JSONArray().put(org.json.JSONObject().apply {
+                            put("role", "user")
+                            put("content", org.json.JSONArray().put(org.json.JSONObject().apply {
+                                put("type", "image")
+                                put("source", org.json.JSONObject().apply {
+                                    put("type", "base64")
+                                    put("media_type", "image/jpeg")
+                                    put("data", base64Image)
+                                })
+                            }).put(org.json.JSONObject().apply {
+                                put("type", "text")
+                                put("text", "Extract the serial number from this image.")
+                            }))
+                        }))
                     }
-                    decodedResult?.let { result ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFBF0)),
-                            border = BorderStroke(1.dp, Gold)
-                        ) {
-                            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text("📋 Decoded Information", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Navy)
-                                Text(result, fontSize = 12.sp, color = Color(0xFF374151))
-                                Spacer(Modifier.height(4.dp))
-                                Button(
-                                    onClick = { onNarrativeChanged(result) },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Navy),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text("Copy to Notes", fontSize = 12.sp)
-                                }
-                            }
-                        }
+
+                    // 3. The OkHttp call
+                    val body = json.toString().toRequestBody("application/json".toMediaType())
+                    val request = okhttp3.Request.Builder()
+                        .url("https://api.anthropic.com")
+                        .addHeader("x-api-key", "YOUR_API_KEY") // Replace with actual key
+                        .addHeader("anthropic-version", "2023-06-01")
+                        .post(body)
+                        .build()
+
+                    client.newCall(request).execute().use { resp ->
+                        if (!resp.isSuccessful) throw Exception("Error: ${resp.code}")
+                        val respJson = org.json.JSONObject(resp.body!!.string())
+                        respJson.getJSONArray("content").getJSONObject(0).getString("text")
                     }
                 }
+                decodedResult = result
+            } catch (e: Exception) {
+                decodedResult = "Error: ${e.localizedMessage}"
+            } finally {
+                isDecoding = false
             }
         }
     }
