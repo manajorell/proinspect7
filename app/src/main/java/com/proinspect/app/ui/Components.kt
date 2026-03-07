@@ -527,7 +527,7 @@ val request = okhttp3.Request.Builder()
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedButton(
                         onClick = {
-                            val file = java.io.File(context.filesDir, "serial_${System.currentTimeMillis()}.jpg")
+                           val file = java.io.File(context.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES), "serial_${System.currentTimeMillis()}.jpg")
                             photoUri = androidx.core.content.FileProvider.getUriForFile(
                                 context, "${context.packageName}.fileprovider", file)
                             cameraLauncher.launch(photoUri!!)
