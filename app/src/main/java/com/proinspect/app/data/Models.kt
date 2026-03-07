@@ -74,7 +74,6 @@ data class Report(
     val agreementSentPath: String = "",
     val signedAgreementPath: String = ""
 )
-)
 
 @Entity(tableName = "inspection_items", foreignKeys = [
     ForeignKey(entity = Report::class, parentColumns = ["id"], childColumns = ["reportId"], onDelete = ForeignKey.CASCADE)
