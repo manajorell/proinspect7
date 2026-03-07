@@ -559,11 +559,9 @@ fun ChecklistItemCard(
                     modifier = Modifier.fillMaxWidth()
                ) {
                     Text("Copy to Notes", fontSize = 12.sp)
-                }
+             }
             }
         }
     }
 }
-}
-}
-    }
+            }
