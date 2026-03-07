@@ -364,7 +364,8 @@ fun ChecklistItemCard(
     onCameraClick: () -> Unit,
     onGalleryPick: (Uri) -> Unit,
     onDeletePhoto: (InspectionPhoto) -> Unit,
-) {
+    apiKey: String = "",
+) 
     var expanded by remember { mutableStateOf(false) }
     val rColor = ratingColor(rating)
     val hasDefects = DefectLibrary.getDefectsForItem(item.id).isNotEmpty()
