@@ -202,4 +202,12 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
             settingsDao.saveSettings(updated)
         }
     }
+    fun saveAgreementPath(reportId: Long, path: String, isSigned: Boolean) {
+        viewModelScope.launch {
+            val r = reportDao.getReport(reportId) ?: return@launch
+            val updated = if (isSigned) r.copy(signedAgreementPath = path)
+                          else r.copy(agreementSentPath = path)
+            reportDao.insertReport(updated)
+        }
+    }
 }
