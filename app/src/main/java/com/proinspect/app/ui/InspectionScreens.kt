@@ -37,6 +37,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
     val report by viewModel.currentReport.collectAsState()
     val items by viewModel.items.collectAsState()
     val photos by viewModel.photos.collectAsState()
+    val settings by viewModel.appSettings.collectAsState()
     var cameraUri by remember { mutableStateOf<Uri?>(null) }
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         viewModel.onPhotoCaptured(success)
@@ -83,7 +84,8 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                 onNarrativeChanged = { text -> viewModel.setItemNarrative(ci.id, section, text) },
                 onCameraClick = { launchCamera(section, ci.id) },
                 onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, section, ci.id) },
-                onDeletePhoto = { photo -> viewModel.deletePhoto(photo) }
+                onDeletePhoto = { photo -> viewModel.deletePhoto(photo) },
+                apiKey = settings.anthropicApiKey
             )
         }
         item {
