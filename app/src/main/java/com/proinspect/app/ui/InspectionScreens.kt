@@ -335,6 +335,7 @@ fun SummaryScreen(viewModel: InspectionViewModel) {
                 Text("Email Report to Client", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Navy)
             }
         }
-        item { Spacer(Modifier.height(20.dp)) }
+     item { Spacer(Modifier.height(20.dp)) }
     }
+}
 }
