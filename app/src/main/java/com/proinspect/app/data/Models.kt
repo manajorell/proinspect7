@@ -70,7 +70,10 @@ data class Report(
     val garageCars: String = "2 Car",
     val garageNarrative: String = "",
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = System.currentTimeMillis(),
+    val agreementSentPath: String = "",
+    val signedAgreementPath: String = ""
+)
 )
 
 @Entity(tableName = "inspection_items", foreignKeys = [
