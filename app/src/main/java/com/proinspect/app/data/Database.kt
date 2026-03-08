@@ -55,11 +55,23 @@ interface AppSettingsDao {
     suspend fun saveSettings(settings: AppSettings)
 }
 
+class Converters {
+    @TypeConverter
+    fun fromRating(value: Rating): String = value.name
+
+    @TypeConverter
+    fun toRating(value: String): Rating = 
+        Rating.entries.find { it.name == value } ?: Rating.NOT_RATED
+
+    
+}
+
 @Database(
     entities = [Report::class, InspectionItem::class, InspectionPhoto::class, AppSettings::class],
     version = 4,
     exportSchema = false
 )
+@TypeConverters(Converters::class) 
 abstract class ProInspectDatabase : RoomDatabase() {
     abstract fun reportDao(): ReportDao
     abstract fun inspectionItemDao(): InspectionItemDao
