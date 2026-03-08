@@ -94,16 +94,15 @@ data class InspectionItem(
         val narrative: String = ""
 )
 
+    val narrative: String = ""
+)
+
+// FIX: This extension property MUST be outside the class and NOT have a trailing {
 val InspectionItem.rating: Rating
-    get() = Rating.entries.find { it.name == ratingName } ?: Rating.NOT_RATED {
-    @Ignore
-    val rating: Rating get() = Rating.values().find { it.name == ratingName } ?: Rating.NOT_RATED
-}
+    get() = Rating.entries.find { it.name == ratingName } ?: Rating.NOT_RATED
 
 @Entity(
     tableName = "inspection_photos",
-// ... rest of your code
-
     foreignKeys = [ForeignKey(
         entity = Report::class,
         parentColumns = ["id"],
@@ -115,24 +114,9 @@ val InspectionItem.rating: Rating
 data class InspectionPhoto(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val reportId: Long = 0,
-    val itemId: String? = null,   // nullable — null means it's a section-level photo
-    val section: String = "",     // added: needed for section-level photo filtering
+    val itemId: String? = null,
+    val section: String = "",
     val filePath: String = "",
     val caption: String = "",
     val createdAt: Long = System.currentTimeMillis()
-)
-
-data class ChecklistItem(val id: String, val title: String, val section: String)
-
-// ... keep existing code (InspectionSections object - unchanged) ...
-
-@Entity(tableName = "app_settings")
-data class AppSettings(
-    @PrimaryKey val id: Int = 1,
-    val companyLogoPath: String = "",
-    val badge1Path: String = "",
-    val badge2Path: String = "",
-    val badge3Path: String = "",
-    val badge4Path: String = "",
-    val anthropicApiKey: String = ""
 )
