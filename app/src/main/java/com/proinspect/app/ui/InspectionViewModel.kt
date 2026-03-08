@@ -83,8 +83,8 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
         viewModelScope.launch {
             val reportId = _currentReportId.value ?: return@launch
             val existing = items.value[itemId]
-            val item = existing?.copy(rating = rating)
-                ?: InspectionItem(reportId = reportId, itemId = itemId, section = section, rating = rating)
+            val item = existing?.copy(ratingName = rating.name)
+    ?: InspectionItem(reportId = reportId, itemId = itemId, section = section, ratingName = rating.name)
             itemDao.insertItem(item)
         }
     }
@@ -92,8 +92,8 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
     fun setItemNarrative(itemId: String, section: String, narrative: String) {
         viewModelScope.launch {
             val reportId = _currentReportId.value ?: return@launch
-            val existing = items.value[itemId]
-            val item = existing?.copy(narrative = narrative)
+           val item = existing?.copy(narrative = narrative)
+    ?: InspectionItem(reportId = reportId, itemId = itemId, section = section, ratingName = Rating.NOT_RATED.name, narrative = narrative)
                 ?: InspectionItem(reportId = reportId, itemId = itemId, section = section, narrative = narrative)
             itemDao.insertItem(item)
         }
