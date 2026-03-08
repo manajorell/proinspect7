@@ -75,6 +75,44 @@ data class Report(
     val signedAgreementPath: String = ""
 )
 
+@Entity(
+    tableName = "inspection_items",
+    foreignKeys = [ForeignKey(
+        entity = Report::class,
+        parentColumns = ["id"],
+        childColumns = ["reportId"],
+        onDelete = ForeignKey.CASCADE
+    )],
+    indices = [Index("reportId")]
+)
+data class InspectionItem(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val reportId: Long = 0,
+    val itemId: String = "",
+    val section: String = "",
+    val rating: String = Rating.NOT_RATED.name,
+    val narrative: String = ""
+)
+
+@Entity(
+    tableName = "inspection_photos",
+    foreignKeys = [ForeignKey(
+        entity = Report::class,
+        parentColumns = ["id"],
+        childColumns = ["reportId"],
+        onDelete = ForeignKey.CASCADE
+    )],
+    indices = [Index("reportId")]
+)
+data class InspectionPhoto(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val reportId: Long = 0,
+    val itemId: String = "",
+    val filePath: String = "",
+    val caption: String = "",
+    val createdAt: Long = System.currentTimeMillis()
+)
+
 data class ChecklistItem(val id: String, val title: String, val section: String)
 
 object InspectionSections {
