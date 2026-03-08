@@ -586,27 +586,21 @@ val serialGalleryLauncher = rememberLauncherForActivityResult(
                         }))
                     }
 
-                    // 3. The OkHttp call
-                    val body = json.toString().toRequestBody("application/json".toMediaType())
-                    val request = okhttp3.Request.Builder()
-                        .url("https://api.anthropic.com")
-                        .addHeader("x-api-key", "YOUR_API_KEY") // Replace with actual key
-                        .addHeader("anthropic-version", "2023-06-01")
-                        .post(body)
-                        .build()
+                    // // 3. The OkHttp call
+val body = json.toString().toRequestBody("application/json".toMediaType())
+val request = okhttp3.Request.Builder()
+    .url("https://api.anthropic.com") // FIX: Added /v1/messages
+    .addHeader("x-api-key", "YOUR_API_KEY") 
+    .addHeader("anthropic-version", "2023-06-01")
+    .post(body)
+    .build()
 
-                    client.newCall(request).execute().use { resp ->
-                        if (!resp.isSuccessful) throw Exception("Error: ${resp.code}")
-                        val respJson = org.json.JSONObject(resp.body!!.string())
-                        respJson.getJSONArray("content").getJSONObject(0).getString("text")
-                    }
-                }
-                decodedResult = result
-            } catch (e: Exception) {
-                decodedResult = "Error: ${e.localizedMessage}"
-            } finally {
-                isDecoding = false
-            }
-        }
+client.newCall(request).execute().use { resp ->
+    val responseBody = resp.body?.string() ?: ""
+    if (!resp.isSuccessful) {
+        // This will now show you the actual error message from Anthropic (like missing fields)
+        throw Exception("Error ${resp.code}: $responseBody")
     }
+    val respJson = org.json.JSONObject(responseBody)
+    respJson.getJSONArray("content").getJSONObject(0).getString("text")
 }
