@@ -91,17 +91,18 @@ data class InspectionItem(
     val itemId: String = "",
     val section: String = "",
     val ratingName: String = Rating.NOT_RATED.name,
-    val narrative: String = ""
+        val narrative: String = ""
 )
 
+// This is an EXTENSION PROPERTY. 
+// It stays OUTSIDE the class and doesn't need @Ignore.
 val InspectionItem.rating: Rating
-    get() = Rating.entries.find { it.name == ratingName } ?: Rating.NOT_RATED {
-    @Ignore
-    val rating: Rating get() = Rating.values().find { it.name == ratingName } ?: Rating.NOT_RATED
-)
+    get() = Rating.entries.find { it.name == ratingName } ?: Rating.NOT_RATED
 
 @Entity(
     tableName = "inspection_photos",
+// ... rest of your code
+
     foreignKeys = [ForeignKey(
         entity = Report::class,
         parentColumns = ["id"],
