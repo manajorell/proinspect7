@@ -252,7 +252,7 @@ object PdfGenerator {
             doc.add(gHdr)
             val goodTbl = PdfPTable(3).apply { widthPercentage = 100f; spacingAfter = 16f }
             good.forEach { item ->
-                val ci = InspectionSections.allItems().find { it.id == item.itemId }
+               val title = InspectionSections.allItems.find { it.id == item.itemId }?.title ?: "Unknown"
                 val gc = PdfPCell(Phrase("✓  ${ci?.title ?: item.itemId}",
                     Font(Font.FontFamily.HELVETICA, 9f, Font.NORMAL, cGreen)))
                 gc.border = Rectangle.NO_BORDER
@@ -279,7 +279,7 @@ object PdfGenerator {
         doc.add(hdrTbl)
 
         items.forEach { item ->
-            val ci = InspectionSections.allItems().find { it.id == item.itemId }
+            val title = InspectionSections.allItems.find { it.id == item.itemId }?.title ?: "Unknown"
             val itemPhotos = photos.filter { it.itemId == item.itemId }.take(2)
             val row = PdfPTable(if (itemPhotos.isNotEmpty()) 2 else 1).apply {
                 widthPercentage = 100f; spacingAfter = 6f
