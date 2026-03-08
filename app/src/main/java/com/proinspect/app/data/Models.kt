@@ -75,29 +75,67 @@ data class Report(
     val signedAgreementPath: String = ""
 )
 
-@Entity(tableName = "inspection_items", foreignKeys = [
-    ForeignKey(entity = Report::class, parentColumns = ["id"], childColumns = ["reportId"], onDelete = ForeignKey.CASCADE)
-])
-data class InspectionItem(
-    @PrimaryKey val itemId: String,
-    val reportId: Long,
-    val rating: Rating = Rating.NOT_RATED,
-    val narrative: String = "",
-    val section: String = ""
-)
+val scope = rememberCoroutineScope()
+val context = LocalContext.current
 
-@Entity(tableName = "inspection_photos", foreignKeys = [
-    ForeignKey(entity = Report::class, parentColumns = ["id"], childColumns = ["reportId"], onDelete = ForeignKey.CASCADE)
-])
-data class InspectionPhoto(
+// Inside your serialGalleryLauncher = rememberLauncherForActivityResult(...) { uri ->
+uri?.let { selectedUri ->
+    scope.launch {
+        isDecoding = true
+        try {
+            val result = withContext(Dispatchers.IO) {
+                // 1. Convert URI to Base64 (Required for Vision)
+                val inputStream = context.contentResolver.openInputStream(selectedUri)
+                val bytes = inputStream?.readBytes() ?: throw Exception("File not found")
+                val base64Image = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
 
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val reportId: Long,
-    val filePath: String,
-    val section: String,
-    val itemId: String? = null,
-    val createdAt: Long = System.currentTimeMillis()
-)
+                // 2. Build the Required JSON Body
+                val jsonBody = org.json.JSONObject().apply {
+                    put("model", "claude-3-5-sonnet-20241022")
+                    put("max_tokens", 1024)
+                    put("messages", org.json.JSONArray().put(org.json.JSONObject().apply {
+                        put("role", "user")
+                        put("content", org.json.JSONArray().apply {
+                            put(org.json.JSONObject().apply {
+                                put("type", "image")
+                                put("source", org.json.JSONObject().apply {
+                                    put("type", "base64")
+                                    put("media_type", "image/jpeg") // or image/png
+                                    put("data", base64Image)
+                                })
+                            })
+                            put(org.json.JSONObject().apply {
+                                put("type", "text")
+                                put("text", "Extract the serial number from this image.")
+                            })
+                        })
+                    }))
+                }
+
+                // 3. Execute Request
+                val body = jsonBody.toString().toRequestBody("application/json".toMediaType())
+                val request = okhttp3.Request.Builder()
+                    .url("https://api.anthropic.com")
+                    .addHeader("x-api-key", "YOUR_API_KEY") // Replace with your actual key
+                    .addHeader("anthropic-version", "2023-06-01")
+                    .post(body)
+                    .build()
+
+                client.newCall(request).execute().use { resp ->
+                    if (!resp.isSuccessful) throw Exception("API Error: ${resp.code}")
+                    val respJson = org.json.JSONObject(resp.body!!.string())
+                    respJson.getJSONArray("content").getJSONObject(0).getString("text")
+                }
+            }
+            decodedResult = result
+        } catch (e: Exception) {
+            decodedResult = "Error: ${e.localizedMessage}"
+        } finally {
+            isDecoding = false
+        }
+    }
+}
+
 
 data class ChecklistItem(val id: String, val title: String, val section: String)
 
