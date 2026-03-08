@@ -32,68 +32,36 @@ import com.proinspect.app.data.*
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
-// Inside your @Composable function
-val scope = rememberCoroutineScope()
-val context = LocalContext.current
-
-val serialGalleryLauncher = rememberLauncherForActivityResult(
-    contract = ActivityResultContracts.GetContent()
-) { uri: Uri? ->
-    uri?.let { selectedUri ->
-        scope.launch {
-            isDecoding = true
-            try {
-                val result = withContext(Dispatchers.IO) {
-                    // 1. Get bytes safely
-                    val bytes = context.contentResolver.openInputStream(selectedUri)?.use { it.readBytes() }
-                        ?: throw Exception("File not found")
-                    val base64Image = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
-
-                    // 2. Build Body (ensure model and max_tokens are present)
-                    val jsonBody = JSONObject().apply {
-                        put("model", "claude-3-5-sonnet-20241022")
-                        put("max_tokens", 1024)
-                        put("messages", JSONArray().put(JSONObject().apply {
-                            put("role", "user")
-                            put("content", JSONArray()
-                                .put(JSONObject().apply {
-                                    put("type", "image")
-                                    put("source", JSONObject().apply {
-                                        put("type", "base64")
-                                        put("media_type", "image/jpeg")
-                                        put("data", base64Image)
-                                    })
-                                })
-                                .put(JSONObject().apply {
-                                    put("type", "text")
-                                    put("text", "Extract the serial number from this image.")
-                                })
-                            )
-                        }))
-                    }
-
-                    val body = jsonBody.toString().toRequestBody("application/json".toMediaType())
-val request = okhttp3.Request.Builder()
-    .url("https://api.anthropic.com/v1/messages") // FIX: Full endpoint path
-    .addHeader("x-api-key", "YOUR_ACTUAL_API_KEY") // FIX: Your real key
-    .addHeader("anthropic-version", "2023-06-01")
-    .post(body)
-    .build()
-
-client.newCall(request).execute().use { resp ->
-    val bodyString = resp.body?.string() ?: ""
-    if (!resp.isSuccessful) {
-        // Detailed error for debugging (e.g., 400 Bad Request if JSON is malformed)
-        throw Exception("API Error ${resp.code}: $bodyString")
+fun RatingRow(
+    current: Rating,
+    onRatingSelected: (Rating) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Rating.values().forEach { r ->
+            val selected = current == r
+            val color = ratingColor(r)
+            OutlinedButton(
+                onClick = { onRatingSelected(r) },
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = if (selected) color else Color.Transparent,
+                    contentColor = if (selected) Color.White else color
+                ),
+                border = BorderStroke(1.5.dp, color),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                modifier = Modifier.height(32.dp)
+            ) {
+                Text(r.short, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
+        }
     }
-    
-    val respJson = JSONObject(bodyString)
-    // Extraction from Anthropic's standard message response structure
-    respJson.getJSONArray("content").getJSONObject(0).getString("text")
 }
-
 
 @Composable
 fun ProTextField(
@@ -398,10 +366,12 @@ fun ChecklistItemCard(
     onGalleryPick: (Uri) -> Unit,
     onDeletePhoto: (InspectionPhoto) -> Unit,
     apiKey: String = "",
-) { 
+) {
     var expanded by remember { mutableStateOf(false) }
     val rColor = ratingColor(rating)
     val hasDefects = DefectLibrary.getDefectsForItem(item.id).isNotEmpty()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -423,8 +393,6 @@ fun ChecklistItemCard(
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.weight(1f)
                 )
-
-                // The "Templates" label stays INSIDE the Row
                 if (hasDefects) {
                     Surface(
                         color = Gold.copy(alpha = 0.15f),
@@ -438,8 +406,6 @@ fun ChecklistItemCard(
                         )
                     }
                 }
-
-                // The IconButton stays INSIDE the Row
                 IconButton(
                     onClick = { expanded = !expanded },
                     modifier = Modifier.size(28.dp)
@@ -450,151 +416,151 @@ fun ChecklistItemCard(
                         tint = if (photos.isNotEmpty() || narrative.isNotBlank()) Gold else Color(0xFF9CA3AF)
                     )
                 }
-            } 
-        } 
-    } 
-} 
-
-            val serialGalleryLauncher = rememberLauncherForActivityResult(
-    ActivityResultContracts.GetContent()
-) { uri ->
-    uri?.let {
-        isDecoding = true
-        scope.launch {
-            try {
-                val inputStream = context.contentResolver.openInputStream(uri)
-                val bytes = inputStream?.readBytes() ?: return@launch
-                inputStream.close()
-                val base64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
-                
-                val result = kotlinx.coroutines.withContext(Dispatchers.IO) {
-                    val client = okhttp3.OkHttpClient.Builder()
-                        .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                        .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-                        .build()
-                        
-                    val json = org.json.JSONObject().apply {
-                        put("model", "claude-opus-4-5-20251101")
-                        put("max_tokens", 300)
-                        put("messages", org.json.JSONArray().put(
-                            org.json.JSONObject().apply {
-                                put("role", "user")
-                                put("content", org.json.JSONArray().apply {
-                                    put(org.json.JSONObject().apply {
-                                        put("type", "image")
-                                        put("source", org.json.JSONObject().apply {
-                                            put("type", "base64")
-                                            put("media_type", "image/jpeg")
-                                            put("data", base64)
-                                        })
-                                    })
-                                    put(org.json.JSONObject().apply {
-                                        put("type", "text")
-                                        put("text", "This is a serial number plate from a $equipmentName. Extract details...")
-                                    })
-                                }) // End Content Array
-                            } // End Message Object
-                        )) // End Messages Array
-                    } // End Root JSON Object
-                    
-                    // TODO: Add your network request call here (e.g., client.newCall(request).execute())
-                    "Success" 
-                }
-                decodedResult = result
-            } catch (e: Exception) {
-                decodedResult = "Error: ${e.localizedMessage}"
-            } finally {
-                isDecoding = false
             }
-        }
-    }
-}
-
-                                        // 1. Build the correct JSON body
-val json = JSONObject().apply {
-    put("model", "claude-3-5-sonnet-20241022")
-    put("max_tokens", 1024)
-    put("messages", JSONArray().put(JSONObject().apply {
-        put("role", "user")
-        put("content", JSONArray().apply {
-            put(JSONObject().apply {
-                put("type", "image")
-                put("source", JSONObject().apply {
-                    put("type", "base64")
-                    put("media_type", "image/jpeg") // or image/png
-                    put("data", base64ImageData) // Your base64 string here
-                })
+            Spacer(Modifier.height(8.dp))
+            RatingRow(current = rating, onRatingSelected = { r ->
+                onRatingChanged(r)
+                if (r != Rating.NOT_RATED && r != Rating.GOOD) expanded = true
             })
-            put(JSONObject().apply {
-                put("type", "text")
-                put("text", "Extract the serial number from this image.")
-            })
-        })
-    }))
-}
-val serialGalleryLauncher = rememberLauncherForActivityResult(
-    contract = ActivityResultContracts.GetContent()
-) { uri: Uri? ->
-    uri?.let {
-        scope.launch {
-            isDecoding = true
-            try {
-                val result = withContext(Dispatchers.IO) {
-                    // 1. Convert Image to Base64
-                    val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } 
-                        ?: throw Exception("Failed to read image")
-                    val base64Image = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+            if (expanded) {
+                Spacer(Modifier.height(12.dp))
+                if (hasDefects) {
+                    DefectDropdown(
+                        itemId = item.id,
+                        onDefectSelected = { description ->
+                            if (description.isNotBlank()) {
+                                val newNarrative = if (narrative.isBlank()) description
+                                else "$narrative\n\n$description"
+                                onNarrativeChanged(newNarrative)
+                            }
+                        }
+                    )
+                    Spacer(Modifier.height(10.dp))
+                }
+                PhotoStrip(
+                    photos = photos,
+                    onCameraClick = onCameraClick,
+                    onGalleryPick = onGalleryPick,
+                    onDeletePhoto = onDeletePhoto,
+                    compact = true
+                )
+                Spacer(Modifier.height(8.dp))
+                NarrativeBox(
+                    value = narrative,
+                    onValueChange = onNarrativeChanged,
+                    label = "📝 Item Notes",
+                    placeholder = "Describe findings for: ${item.title}..."
+                )
 
-                    // 2. Build the correct JSON body
-                    val json = org.json.JSONObject().apply {
-                        put("model", "claude-3-5-sonnet-20241022")
-                        put("max_tokens", 1024)
-                        put("messages", org.json.JSONArray().put(org.json.JSONObject().apply {
-                            put("role", "user")
-                            put("content", org.json.JSONArray().apply {
-                                put(org.json.JSONObject().apply {
-                                    put("type", "image")
-                                    put("source", org.json.JSONObject().apply {
-                                        put("type", "base64")
-                                        put("media_type", "image/jpeg")
-                                        put("data", base64Image)
-                                    })
-                                })
-                                put(org.json.JSONObject().apply {
-                                    put("type", "text")
-                                    put("text", "Extract the serial number from this image.")
-                                })
-                            })
-                        }))
+                if (item.id in listOf("pl3", "hv1", "hv2")) {
+                    val equipmentName = when (item.id) {
+                        "pl3" -> "Water Heater"
+                        "hv1" -> "Furnace / Air Handler"
+                        "hv2" -> "AC Condenser"
+                        else -> "Equipment"
+                    }
+                    var isDecoding by remember { mutableStateOf(false) }
+                    var decodedResult by remember { mutableStateOf<String?>(null) }
+
+                    val serialGalleryLauncher = rememberLauncherForActivityResult(
+                        ActivityResultContracts.GetContent()
+                    ) { uri ->
+                        uri?.let {
+                            isDecoding = true
+                            scope.launch {
+                                try {
+                                    val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                                        ?: throw Exception("Failed to read image")
+                                    val base64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+
+                                    val result = withContext(Dispatchers.IO) {
+                                        val client = okhttp3.OkHttpClient.Builder()
+                                            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                                            .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                                            .build()
+                                        val json = org.json.JSONObject().apply {
+                                            put("model", "claude-3-5-sonnet-20241022")
+                                            put("max_tokens", 1024)
+                                            put("messages", org.json.JSONArray().put(
+                                                org.json.JSONObject().apply {
+                                                    put("role", "user")
+                                                    put("content", org.json.JSONArray().apply {
+                                                        put(org.json.JSONObject().apply {
+                                                            put("type", "image")
+                                                            put("source", org.json.JSONObject().apply {
+                                                                put("type", "base64")
+                                                                put("media_type", "image/jpeg")
+                                                                put("data", base64)
+                                                            })
+                                                        })
+                                                        put(org.json.JSONObject().apply {
+                                                            put("type", "text")
+                                                            put("text", "This is a serial number plate from a $equipmentName. Extract: 1) Manufacturer, 2) Model number, 3) Serial number, 4) Manufacture date or age, 5) Capacity (BTU, gallons, or tons). Reply in this exact format:\nManufacturer: \nModel: \nSerial: \nYear/Age: \nCapacity: ")
+                                                        })
+                                                    })
+                                                }
+                                            ))
+                                        }
+                                        val body = json.toString().toRequestBody("application/json".toMediaType())
+                                        val request = okhttp3.Request.Builder()
+                                            .url("https://api.anthropic.com/v1/messages")
+                                            .addHeader("x-api-key", apiKey)
+                                            .addHeader("anthropic-version", "2023-06-01")
+                                            .addHeader("content-type", "application/json")
+                                            .post(body)
+                                            .build()
+                                        val resp = client.newCall(request).execute()
+                                        val respJson = org.json.JSONObject(resp.body!!.string())
+                                        respJson.getJSONArray("content").getJSONObject(0).getString("text")
+                                    }
+                                    decodedResult = result
+                                } catch (e: Exception) {
+                                    decodedResult = "Error: ${e.localizedMessage}"
+                                } finally {
+                                    isDecoding = false
+                                }
+                            }
+                        }
                     }
 
-                    // 3. The OkHttp call with correct URL
-                    val body = json.toString().toRequestBody("application/json".toMediaType())
-                    val request = okhttp3.Request.Builder()
-                        .url("https://api.anthropic.com/v1/messages") // FIX: Must include /v1/messages
-                        .addHeader("x-api-key", "YOUR_API_KEY") 
-                        .addHeader("anthropic-version", "2023-06-01")
-                        .post(body)
-                        .build()
-
-                    client.newCall(request).execute().use { resp ->
-                        val responseBody = resp.body?.string() ?: ""
-                        if (!resp.isSuccessful) throw Exception("Error ${resp.code}: $responseBody")
-                        
-                        val respJson = org.json.JSONObject(responseBody)
-                        // Extraction: Anthropic returns content as an array of objects
-                        val contentArray = respJson.getJSONArray("content")
-                        contentArray.getJSONObject(0).getString("text")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = { serialGalleryLauncher.launch("image/*") },
+                        modifier = Modifier.fillMaxWidth(),
+                        border = BorderStroke(1.dp, Gold),
+                        enabled = !isDecoding
+                    ) {
+                        if (isDecoding) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = Gold)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Decoding...", color = Gold)
+                        } else {
+                            Text("📷 Decode Serial Number", color = Gold)
+                        }
                     }
-                }
-                decodedResult = result
-            } catch (e: Exception) {
-                decodedResult = "Error: ${e.localizedMessage}"
-            } finally {
-                isDecoding = false
-            }
-        }
-    }  
-    }
-                }
-}
+
+                    decodedResult?.let { result ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFBF0)),
+                            border = BorderStroke(1.dp, Gold)
+                        ) {
+                            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text("📋 Decoded Information", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Navy)
+                                Text(result, fontSize = 12.sp, color = Color(0xFF374151))
+                                Spacer(Modifier.height(4.dp))
+                                Button(
+                                    onClick = { onNarrativeChanged(result) },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Navy),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Copy to Notes", fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+                } // end if serial decoder
+            } // end if expanded
+        } // end Column
+    } // end Card
+} // end ChecklistItemCard
