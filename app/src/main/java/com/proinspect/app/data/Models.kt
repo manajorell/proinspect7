@@ -92,9 +92,7 @@ data class InspectionItem(
     val section: String = "",
     val ratingName: String = Rating.NOT_RATED.name,
         val narrative: String = ""
-)
 
-    val narrative: String = ""
 )
 
 // FIX: This extension property MUST be outside the class and NOT have a trailing {
