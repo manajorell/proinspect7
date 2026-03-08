@@ -75,29 +75,23 @@ val serialGalleryLauncher = rememberLauncherForActivityResult(
                     }
 
                     val body = jsonBody.toString().toRequestBody("application/json".toMediaType())
-                    val request = okhttp3.Request.Builder()
-                        .url("https://api.anthropic.com") // Corrected Endpoint
-                        .addHeader("x-api-key", "YOUR_API_KEY")
-                        .addHeader("anthropic-version", "2023-06-01")
-                        .post(body)
-                        .build()
+val request = okhttp3.Request.Builder()
+    .url("https://api.anthropic.com/v1/messages") // FIX: Full endpoint path
+    .addHeader("x-api-key", "YOUR_ACTUAL_API_KEY") // FIX: Your real key
+    .addHeader("anthropic-version", "2023-06-01")
+    .post(body)
+    .build()
 
-                    client.newCall(request).execute().use { resp ->
-                        val bodyString = resp.body?.string() ?: ""
-                        if (!resp.isSuccessful) throw Exception("API Error ${resp.code}: $bodyString")
-                        
-                        val respJson = JSONObject(bodyString)
-                        respJson.getJSONArray("content").getJSONObject(0).getString("text")
-                    }
-                }
-                decodedResult = result
-            } catch (e: Exception) {
-                decodedResult = "Error: ${e.localizedMessage}"
-            } finally {
-                isDecoding = false
-            }
-        }
+client.newCall(request).execute().use { resp ->
+    val bodyString = resp.body?.string() ?: ""
+    if (!resp.isSuccessful) {
+        // Detailed error for debugging (e.g., 400 Bad Request if JSON is malformed)
+        throw Exception("API Error ${resp.code}: $bodyString")
     }
+    
+    val respJson = JSONObject(bodyString)
+    // Extraction from Anthropic's standard message response structure
+    respJson.getJSONArray("content").getJSONObject(0).getString("text")
 }
 
 
