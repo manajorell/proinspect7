@@ -118,3 +118,13 @@ data class InspectionPhoto(
     val caption: String = "",
     val createdAt: Long = System.currentTimeMillis()
 )
+@Entity(tableName = "app_settings")
+data class AppSettings(
+    @PrimaryKey val id: Int = 1,
+    val companyLogoPath: String = "",
+    val badge1Path: String = "",
+    val badge2Path: String = "",
+    val badge3Path: String = "",
+    val badge4Path: String = "",
+    val anthropicApiKey: String = ""
+)
