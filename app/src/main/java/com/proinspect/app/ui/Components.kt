@@ -594,5 +594,6 @@ val serialGalleryLauncher = rememberLauncherForActivityResult(
                 isDecoding = false
             }
         }
+    }  
     }
 }
