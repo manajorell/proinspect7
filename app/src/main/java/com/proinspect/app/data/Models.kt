@@ -135,9 +135,9 @@ data class ChecklistItem(
     val section: String
 )
 
-// The central data object holding all inspection categories
 object InspectionSections {
-    val all = listOf(
+    // renamed from 'all' to 'allItems' to satisfy PdfGenerator and InspectionScreens
+    val allItems = listOf(
         ChecklistItem("rf1", "Roof Surface", "Roofing"),
         ChecklistItem("rf2", "Flashings", "Roofing"),
         ChecklistItem("rf3", "Gutters/Downspouts", "Roofing"),
@@ -155,5 +155,20 @@ object InspectionSections {
         ChecklistItem("hv2", "Cooling Equipment", "HVAC"),
         ChecklistItem("in1", "Walls/Ceilings/Floors", "Interior"),
         ChecklistItem("in2", "Attic/Insulation", "Interior")
+    )
+
+    // These lines satisfy the "Unresolved reference: sections/sectionNames" errors
+    val sections = allItems.groupBy { it.section }
+    val sectionNames = allItems.map { it.section }.distinct()
+    
+    // This satisfies the "Unresolved reference: sectionIcons" error in PDF
+    val sectionIcons = mapOf(
+        "Roofing" to "🏠",
+        "Exterior" to "🌳",
+        "Structure" to "🏗️",
+        "Plumbing" to "💧",
+        "Electrical" to "⚡",
+        "HVAC" to "🌡️",
+        "Interior" to "🛋️"
     )
 }
