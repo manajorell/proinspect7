@@ -128,3 +128,32 @@ data class AppSettings(
     val badge4Path: String = "",
     val anthropicApiKey: String = ""
 )
+// Data class for the UI checklist items
+data class ChecklistItem(
+    val id: String, 
+    val title: String, 
+    val section: String
+)
+
+// The central data object holding all inspection categories
+object InspectionSections {
+    val all = listOf(
+        ChecklistItem("rf1", "Roof Surface", "Roofing"),
+        ChecklistItem("rf2", "Flashings", "Roofing"),
+        ChecklistItem("rf3", "Gutters/Downspouts", "Roofing"),
+        ChecklistItem("ex1", "Siding/Trim", "Exterior"),
+        ChecklistItem("ex2", "Eaves/Soffits/Fascia", "Exterior"),
+        ChecklistItem("ex3", "Windows/Doors", "Exterior"),
+        ChecklistItem("st1", "Foundation", "Structure"),
+        ChecklistItem("st2", "Basement/Crawlspace", "Structure"),
+        ChecklistItem("pl1", "Main Water Shutoff", "Plumbing"),
+        ChecklistItem("pl2", "Visible Piping", "Plumbing"),
+        ChecklistItem("pl3", "Water Heater", "Plumbing"),
+        ChecklistItem("el1", "Main Panel", "Electrical"),
+        ChecklistItem("el2", "Outlets/Switches", "Electrical"),
+        ChecklistItem("hv1", "Heating Equipment", "HVAC"),
+        ChecklistItem("hv2", "Cooling Equipment", "HVAC"),
+        ChecklistItem("in1", "Walls/Ceilings/Floors", "Interior"),
+        ChecklistItem("in2", "Attic/Insulation", "Interior")
+    )
+}
