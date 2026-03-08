@@ -94,10 +94,11 @@ data class InspectionItem(
     val narrative: String = ""
 )
 
-// This does not need @Ignore because it's an extension
 val InspectionItem.rating: Rating
-    get() = Rating.entries.find { it.name == ratingName } ?: Rating.NOT_RATED
-
+    get() = Rating.entries.find { it.name == ratingName } ?: Rating.NOT_RATED {
+    @Ignore
+    val rating: Rating get() = Rating.values().find { it.name == ratingName } ?: Rating.NOT_RATED
+)
 
 @Entity(
     tableName = "inspection_photos",
