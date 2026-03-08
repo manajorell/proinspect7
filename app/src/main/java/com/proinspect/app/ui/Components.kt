@@ -34,33 +34,72 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
-fun RatingRow(
-    current: Rating,
-    onRatingSelected: (Rating) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier.horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Rating.values().forEach { r ->
-            val selected = current == r
-            val color = ratingColor(r)
-            OutlinedButton(
-                onClick = { onRatingSelected(r) },
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = if (selected) color else Color.Transparent,
-                    contentColor = if (selected) Color.White else color
-                ),
-                border = BorderStroke(1.5.dp, color),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                modifier = Modifier.height(32.dp)
-            ) {
-                Text(r.short, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+// Inside your @Composable function
+val scope = rememberCoroutineScope()
+val context = LocalContext.current
+
+val serialGalleryLauncher = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.GetContent()
+) { uri: Uri? ->
+    uri?.let { selectedUri ->
+        scope.launch {
+            isDecoding = true
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    // 1. Get bytes safely
+                    val bytes = context.contentResolver.openInputStream(selectedUri)?.use { it.readBytes() }
+                        ?: throw Exception("File not found")
+                    val base64Image = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+
+                    // 2. Build Body (ensure model and max_tokens are present)
+                    val jsonBody = JSONObject().apply {
+                        put("model", "claude-3-5-sonnet-20241022")
+                        put("max_tokens", 1024)
+                        put("messages", JSONArray().put(JSONObject().apply {
+                            put("role", "user")
+                            put("content", JSONArray()
+                                .put(JSONObject().apply {
+                                    put("type", "image")
+                                    put("source", JSONObject().apply {
+                                        put("type", "base64")
+                                        put("media_type", "image/jpeg")
+                                        put("data", base64Image)
+                                    })
+                                })
+                                .put(JSONObject().apply {
+                                    put("type", "text")
+                                    put("text", "Extract the serial number from this image.")
+                                })
+                            )
+                        }))
+                    }
+
+                    val body = jsonBody.toString().toRequestBody("application/json".toMediaType())
+                    val request = okhttp3.Request.Builder()
+                        .url("https://api.anthropic.com") // Corrected Endpoint
+                        .addHeader("x-api-key", "YOUR_API_KEY")
+                        .addHeader("anthropic-version", "2023-06-01")
+                        .post(body)
+                        .build()
+
+                    client.newCall(request).execute().use { resp ->
+                        val bodyString = resp.body?.string() ?: ""
+                        if (!resp.isSuccessful) throw Exception("API Error ${resp.code}: $bodyString")
+                        
+                        val respJson = JSONObject(bodyString)
+                        respJson.getJSONArray("content").getJSONObject(0).getString("text")
+                    }
+                }
+                decodedResult = result
+            } catch (e: Exception) {
+                decodedResult = "Error: ${e.localizedMessage}"
+            } finally {
+                isDecoding = false
             }
         }
     }
 }
+
 
 @Composable
 fun ProTextField(
