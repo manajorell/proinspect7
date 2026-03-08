@@ -532,27 +532,6 @@ val json = JSONObject().apply {
         })
     }))
 }
-
-// 2. Execute on IO thread
-val result = withContext(Dispatchers.IO) {
-    val body = json.toString().toRequestBody("application/json".toMediaType())
-    val request = okhttp3.Request.Builder()
-        .url("https://api.anthropic.com/v1/messages")
-        .addHeader("x-api-key", "YOUR_API_KEY")
-        .addHeader("anthropic-version", "2023-06-01")
-        .post(body)
-        .build()
-
-    client.newCall(request).execute().use { resp ->
-        if (!resp.isSuccessful) throw Exception("HTTP ${resp.code}: ${resp.message}")
-        val respJson = JSONObject(resp.body!!.string())
-        respJson.getJSONArray("content").getJSONObject(0).getString("text")
-    }
-}
-
-val context = LocalContext.current
-val scope = rememberCoroutineScope()
-
 val serialGalleryLauncher = rememberLauncherForActivityResult(
     contract = ActivityResultContracts.GetContent()
 ) { uri: Uri? ->
@@ -561,46 +540,59 @@ val serialGalleryLauncher = rememberLauncherForActivityResult(
             isDecoding = true
             try {
                 val result = withContext(Dispatchers.IO) {
-                    // 1. Convert Image to Base64 (Required for vision)
-                    val inputStream = context.contentResolver.openInputStream(uri)
-                    val bytes = inputStream?.readBytes() ?: throw Exception("Failed to read image")
+                    // 1. Convert Image to Base64
+                    val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } 
+                        ?: throw Exception("Failed to read image")
                     val base64Image = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
 
-                    // 2. Build the correct Anthropic JSON structure
+                    // 2. Build the correct JSON body
                     val json = org.json.JSONObject().apply {
                         put("model", "claude-3-5-sonnet-20241022")
                         put("max_tokens", 1024)
                         put("messages", org.json.JSONArray().put(org.json.JSONObject().apply {
                             put("role", "user")
-                            put("content", org.json.JSONArray().put(org.json.JSONObject().apply {
-                                put("type", "image")
-                                put("source", org.json.JSONObject().apply {
-                                    put("type", "base64")
-                                    put("media_type", "image/jpeg")
-                                    put("data", base64Image)
+                            put("content", org.json.JSONArray().apply {
+                                put(org.json.JSONObject().apply {
+                                    put("type", "image")
+                                    put("source", org.json.JSONObject().apply {
+                                        put("type", "base64")
+                                        put("media_type", "image/jpeg")
+                                        put("data", base64Image)
+                                    })
                                 })
-                            }).put(org.json.JSONObject().apply {
-                                put("type", "text")
-                                put("text", "Extract the serial number from this image.")
-                            }))
+                                put(org.json.JSONObject().apply {
+                                    put("type", "text")
+                                    put("text", "Extract the serial number from this image.")
+                                })
+                            })
                         }))
                     }
 
-                    // // 3. The OkHttp call
-val body = json.toString().toRequestBody("application/json".toMediaType())
-val request = okhttp3.Request.Builder()
-    .url("https://api.anthropic.com") // FIX: Added /v1/messages
-    .addHeader("x-api-key", "YOUR_API_KEY") 
-    .addHeader("anthropic-version", "2023-06-01")
-    .post(body)
-    .build()
+                    // 3. The OkHttp call with correct URL
+                    val body = json.toString().toRequestBody("application/json".toMediaType())
+                    val request = okhttp3.Request.Builder()
+                        .url("https://api.anthropic.com/v1/messages") // FIX: Must include /v1/messages
+                        .addHeader("x-api-key", "YOUR_API_KEY") 
+                        .addHeader("anthropic-version", "2023-06-01")
+                        .post(body)
+                        .build()
 
-client.newCall(request).execute().use { resp ->
-    val responseBody = resp.body?.string() ?: ""
-    if (!resp.isSuccessful) {
-        // This will now show you the actual error message from Anthropic (like missing fields)
-        throw Exception("Error ${resp.code}: $responseBody")
+                    client.newCall(request).execute().use { resp ->
+                        val responseBody = resp.body?.string() ?: ""
+                        if (!resp.isSuccessful) throw Exception("Error ${resp.code}: $responseBody")
+                        
+                        val respJson = org.json.JSONObject(responseBody)
+                        // Extraction: Anthropic returns content as an array of objects
+                        val contentArray = respJson.getJSONArray("content")
+                        contentArray.getJSONObject(0).getString("text")
+                    }
+                }
+                decodedResult = result
+            } catch (e: Exception) {
+                decodedResult = "Error: ${e.localizedMessage}"
+            } finally {
+                isDecoding = false
+            }
+        }
     }
-    val respJson = org.json.JSONObject(responseBody)
-    respJson.getJSONArray("content").getJSONObject(0).getString("text")
 }
