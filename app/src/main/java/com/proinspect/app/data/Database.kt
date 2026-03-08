@@ -61,9 +61,7 @@ class Converters {
 
     @TypeConverter
     fun toRating(value: String): Rating = 
-        Rating.entries.find { it.name == value } ?: Rating.NOT_RATED
-
-    
+        Rating.values().find { it.name == value } ?: Rating.NOT_RATED
 }
 
 @Database(
@@ -72,7 +70,7 @@ class Converters {
     exportSchema = false
 )
 @TypeConverters(Converters::class) 
-abstract class ProInspectDatabase : RoomDatabase() {
+abstract class ProInspectDatabase : RoomDatabase() { 
     abstract fun reportDao(): ReportDao
     abstract fun inspectionItemDao(): InspectionItemDao
     abstract fun inspectionPhotoDao(): InspectionPhotoDao
