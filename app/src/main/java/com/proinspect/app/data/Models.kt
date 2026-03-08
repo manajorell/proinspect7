@@ -136,7 +136,7 @@ data class ChecklistItem(
 )
 
 object InspectionSections {
-    // renamed from 'all' to 'allItems' to satisfy PdfGenerator and InspectionScreens
+    // 1. MUST be allItems for PdfGenerator
     val allItems = listOf(
         ChecklistItem("rf1", "Roof Surface", "Roofing"),
         ChecklistItem("rf2", "Flashings", "Roofing"),
@@ -157,11 +157,13 @@ object InspectionSections {
         ChecklistItem("in2", "Attic/Insulation", "Interior")
     )
 
-    // These lines satisfy the "Unresolved reference: sections/sectionNames" errors
-    val sections = allItems.groupBy { it.section }
-    val sectionNames = allItems.map { it.section }.distinct()
+    // 2. Map for grouped UI logic
+    val sections: Map<String, List<ChecklistItem>> = allItems.groupBy { it.section }
     
-    // This satisfies the "Unresolved reference: sectionIcons" error in PDF
+    // 3. List for Tab titles and PDF iteration
+    val sectionNames: List<String> = allItems.map { it.section }.distinct()
+
+    // 4. Icons for PDF headers
     val sectionIcons = mapOf(
         "Roofing" to "🏠",
         "Exterior" to "🌳",
