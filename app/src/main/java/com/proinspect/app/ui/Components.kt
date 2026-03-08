@@ -596,4 +596,5 @@ val serialGalleryLauncher = rememberLauncherForActivityResult(
         }
     }  
     }
+                }
 }
