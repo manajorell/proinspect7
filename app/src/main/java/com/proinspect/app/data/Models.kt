@@ -97,7 +97,7 @@ data class InspectionItem(
 val InspectionItem.rating: Rating
     get() = Rating.entries.find { it.name == ratingName } ?: Rating.NOT_RATED {
     @Ignore
-    val rating: Rating get() = Rating.values().find { it.name == ratingName } ?: Rating.NOT_RATED
+    val rating: Rating get(); = Rating.values().find { it.name == ratingName } ?: Rating.NOT_RATED
 }
 
 @Entity(
