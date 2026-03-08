@@ -94,14 +94,10 @@ data class InspectionItem(
     val narrative: String = ""
 )
 
-// Extension property - no @Ignore needed
 val InspectionItem.rating: Rating
     get() = Rating.entries.find { it.name == ratingName } ?: Rating.NOT_RATED {
     @Ignore
- // Remove the { at the end and the duplicate code inside
-val InspectionItem.rating: Rating
-    get() = Rating.entries.find { it.name == ratingName } ?: Rating.NOT_RATED
-
+    val rating: Rating get() = Rating.values().find { it.name == ratingName } ?: Rating.NOT_RATED
 }
 
 @Entity(
