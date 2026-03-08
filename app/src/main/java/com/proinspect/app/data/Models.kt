@@ -90,9 +90,13 @@ data class InspectionItem(
     val reportId: Long = 0,
     val itemId: String = "",
     val section: String = "",
-    val ratingName: String = Rating.NOT_RATED.name,  // stored in DB as String
+    val ratingName: String = Rating.NOT_RATED.name,
     val narrative: String = ""
-) {
+)
+
+// Extension property - no @Ignore needed
+val InspectionItem.rating: Rating
+    get() = Rating.entries.find { it.name == ratingName } ?: Rating.NOT_RATED {
     @Ignore
     val rating: Rating get() = Rating.entries.find { it.name == ratingName } ?: Rating.NOT_RATED
 }
