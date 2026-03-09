@@ -470,6 +470,7 @@ suspend fun decodeSerialNumber(
         }
     }
 }
+
 fun parseSerialPlateText(text: String, equipmentName: String): String {
     val lines = text.lines().map { it.trim() }
     
@@ -488,10 +489,15 @@ fun parseSerialPlateText(text: String, equipmentName: String): String {
     
     for (line in lines) {
         val lower = line.lowercase()
+        // Clean up common OCR errors
+        val cleaned = lower
+            .replace("0", "o")  // Zero to O
+            .replace("|", "i")  // Pipe to I
+            .replace("1", "l")  // One to L in text context
         
         if (manufacturer.isEmpty()) {
             for (mfg in mfgPatterns) {
-                if (lower.contains(mfg)) {
+                if (cleaned.contains(mfg)) {
                     manufacturer = mfg.split(" ").joinToString(" ") { 
                         it.replaceFirstChar { c -> c.uppercase() } 
                     }
@@ -500,46 +506,70 @@ fun parseSerialPlateText(text: String, equipmentName: String): String {
             }
         }
         
-        if (model.isEmpty() && (lower.contains("model") || lower.contains("mod") || lower.contains("m/n") || lower.contains("m.n"))) {
+        if (model.isEmpty() && (cleaned.contains("model") || cleaned.contains("mod") || cleaned.contains("m/n") || cleaned.contains("m.n"))) {
             model = line.replace(Regex("(?i)(model|mod|m/n|m\\.n)[:\\s]*"), "").trim()
         }
         
-        if (serial.isEmpty() && (lower.contains("serial") || lower.contains("ser") || lower.contains("s/n") || lower.contains("s.n"))) {
+        if (serial.isEmpty() && (cleaned.contains("serial") || cleaned.contains("ser") || cleaned.contains("s/n") || cleaned.contains("s.n"))) {
             serial = line.replace(Regex("(?i)(serial|ser|s/n|s\\.n)[:\\s]*"), "").trim()
         }
         
+        // Enhanced year detection with OCR error correction
         if (year.isEmpty()) {
+            // Strategy 1: Look for explicit 4-digit year
             val yearMatch = Regex("\\b(19|20)\\d{2}\\b").find(line)
             if (yearMatch != null) {
                 year = yearMatch.value
             } 
-            else if (lower.contains("mfg") || lower.contains("date") || lower.contains("manufactured")) {
-                val dateText = line.replace(Regex("(?i)(mfg|date|manufactured)[:\\s]*"), "").trim()
+            // Strategy 2: Look for MFG/DATE with fuzzy matching (handles "MEr", "MFr", etc.)
+            else if (cleaned.contains("mfg") || cleaned.contains("mfr") || cleaned.contains("mer") || 
+                     cleaned.contains("date") || cleaned.contains("manufactured") || cleaned.contains("manuf")) {
+                val dateText = line.replace(Regex("(?i)(mfg|mfr|mer|date|manufactured|manuf)[:\\s]*"), "").trim()
+                
+                // Try to extract year from date formats
                 val yearInDate = Regex("(19|20)\\d{2}").find(dateText)
                 if (yearInDate != null) {
                     year = yearInDate.value
-                } else {
+                } else if (dateText.isNotBlank() && dateText.length <= 10) {
+                    // Keep the raw date text if it's reasonable length
                     year = dateText
                 }
             }
-            else if (lower.contains("year")) {
-                year = line.replace(Regex("(?i)year[:\\s]*"), "").trim()
+            // Strategy 3: Look for "YEAR" field
+            else if (cleaned.contains("year") || cleaned.contains("yr")) {
+                year = line.replace(Regex("(?i)(year|yr)[:\\s]*"), "").trim()
             }
         }
         
+        // Enhanced capacity detection
         if (capacity.isEmpty()) {
-            val btuMatch = Regex("\\d+,?\\d*\\s*(btu|btuh)", RegexOption.IGNORE_CASE).find(line)
-            val galMatch = Regex("\\d+\\s*(gal|gallon)", RegexOption.IGNORE_CASE).find(line)
-            val tonMatch = Regex("\\d+\\.?\\d*\\s*ton", RegexOption.IGNORE_CASE).find(line)
+            // BTU patterns (handles commas and spaces)
+            val btuMatch = Regex("\\d+[,\\s]?\\d*\\s*(btu|btuh|8tu)", RegexOption.IGNORE_CASE).find(line)
+            // Gallon patterns
+            val galMatch = Regex("\\d+\\s*(gal|gallon|gallons)", RegexOption.IGNORE_CASE).find(line)
+            // Ton patterns (including decimal)
+            val tonMatch = Regex("\\d+\\.?\\d*\\s*(ton|tons)", RegexOption.IGNORE_CASE).find(line)
+            // KW patterns for electric heaters
+            val kwMatch = Regex("\\d+\\.?\\d*\\s*(kw|kilowatt)", RegexOption.IGNORE_CASE).find(line)
             
-            capacity = btuMatch?.value ?: galMatch?.value ?: tonMatch?.value ?: ""
+            capacity = btuMatch?.value ?: galMatch?.value ?: tonMatch?.value ?: kwMatch?.value ?: ""
+            
+            // Clean up capacity formatting
+            if (capacity.isNotEmpty()) {
+                capacity = capacity.replace(Regex("\\s+"), " ").trim()
+            }
         }
     }
     
-    if (year.isEmpty() && serial.isNotEmpty()) {
-        year = decodeYearFromSerial(serial, manufacturer)
+    // Strategy 4: Try to decode year from serial number if still empty or looks like OCR error
+    if ((year.isEmpty() || year.length < 4 || year.matches(Regex(".*[a-zA-Z]{3,}.*"))) && serial.isNotEmpty()) {
+        val decodedYear = decodeYearFromSerial(serial, manufacturer)
+        if (decodedYear.isNotEmpty()) {
+            year = decodedYear
+        }
     }
     
+    // Only return if we found at least 3 fields
     val foundCount = listOf(manufacturer, model, serial, year, capacity).count { it.isNotEmpty() }
     
     if (foundCount < 3) {
@@ -558,70 +588,84 @@ fun parseSerialPlateText(text: String, equipmentName: String): String {
 fun decodeYearFromSerial(serial: String, manufacturer: String): String {
     if (serial.length < 4) return ""
     
+    // Clean serial number (remove spaces, dashes)
+    val cleanSerial = serial.replace(Regex("[\\s-]"), "").uppercase()
+    
     return when (manufacturer.lowercase()) {
         "rheem", "ruud" -> {
-            if (serial.length >= 6) {
-                val yearDigits = serial.substring(4, 6)
+            // Rheem/Ruud: Characters 5-6 are year (positions 4-5 in 0-indexed)
+            // Example: M051234567 = May 2012 (12 at positions 4-5)
+            if (cleanSerial.length >= 6) {
+                val yearDigits = cleanSerial.substring(4, 6)
                 val year = yearDigits.toIntOrNull()
                 if (year != null) {
                     val fullYear = if (year > 50) 1900 + year else 2000 + year
-                    fullYear.toString()
+                    "$fullYear (from serial)"
                 } else ""
             } else ""
         }
         "carrier", "bryant", "payne" -> {
-            if (serial.length >= 4) {
-                val yearDigit = serial[3].toString().toIntOrNull()
+            // Carrier/Bryant: 4th character is year
+            if (cleanSerial.length >= 4) {
+                val yearChar = cleanSerial[3]
+                val yearDigit = yearChar.toString().toIntOrNull()
                 if (yearDigit != null) {
                     val year = 2010 + yearDigit
-                    if (year > 2025) (year - 10).toString() else year.toString()
+                    val adjustedYear = if (year > 2025) year - 10 else year
+                    "$adjustedYear (from serial)"
                 } else ""
             } else ""
         }
         "trane", "american standard" -> {
-            if (serial.length >= 4) {
-                val yearChars = serial.substring(2, 4)
+            // Trane: Characters 3-4 are year
+            if (cleanSerial.length >= 4) {
+                val yearChars = cleanSerial.substring(2, 4)
                 val year = yearChars.toIntOrNull()
                 if (year != null) {
                     val fullYear = if (year > 50) 1900 + year else 2000 + year
-                    fullYear.toString()
+                    "$fullYear (from serial)"
                 } else ""
             } else ""
         }
         "lennox" -> {
-            if (serial.length >= 3) {
-                val yearDigits = serial.substring(1, 3)
+            // Lennox: Characters 2-3 are year
+            if (cleanSerial.length >= 3) {
+                val yearDigits = cleanSerial.substring(1, 3)
                 val year = yearDigits.toIntOrNull()
                 if (year != null) {
                     val fullYear = if (year > 50) 1900 + year else 2000 + year
-                    fullYear.toString()
+                    "$fullYear (from serial)"
                 } else ""
             } else ""
         }
         "goodman", "amana" -> {
-            if (serial.length >= 4) {
-                val yearDigits = serial.substring(2, 4)
+            // Goodman/Amana: Characters 3-4 are year
+            if (cleanSerial.length >= 4) {
+                val yearDigits = cleanSerial.substring(2, 4)
                 val year = yearDigits.toIntOrNull()
                 if (year != null) {
                     val fullYear = if (year > 50) 1900 + year else 2000 + year
-                    fullYear.toString()
+                    "$fullYear (from serial)"
                 } else ""
             } else ""
         }
         "york" -> {
-            if (serial.isNotEmpty() && serial[0].isLetter()) {
-                val letter = serial[0].uppercaseChar()
+            // York: 1st letter is year (A=2004, B=2005, etc.)
+            if (cleanSerial.isNotEmpty() && cleanSerial[0].isLetter()) {
+                val letter = cleanSerial[0]
                 val year = 2004 + (letter - 'A')
-                if (year in 2004..2030) year.toString() else ""
+                if (year in 2004..2030) "$year (from serial)" else ""
             } else ""
         }
         "bradford white", "a.o. smith", "ao smith", "state" -> {
-            val yearMatch = Regex("(19|20)\\d{2}").find(serial)
-            yearMatch?.value ?: ""
+            // Water heaters: Look for 4-digit year anywhere in serial
+            val yearMatch = Regex("(19|20)\\d{2}").find(cleanSerial)
+            if (yearMatch != null) "${yearMatch.value} (from serial)" else ""
         }
         else -> {
-            val yearMatch = Regex("(19|20)\\d{2}").find(serial)
-            yearMatch?.value ?: ""
+            // Generic: try to find any 4-digit year in the serial
+            val yearMatch = Regex("(19|20)\\d{2}").find(cleanSerial)
+            if (yearMatch != null) "${yearMatch.value} (from serial)" else ""
         }
     }
 }
