@@ -129,48 +129,126 @@ data class AppSettings(
     val anthropicApiKey: String = ""
 )
 // Data class for the UI checklist items
+// Data class for the UI checklist items
 data class ChecklistItem(
     val id: String, 
     val title: String, 
-    val section: String
+    val description: String = ""
 )
 
 object InspectionSections {
-    // 1. MUST be allItems for PdfGenerator
-    val allItems = listOf(
-        ChecklistItem("rf1", "Roof Surface", "Roofing"),
-        ChecklistItem("rf2", "Flashings", "Roofing"),
-        ChecklistItem("rf3", "Gutters/Downspouts", "Roofing"),
-        ChecklistItem("ex1", "Siding/Trim", "Exterior"),
-        ChecklistItem("ex2", "Eaves/Soffits/Fascia", "Exterior"),
-        ChecklistItem("ex3", "Windows/Doors", "Exterior"),
-        ChecklistItem("st1", "Foundation", "Structure"),
-        ChecklistItem("st2", "Basement/Crawlspace", "Structure"),
-        ChecklistItem("pl1", "Main Water Shutoff", "Plumbing"),
-        ChecklistItem("pl2", "Visible Piping", "Plumbing"),
-        ChecklistItem("pl3", "Water Heater", "Plumbing"),
-        ChecklistItem("el1", "Main Panel", "Electrical"),
-        ChecklistItem("el2", "Outlets/Switches", "Electrical"),
-        ChecklistItem("hv1", "Heating Equipment", "HVAC"),
-        ChecklistItem("hv2", "Cooling Equipment", "HVAC"),
-        ChecklistItem("in1", "Walls/Ceilings/Floors", "Interior"),
-        ChecklistItem("in2", "Attic/Insulation", "Interior")
-    )
-
-    // 2. Map for grouped UI logic
-    val sections: Map<String, List<ChecklistItem>> = allItems.groupBy { it.section }
     
-    // 3. List for Tab titles and PDF iteration
-    val sectionNames: List<String> = allItems.map { it.section }.distinct()
-
-    // 4. Icons for PDF headers
+    private val roofingItems = listOf(
+        ChecklistItem("rf1", "Roof Surface", "Inspect shingles, tiles, or metal roofing"),
+        ChecklistItem("rf2", "Flashings", "Check chimney, vent, and skylight flashing"),
+        ChecklistItem("rf3", "Gutters/Downspouts", "Check gutters, downspouts, and drainage"),
+        ChecklistItem("rf4", "Roof Structure", "Check for sagging or structural issues"),
+        ChecklistItem("rf5", "Attic Ventilation", "Verify adequate ventilation")
+    )
+    
+    private val exteriorItems = listOf(
+        ChecklistItem("ex1", "Siding/Trim", "Inspect for damage, rot, or deterioration"),
+        ChecklistItem("ex2", "Eaves/Soffits/Fascia", "Check for damage or pest entry"),
+        ChecklistItem("ex3", "Windows/Doors", "Check operation, seals, and weatherstripping"),
+        ChecklistItem("ex4", "Foundation & Grading", "Inspect for cracks or water issues"),
+        ChecklistItem("ex5", "Decks & Porches", "Check structural integrity and safety")
+    )
+    
+    private val structureItems = listOf(
+        ChecklistItem("st1", "Foundation", "Check for cracks, bowing, or moisture"),
+        ChecklistItem("st2", "Basement/Crawlspace", "Inspect for moisture, pests, or damage"),
+        ChecklistItem("st3", "Floor Structure", "Check for sagging or rot"),
+        ChecklistItem("st4", "Wall Framing", "Check for plumb and structural issues"),
+        ChecklistItem("st5", "Stairs & Railings", "Verify code compliance and safety")
+    )
+    
+    private val electricalItems = listOf(
+        ChecklistItem("el1", "Main Panel", "Inspect service size, breakers, and labeling"),
+        ChecklistItem("el2", "Outlets/Switches", "Test GFCI/AFCI protection"),
+        ChecklistItem("el3", "Wiring", "Check for aluminum wiring or hazards"),
+        ChecklistItem("el4", "Grounding", "Verify proper grounding system"),
+        ChecklistItem("el5", "Smoke/CO Detectors", "Check presence and operation")
+    )
+    
+    private val hvacItems = listOf(
+        ChecklistItem("hv1", "Heating Equipment", "Inspect furnace or heat pump operation"),
+        ChecklistItem("hv2", "Cooling Equipment", "Check AC unit and operation"),
+        ChecklistItem("hv3", "Ductwork", "Inspect for leaks and insulation"),
+        ChecklistItem("hv4", "Ventilation", "Check exhaust fans and fresh air"),
+        ChecklistItem("hv5", "Thermostat", "Test operation and temperature control")
+    )
+    
+    private val plumbingItems = listOf(
+        ChecklistItem("pl1", "Main Water Shutoff", "Locate and test main shutoff valve"),
+        ChecklistItem("pl2", "Visible Piping", "Check for leaks or corrosion"),
+        ChecklistItem("pl3", "Water Heater", "Inspect age, operation, and TPR valve"),
+        ChecklistItem("pl4", "Fixtures", "Test sinks, toilets, showers, and tubs"),
+        ChecklistItem("pl5", "Drains & Vents", "Check for proper drainage and venting")
+    )
+    
+    private val interiorItems = listOf(
+        ChecklistItem("in1", "Walls/Ceilings/Floors", "Check for cracks or water damage"),
+        ChecklistItem("in2", "Attic/Insulation", "Check insulation type and depth"),
+        ChecklistItem("in3", "Interior Doors", "Check operation and hardware"),
+        ChecklistItem("in4", "Windows", "Test operation and check for condensation"),
+        ChecklistItem("in5", "Kitchen", "Inspect cabinets and appliances")
+    )
+    
+    private val insulationItems = listOf(
+        ChecklistItem("ins1", "Attic Insulation", "Check type, depth, and coverage"),
+        ChecklistItem("ins2", "Wall Insulation", "Verify presence and adequacy"),
+        ChecklistItem("ins3", "Crawlspace Insulation", "Inspect insulation and vapor barriers"),
+        ChecklistItem("ins4", "Ventilation", "Check for adequate airflow"),
+        ChecklistItem("ins5", "Moisture Control", "Look for signs of moisture problems")
+    )
+    
+    private val garageItems = listOf(
+        ChecklistItem("gr1", "Garage Door & Opener", "Test operation and safety sensors"),
+        ChecklistItem("gr2", "Garage Structure", "Inspect walls, ceiling, and floor"),
+        ChecklistItem("gr3", "Garage Electrical", "Check outlets and GFCI protection"),
+        ChecklistItem("gr4", "Fire Separation", "Verify fire-rated walls and door"),
+        ChecklistItem("gr5", "Garage Ventilation", "Check for adequate ventilation")
+    )
+    
+    // Map with LOWERCASE keys (matching your code)
+    val items: Map<String, List<ChecklistItem>> = mapOf(
+        "roofing" to roofingItems,
+        "exterior" to exteriorItems,
+        "structure" to structureItems,
+        "electrical" to electricalItems,
+        "hvac" to hvacItems,
+        "plumbing" to plumbingItems,
+        "interior" to interiorItems,
+        "insulation" to insulationItems,
+        "garage" to garageItems
+    )
+    
+    // All items flattened for summary screen
+    val allItems: List<ChecklistItem> = items.values.flatten()
+    
+    // Section display names
+    val sectionNames = mapOf(
+        "roofing" to "Roofing",
+        "exterior" to "Exterior",
+        "structure" to "Structure",
+        "electrical" to "Electrical",
+        "hvac" to "HVAC",
+        "plumbing" to "Plumbing",
+        "interior" to "Interior",
+        "insulation" to "Insulation & Ventilation",
+        "garage" to "Garage & Carport"
+    )
+    
+    // Icons for PDF headers
     val sectionIcons = mapOf(
-        "Roofing" to "🏠",
-        "Exterior" to "🌳",
-        "Structure" to "🏗️",
-        "Plumbing" to "💧",
-        "Electrical" to "⚡",
-        "HVAC" to "🌡️",
-        "Interior" to "🛋️"
+        "roofing" to "🏠",
+        "exterior" to "🌳",
+        "structure" to "🏗️",
+        "electrical" to "⚡",
+        "hvac" to "🌡️",
+        "plumbing" to "💧",
+        "interior" to "🛋️",
+        "insulation" to "🧊",
+        "garage" to "🚗"
     )
 }
