@@ -33,9 +33,10 @@ import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import com.google.android.gms.vision.Frame
+import com.google.android.gms.vision.text.TextRecognizer
 
 @Composable
 fun RatingRow(
@@ -366,28 +367,36 @@ suspend fun decodeSerialNumber(
 ): String {
     return withContext(Dispatchers.IO) {
         try {
-            // STEP 1: Try local OCR first using ML Kit
-            val image = InputImage.fromFilePath(context, uri)
-            val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-            
+            // STEP 1: Try local OCR first using Google Vision API
             var localResult: String? = null
             
             try {
-                val task = recognizer.process(image)
-                while (!task.isComplete) {
-                    Thread.sleep(100)
+                val bitmap = context.contentResolver.openInputStream(uri)?.use { stream ->
+                    BitmapFactory.decodeStream(stream)
                 }
                 
-                if (task.isSuccessful) {
-                    val visionText = task.result
-                    val extractedText = visionText.text
+                if (bitmap != null) {
+                    val textRecognizer = TextRecognizer.Builder(context).build()
                     
-                    // Parse the extracted text using patterns
-                    val parsedData = parseSerialPlateText(extractedText, equipmentName)
-                    
-                    // Check if we got meaningful data
-                    if (parsedData.isNotEmpty() && parsedData.contains("Manufacturer:")) {
-                        localResult = parsedData
+                    if (textRecognizer.isOperational) {
+                        val frame = Frame.Builder().setBitmap(bitmap).build()
+                        val textBlocks = textRecognizer.detect(frame)
+                        
+                        val extractedText = StringBuilder()
+                        for (i in 0 until textBlocks.size()) {
+                            val textBlock = textBlocks.valueAt(i)
+                            extractedText.append(textBlock.value).append("\n")
+                        }
+                        
+                        textRecognizer.release()
+                        
+                        // Parse the extracted text using patterns
+                        val parsedData = parseSerialPlateText(extractedText.toString(), equipmentName)
+                        
+                        // Check if we got meaningful data
+                        if (parsedData.isNotEmpty() && parsedData.contains("Manufacturer:")) {
+                            localResult = parsedData
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -401,7 +410,7 @@ suspend fun decodeSerialNumber(
             
             // STEP 2: Local failed, try API
             if (apiKey.isBlank()) {
-                return@withContext "Error: Local decode failed and no API key configured"
+                return@withContext "⚠️ Local decode failed. API key needed for AI decode."
             }
             
             val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
@@ -463,7 +472,7 @@ suspend fun decodeSerialNumber(
             return@withContext "🤖 AI Decode:\n$text"
             
         } catch (e: Exception) {
-            return@withContext "Error: ${e.localizedMessage ?: "Unknown error occurred"}"
+            return@withContext "❌ Error: ${e.localizedMessage ?: "Unknown error occurred"}"
         }
     }
 }
@@ -482,7 +491,8 @@ fun parseSerialPlateText(text: String, equipmentName: String): String {
     val mfgPatterns = listOf(
         "rheem", "ruud", "carrier", "trane", "lennox", "goodman", "amana", 
         "york", "american standard", "bryant", "payne", "bradford white",
-        "a.o. smith", "ao smith", "state", "whirlpool", "ge", "frigidaire"
+        "a.o. smith", "ao smith", "state", "whirlpool", "ge", "frigidaire",
+        "mitsubishi", "daikin", "fujitsu", "lg", "samsung"
     )
     
     for (line in lines) {
@@ -501,13 +511,13 @@ fun parseSerialPlateText(text: String, equipmentName: String): String {
         }
         
         // Find model (usually starts with MODEL, MOD, or M/N)
-        if (model.isEmpty() && (lower.contains("model") || lower.contains("mod") || lower.contains("m/n"))) {
-            model = line.replace(Regex("(?i)(model|mod|m/n)[:\\s]*"), "").trim()
+        if (model.isEmpty() && (lower.contains("model") || lower.contains("mod") || lower.contains("m/n") || lower.contains("m.n"))) {
+            model = line.replace(Regex("(?i)(model|mod|m/n|m\\.n)[:\\s]*"), "").trim()
         }
         
         // Find serial (usually starts with SERIAL, SER, or S/N)
-        if (serial.isEmpty() && (lower.contains("serial") || lower.contains("ser") || lower.contains("s/n"))) {
-            serial = line.replace(Regex("(?i)(serial|ser|s/n)[:\\s]*"), "").trim()
+        if (serial.isEmpty() && (lower.contains("serial") || lower.contains("ser") || lower.contains("s/n") || lower.contains("s.n"))) {
+            serial = line.replace(Regex("(?i)(serial|ser|s/n|s\\.n)[:\\s]*"), "").trim()
         }
         
         // Find year (4 digits or MFG DATE)
@@ -515,8 +525,8 @@ fun parseSerialPlateText(text: String, equipmentName: String): String {
             val yearMatch = Regex("(19|20)\\d{2}").find(line)
             if (yearMatch != null) {
                 year = yearMatch.value
-            } else if (lower.contains("mfg") || lower.contains("date")) {
-                year = line.replace(Regex("(?i)(mfg|date)[:\\s]*"), "").trim()
+            } else if (lower.contains("mfg") || lower.contains("date") || lower.contains("manufactured")) {
+                year = line.replace(Regex("(?i)(mfg|date|manufactured)[:\\s]*"), "").trim()
             }
         }
         
@@ -694,19 +704,20 @@ fun ChecklistItemCard(
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
-                                containerColor = if (result.startsWith("✅")) 
-                                    Color(0xFFECFDF5) 
-                                else if (result.startsWith("🤖")) 
-                                    Color(0xFFFFFBF0) 
-                                else 
-                                    Color(0xFFFEE2E2)
+                                containerColor = when {
+                                    result.startsWith("✅") -> Color(0xFFECFDF5)
+                                    result.startsWith("🤖") -> Color(0xFFFFFBF0)
+                                    result.startsWith("⚠️") -> Color(0xFFFEF3C7)
+                                    else -> Color(0xFFFEE2E2)
+                                }
                             ),
                             border = BorderStroke(
                                 1.dp, 
-                                if (result.startsWith("Error")) 
-                                    Color(0xFFEF4444) 
-                                else 
-                                    Gold
+                                when {
+                                    result.startsWith("❌") -> Color(0xFFEF4444)
+                                    result.startsWith("⚠️") -> Color(0xFFF59E0B)
+                                    else -> Gold
+                                }
                             )
                         ) {
                             Column(
@@ -714,9 +725,12 @@ fun ChecklistItemCard(
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Text(
-                                    if (result.startsWith("✅")) "📋 Decoded Locally" 
-                                    else if (result.startsWith("🤖")) "📋 Decoded via AI" 
-                                    else "⚠️ Decode Failed",
+                                    when {
+                                        result.startsWith("✅") -> "📋 Decoded Locally"
+                                        result.startsWith("🤖") -> "📋 Decoded via AI"
+                                        result.startsWith("⚠️") -> "⚠️ Partial Result"
+                                        else -> "❌ Decode Failed"
+                                    },
                                     fontWeight = FontWeight.Bold, 
                                     fontSize = 13.sp, 
                                     color = Navy
@@ -726,7 +740,7 @@ fun ChecklistItemCard(
                                     fontSize = 12.sp, 
                                     color = Color(0xFF374151)
                                 )
-                                if (!result.startsWith("Error")) {
+                                if (!result.startsWith("❌")) {
                                     Spacer(Modifier.height(4.dp))
                                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                         Button(
@@ -734,6 +748,7 @@ fun ChecklistItemCard(
                                                 val cleanResult = result
                                                     .replace("✅ Local Decode:\n", "")
                                                     .replace("🤖 AI Decode:\n", "")
+                                                    .replace("⚠️ ", "")
                                                 onNarrativeChanged(
                                                     if (narrative.isBlank()) cleanResult
                                                     else "$narrative\n\n$cleanResult"
