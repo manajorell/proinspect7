@@ -339,7 +339,7 @@ object PdfGenerator {
         )
 
         InspectionSections.sections.forEach { section ->
-            val sectionItems = InspectionSections.items[section] ?: return@forEach
+            val sectionItemsList = InspectionSections.items[section] ?: return@forEach
             val sectionName  = InspectionSections.sectionNames[section] ?: section
             val icon         = InspectionSections.sectionIcons[section] ?: ""
 
@@ -367,7 +367,7 @@ object PdfGenerator {
             tbl.addCell(thdr("RATING"))
             tbl.addCell(thdr("FINDINGS"))
 
-            sectionItems.forEach { checklistItem ->
+            sectionItemsList.forEach { checklistItem ->
                 val found  = items.find { it.itemId == checklistItem.id }
                 val rating = found?.rating ?: Rating.NOT_RATED
                 val color  = rColor(rating)
