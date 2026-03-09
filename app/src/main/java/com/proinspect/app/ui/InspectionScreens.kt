@@ -35,7 +35,7 @@ import kotlinx.coroutines.withContext
 fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
     val context = LocalContext.current
     val report by viewModel.currentReport.collectAsState()
-   val itemsMap by viewModel.items.collectAsState()
+    val itemsMap by viewModel.items.collectAsState()
     val photos by viewModel.photos.collectAsState()
     val settings by viewModel.appSettings.collectAsState()
     var cameraUri by remember { mutableStateOf<Uri?>(null) }
@@ -47,8 +47,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
         cameraUri = uri
         cameraLauncher.launch(uri)
     }
-   val sectionItemsList = InspectionSections.items.get(section) ?: emptyList()
-
+    val sectionItemsList = InspectionSections.items.get(section) ?: emptyList()
     val sectionName = InspectionSections.sectionNames[section] ?: section
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -75,7 +74,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                 color = Color(0xFF6B7280), modifier = Modifier.padding(top = 4.dp, bottom = 2.dp))
         }
         items(sectionItemsList) { checklistItem ->
-          val itemState = itemsMap[checklistItem.id]
+            val itemState = itemsMap[checklistItem.id]
             ChecklistItemCard(
                 item = checklistItem,
                 rating = itemState?.rating ?: Rating.NOT_RATED,
@@ -125,7 +124,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                 placeholder = "Summarize overall $sectionName findings..."
             )
         }
-       item {
+        item {
             val agreementLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.GetContent()
             ) { uri ->
@@ -209,7 +208,7 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
         viewModel.onPhotoCaptured(success)
     }
 
-    if (report == null) return  // <-- guard here instead
+    if (report == null) return
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
