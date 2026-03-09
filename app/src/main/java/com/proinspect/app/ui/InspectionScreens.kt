@@ -35,7 +35,7 @@ import kotlinx.coroutines.withContext
 fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
     val context = LocalContext.current
     val report by viewModel.currentReport.collectAsState()
-    val items by viewModel.items.collectAsState()
+   val itemsMap by viewModel.items.collectAsState()
     val photos by viewModel.photos.collectAsState()
     val settings by viewModel.appSettings.collectAsState()
     var cameraUri by remember { mutableStateOf<Uri?>(null) }
@@ -74,7 +74,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                 color = Color(0xFF6B7280), modifier = Modifier.padding(top = 4.dp, bottom = 2.dp))
         }
         items(sectionItemsList) { checklistItem ->
-            val itemState = items[checklistItem.id]
+          val itemState = itemsMap[checklistItem.id]
             ChecklistItemCard(
                 item = checklistItem,
                 rating = itemState?.rating ?: Rating.NOT_RATED,
