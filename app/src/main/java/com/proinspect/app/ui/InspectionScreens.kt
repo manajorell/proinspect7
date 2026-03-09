@@ -73,17 +73,17 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
             Text("InterNACHI Checklist", fontSize = 12.sp, fontWeight = FontWeight.Bold,
                 color = Color(0xFF6B7280), modifier = Modifier.padding(top = 4.dp, bottom = 2.dp))
         }
-        items(sectionItems) { ci ->
-            val itemState = items[ci.id]
+        items(sectionItems) { checklistItem ->
+            val itemState = items[checklistItem.id]
             ChecklistItemCard(
-                item = ci,
+                item = checklistItem,
                 rating = itemState?.rating ?: Rating.NOT_RATED,
                 narrative = itemState?.narrative ?: "",
-                photos = photos.filter { photo -> photo.itemId == ci.id },
-                onRatingChanged = { rating -> viewModel.setItemRating(ci.id, section, rating) },
-                onNarrativeChanged = { text -> viewModel.setItemNarrative(ci.id, section, text) },
-                onCameraClick = { launchCamera(section, ci.id) },
-                onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, section, ci.id) },
+                photos = photos.filter { photo -> photo.itemId == checklistItem.id },
+                onRatingChanged = { rating -> viewModel.setItemRating(checklistItem.id, section, rating) },
+                onNarrativeChanged = { text -> viewModel.setItemNarrative(checklistItem.id, section, text) },
+                onCameraClick = { launchCamera(section, checklistItem.id) },
+                onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, section, checklistItem.id) },
                 onDeletePhoto = { photo -> viewModel.deletePhoto(photo) },
                 apiKey = settings.anthropicApiKey
             )
@@ -274,6 +274,7 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
         }
     }
 }
+
 @Composable
 fun SummaryScreen(viewModel: InspectionViewModel) {
     val context = LocalContext.current
@@ -322,25 +323,26 @@ fun SummaryScreen(viewModel: InspectionViewModel) {
         }
         if (findings.isNotEmpty()) {
             item { Text("Priority Findings", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy) }
-          items(findings) { finding ->
-    val ci = InspectionSections.allItems().find { it.id == finding.itemId }
-    val color = when (finding.rating) { Rating.SAFETY -> RatingRed; Rating.MAJOR -> RatingOrange; else -> RatingYellow }
-    Card(colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
-        Row(Modifier.padding(12.dp)) {
-            Box(Modifier.width(4.dp).fillMaxHeight().background(color))
-            Spacer(Modifier.width(10.dp))
-            Column(Modifier.weight(1f)) {
-                Text(finding.section.replaceFirstChar { it.uppercase() }, fontSize = 10.sp, color = Color(0xFF9CA3AF), fontWeight = FontWeight.Bold)
-                Text(ci?.title ?: finding.itemId, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                if (finding.narrative.isNotBlank()) Text(finding.narrative, fontSize = 12.sp, color = Color(0xFF6B7280))
-            }
-            Surface(color = color, shape = RoundedCornerShape(4.dp)) {
-                Text(finding.rating.short, Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                    color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            items(findings) { finding ->
+                val checklistItem = InspectionSections.allItems.find { it.id == finding.itemId }
+                val color = when (finding.rating) { Rating.SAFETY -> RatingRed; Rating.MAJOR -> RatingOrange; else -> RatingYellow }
+                Card(colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
+                    Row(Modifier.padding(12.dp)) {
+                        Box(Modifier.width(4.dp).fillMaxHeight().background(color))
+                        Spacer(Modifier.width(10.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(finding.section.replaceFirstChar { it.uppercase() }, fontSize = 10.sp, color = Color(0xFF9CA3AF), fontWeight = FontWeight.Bold)
+                            Text(checklistItem?.title ?: finding.itemId, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                            if (finding.narrative.isNotBlank()) Text(finding.narrative, fontSize = 12.sp, color = Color(0xFF6B7280))
+                        }
+                        Surface(color = color, shape = RoundedCornerShape(4.dp)) {
+                            Text(finding.rating.short, Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
             }
         }
-    }
-}
         item {
             Button(
                 onClick = {
@@ -412,7 +414,6 @@ fun SummaryScreen(viewModel: InspectionViewModel) {
                 Text("Email Report to Client", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Navy)
             }
         }
-     item { Spacer(Modifier.height(20.dp)) }
+        item { Spacer(Modifier.height(20.dp)) }
     }
-}
 }
