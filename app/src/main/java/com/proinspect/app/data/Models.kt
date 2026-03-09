@@ -211,24 +211,30 @@ object InspectionSections {
     )
     
     // Map with LOWERCASE keys (matching your code)
-val items: Map<String, List<ChecklistItem>> = mapOf(
-    "roofing" to roofingItems,
-    "exterior" to exteriorItems,
-    "structure" to structureItems,
-    "electrical" to electricalItems,
-    "hvac" to hvacItems,
-    "plumbing" to plumbingItems,
-    "interior" to interiorItems,
-    "insulation" to insulationItems,
-    "garage" to garageItems
-)
-
-// ADD THIS LINE:
-val sections: List<String> = items.keys.toList()
-
-// All items flattened for summary screen
-val allItems: List<ChecklistItem> = items.values.flatten()
-
+    val items: Map<String, List<ChecklistItem>> = mapOf(
+        "roofing" to roofingItems,
+        "exterior" to exteriorItems,
+        "structure" to structureItems,
+        "electrical" to electricalItems,
+        "hvac" to hvacItems,
+        "plumbing" to plumbingItems,
+        "interior" to interiorItems,
+        "insulation" to insulationItems,
+        "garage" to garageItems
+    )
+    
+    // List of section keys for iteration
+    val sections: List<String> = listOf(
+        "roofing",
+        "exterior",
+        "structure",
+        "electrical",
+        "hvac",
+        "plumbing",
+        "interior",
+        "insulation",
+        "garage"
+    )
     
     // All items flattened for summary screen
     val allItems: List<ChecklistItem> = items.values.flatten()
