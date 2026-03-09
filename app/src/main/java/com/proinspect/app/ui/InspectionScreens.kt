@@ -47,7 +47,8 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
         cameraUri = uri
         cameraLauncher.launch(uri)
     }
-   val sectionItemsList = InspectionSections.items[section] ?: emptyList()
+   val sectionItemsList = InspectionSections.items.get(section) ?: emptyList()
+
     val sectionName = InspectionSections.sectionNames[section] ?: section
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
