@@ -337,7 +337,6 @@ object PdfGenerator {
             "interior" to report.interiorNarrative, "insulation" to report.insulationNarrative,
             "garage" to report.garageNarrative
         )
-
         InspectionSections.sections.forEach { section ->
             val sectionItemsList = InspectionSections.items[section] ?: return@forEach
             val sectionName  = InspectionSections.sectionNames[section] ?: section
