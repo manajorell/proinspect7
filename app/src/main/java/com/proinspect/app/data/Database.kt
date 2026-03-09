@@ -55,6 +55,22 @@ interface AppSettingsDao {
     suspend fun saveSettings(settings: AppSettings)
 }
 
+// ========== NEW: SERIAL DECODE PATTERNS DAO ==========
+@Dao
+interface SerialDecodePatternDao {
+    @Query("SELECT * FROM serial_decode_patterns WHERE LOWER(manufacturer) = LOWER(:mfg) ORDER BY priority DESC")
+    suspend fun getPatternsForManufacturer(mfg: String): List<SerialDecodePattern>
+    
+    @Query("SELECT * FROM serial_decode_patterns ORDER BY manufacturer, priority DESC")
+    suspend fun getAllPatterns(): List<SerialDecodePattern>
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPatterns(patterns: List<SerialDecodePattern>)
+    
+    @Query("DELETE FROM serial_decode_patterns")
+    suspend fun deleteAll()
+}
+
 class Converters {
     @TypeConverter
     fun fromRating(value: Rating): String = value.name
@@ -65,8 +81,14 @@ class Converters {
 }
 
 @Database(
-    entities = [Report::class, InspectionItem::class, InspectionPhoto::class, AppSettings::class],
-    version = 4,
+    entities = [
+        Report::class, 
+        InspectionItem::class, 
+        InspectionPhoto::class, 
+        AppSettings::class,
+        SerialDecodePattern::class  // ← ADD THIS
+    ],
+    version = 5,  // ← INCREMENT VERSION (was 4, now 5)
     exportSchema = false
 )
 @TypeConverters(Converters::class) 
@@ -75,6 +97,7 @@ abstract class ProInspectDatabase : RoomDatabase() {
     abstract fun inspectionItemDao(): InspectionItemDao
     abstract fun inspectionPhotoDao(): InspectionPhotoDao
     abstract fun appSettingsDao(): AppSettingsDao
+    abstract fun serialDecodePatternDao(): SerialDecodePatternDao  // ← ADD THIS
 
     companion object {
         @Volatile private var INSTANCE: ProInspectDatabase? = null
