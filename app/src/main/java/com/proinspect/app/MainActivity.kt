@@ -55,12 +55,12 @@ fun ProInspectApp(viewModel: InspectionViewModel) {
                 onTabChange = { currentTab = it },
                 onBack = { navController.popBackStack() }
             ) {
-                when (tabSections.getOrNull(currentTab)) {
+                when (val currentSection = tabSections.getOrNull(currentTab)) {
                     "info"    -> PropertyInfoScreen(viewModel)
                     "summary" -> SummaryScreen(viewModel)
                     null      -> PropertyInfoScreen(viewModel)
                     else      -> InspectionSectionScreen(
-                        section = tabSections[currentTab],
+                        section = currentSection,  // ✅ Changed from tabSections[currentTab]
                         viewModel = viewModel
                     )
                 }
