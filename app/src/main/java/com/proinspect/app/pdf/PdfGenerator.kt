@@ -6,7 +6,6 @@ import android.os.Environment
 import com.itextpdf.text.*
 import com.itextpdf.text.pdf.*
 import com.itextpdf.text.pdf.draw.LineSeparator
-import com.itextpdf.text.pdf.PdfPageEventHelper
 import com.itextpdf.text.pdf.ColumnText
 import com.proinspect.app.data.*
 import java.io.File
@@ -135,6 +134,9 @@ object PdfGenerator {
 
         doc.add(Chunk(LineSeparator(0.5f, 100f, cBorder, Element.ALIGN_CENTER, -2f)))
 
+        // ========== NEW: RATING LEGEND ==========
+        addRatingLegend(doc)
+
         val legend = PdfPTable(5).apply {
             widthPercentage = 80f; spacingBefore = 12f; spacingAfter = 8f
             horizontalAlignment = Element.ALIGN_CENTER
@@ -205,6 +207,74 @@ object PdfGenerator {
             doc.add(badgeTbl)
         }
         doc.newPage()
+    }
+
+    // ========== NEW: RATING LEGEND FUNCTION ==========
+    private fun addRatingLegend(doc: Document) {
+        doc.add(Paragraph("\n"))
+        
+        // Legend title
+        val legendTitle = Paragraph("Rating Legend", 
+            Font(Font.FontFamily.HELVETICA, 11f, Font.BOLD, cNavy))
+        legendTitle.alignment = Element.ALIGN_CENTER
+        legendTitle.spacingAfter = 6f
+        doc.add(legendTitle)
+        
+        // Create legend table
+        val legendTable = PdfPTable(5) // 5 columns for 5 ratings
+        legendTable.widthPercentage = 90f
+        legendTable.spacingBefore = 5f
+        legendTable.spacingAfter = 10f
+        legendTable.horizontalAlignment = Element.ALIGN_CENTER
+        
+        // Add each rating with colored circle
+        addLegendItem(legendTable, "Safety Issue", cRed, "Immediate correction required")
+        addLegendItem(legendTable, "Major Concern", cOrange, "Correct prior to closing")
+        addLegendItem(legendTable, "Monitor", cYellow, "Repair or maintain")
+        addLegendItem(legendTable, "Good", cGreen, "No deficiencies noted")
+        addLegendItem(legendTable, "Not Rated", cGray, "Not inspected or N/A")
+        
+        doc.add(legendTable)
+        
+        // Add separator line
+        val line = LineSeparator(0.5f, 100f, cBorder, Element.ALIGN_CENTER, -2f)
+        doc.add(Chunk(line))
+        doc.add(Paragraph("\n"))
+    }
+
+    private fun addLegendItem(table: PdfPTable, label: String, color: BaseColor, description: String) {
+        val cell = PdfPCell()
+        cell.border = Rectangle.BOX
+        cell.borderColor = color
+        cell.borderWidth = 1.5f
+        cell.backgroundColor = BaseColor(color.red, color.green, color.blue, 15) // Light tint
+        cell.horizontalAlignment = Element.ALIGN_CENTER
+        cell.verticalAlignment = Element.ALIGN_MIDDLE
+        cell.paddingTop = 8f
+        cell.paddingBottom = 8f
+        cell.paddingLeft = 5f
+        cell.paddingRight = 5f
+        
+        // Create a paragraph with colored circle and label
+        val paragraph = Paragraph()
+        paragraph.alignment = Element.ALIGN_CENTER
+        
+        // Add colored circle
+        val circleChunk = Chunk("●", Font(Font.FontFamily.HELVETICA, 16f, Font.NORMAL, color))
+        paragraph.add(circleChunk)
+        paragraph.add(Chunk("\n"))
+        
+        // Add label
+        val labelChunk = Chunk(label, Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, color))
+        paragraph.add(labelChunk)
+        paragraph.add(Chunk("\n"))
+        
+        // Add description
+        val descChunk = Chunk(description, Font(Font.FontFamily.HELVETICA, 7f, Font.NORMAL, cGray))
+        paragraph.add(descChunk)
+        
+        cell.addElement(paragraph)
+        table.addCell(cell)
     }
 
     private fun pageExecutiveSummary(
