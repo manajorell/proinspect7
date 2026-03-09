@@ -60,7 +60,7 @@ fun ProInspectApp(viewModel: InspectionViewModel) {
                     "summary" -> SummaryScreen(viewModel)
                     null      -> PropertyInfoScreen(viewModel)
                     else      -> InspectionSectionScreen(
-                        section = currentSection,
+                       section = currentSection,
                         viewModel = viewModel
                     )
                 }
