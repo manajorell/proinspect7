@@ -585,11 +585,14 @@ fun parseSerialPlateText(text: String, equipmentName: String): String {
     }.trim()
 }
 
-fun decodeYearFromSerial(serial: String, manufacturer: String): String {
+ffun decodeYearFromSerial(serial: String, manufacturer: String): String {
     if (serial.length < 4) return ""
     
     // Clean serial number (remove spaces, dashes)
     val cleanSerial = serial.replace(Regex("[\\s-]"), "").uppercase()
+    
+    // Get current year for validation
+    val currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
     
     return when (manufacturer.lowercase()) {
         "rheem", "ruud" -> {
@@ -599,10 +602,99 @@ fun decodeYearFromSerial(serial: String, manufacturer: String): String {
                 val yearDigits = cleanSerial.substring(4, 6)
                 val year = yearDigits.toIntOrNull()
                 if (year != null) {
-                    val fullYear = if (year > 50) 1900 + year else 2000 + year
-                    "$fullYear (from serial)"
+                    // If year is 00-50, assume 2000s. If 51-99, assume 1900s
+                    val fullYear = if (year <= 50) 2000 + year else 1900 + year
+                    // Validate it's not in the future
+                    if (fullYear <= currentYear) "$fullYear (from serial)" else ""
                 } else ""
             } else ""
+        }
+        "carrier", "bryant", "payne" -> {
+            // Carrier/Bryant: 4th character is year (0-9 cycle)
+            // 0=2010, 1=2011... 9=2019, then 0=2020, etc.
+            if (cleanSerial.length >= 4) {
+                val yearChar = cleanSerial[3]
+                val yearDigit = yearChar.toString().toIntOrNull()
+                if (yearDigit != null) {
+                    // Start from 2010 and cycle through decades
+                    var year = 2010 + yearDigit
+                    // If year is in future, go back a decade
+                    while (year > currentYear) {
+                        year -= 10
+                    }
+                    "$year (from serial)"
+                } else ""
+            } else ""
+        }
+        "trane", "american standard" -> {
+            // Trane: Characters 3-4 are year (positions 2-3 in 0-indexed)
+            if (cleanSerial.length >= 4) {
+                val yearChars = cleanSerial.substring(2, 4)
+                val year = yearChars.toIntOrNull()
+                if (year != null) {
+                    // If year is 00-50, assume 2000s. If 51-99, assume 1900s
+                    val fullYear = if (year <= 50) 2000 + year else 1900 + year
+                    // Validate it's not in the future
+                    if (fullYear <= currentYear) "$fullYear (from serial)" else ""
+                } else ""
+            } else ""
+        }
+        "lennox" -> {
+            // Lennox: Characters 2-3 are year (positions 1-2 in 0-indexed)
+            if (cleanSerial.length >= 3) {
+                val yearDigits = cleanSerial.substring(1, 3)
+                val year = yearDigits.toIntOrNull()
+                if (year != null) {
+                    // If year is 00-50, assume 2000s. If 51-99, assume 1900s
+                    val fullYear = if (year <= 50) 2000 + year else 1900 + year
+                    // Validate it's not in the future
+                    if (fullYear <= currentYear) "$fullYear (from serial)" else ""
+                } else ""
+            } else ""
+        }
+        "goodman", "amana" -> {
+            // Goodman/Amana: Characters 3-4 are year (positions 2-3 in 0-indexed)
+            if (cleanSerial.length >= 4) {
+                val yearDigits = cleanSerial.substring(2, 4)
+                val year = yearDigits.toIntOrNull()
+                if (year != null) {
+                    // If year is 00-50, assume 2000s. If 51-99, assume 1900s
+                    val fullYear = if (year <= 50) 2000 + year else 1900 + year
+                    // Validate it's not in the future
+                    if (fullYear <= currentYear) "$fullYear (from serial)" else ""
+                } else ""
+            } else ""
+        }
+        "york" -> {
+            // York: 1st letter is year (A=2004, B=2005, etc.)
+            if (cleanSerial.isNotEmpty() && cleanSerial[0].isLetter()) {
+                val letter = cleanSerial[0]
+                val year = 2004 + (letter - 'A')
+                // Validate it's reasonable (2004-current year)
+                if (year in 2004..currentYear) "$year (from serial)" else ""
+            } else ""
+        }
+        "bradford white", "a.o. smith", "ao smith", "state" -> {
+            // Water heaters: Look for 4-digit year anywhere in serial
+            val yearMatch = Regex("(19|20)\\d{2}").find(cleanSerial)
+            if (yearMatch != null) {
+                val year = yearMatch.value.toInt()
+                // Validate it's reasonable (1980-current year)
+                if (year in 1980..currentYear) "${yearMatch.value} (from serial)" else ""
+            } else ""
+        }
+        else -> {
+            // Generic: try to find any 4-digit year in the serial
+            val yearMatch = Regex("(19|20)\\d{2}").find(cleanSerial)
+            if (yearMatch != null) {
+                val year = yearMatch.value.toInt()
+                // Validate it's reasonable (1980-current year)
+                if (year in 1980..currentYear) "${yearMatch.value} (from serial)" else ""
+            } else ""
+        }
+    }
+}
+
         }
         "carrier", "bryant", "payne" -> {
             // Carrier/Bryant: 4th character is year
