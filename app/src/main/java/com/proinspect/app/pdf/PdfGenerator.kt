@@ -252,8 +252,8 @@ object PdfGenerator {
             doc.add(gHdr)
             val goodTbl = PdfPTable(3).apply { widthPercentage = 100f; spacingAfter = 16f }
             good.forEach { item ->
-               val title = InspectionSections.allItems.find { it.id == item.itemId }?.title ?: "Unknown"
-                val gc = PdfPCell(Phrase("✓  ${ci?.title ?: item.itemId}",
+                val checklistItem = InspectionSections.allItems.find { it.id == item.itemId }
+                val gc = PdfPCell(Phrase("✓  ${checklistItem?.title ?: item.itemId}",
                     Font(Font.FontFamily.HELVETICA, 9f, Font.NORMAL, cGreen)))
                 gc.border = Rectangle.NO_BORDER
                 gc.paddingTop = 3f; gc.paddingBottom = 3f; gc.paddingLeft = 3f; gc.paddingRight = 3f
@@ -279,7 +279,7 @@ object PdfGenerator {
         doc.add(hdrTbl)
 
         items.forEach { item ->
-            val title = InspectionSections.allItems.find { it.id == item.itemId }?.title ?: "Unknown"
+            val checklistItem = InspectionSections.allItems.find { it.id == item.itemId }
             val itemPhotos = photos.filter { it.itemId == item.itemId }.take(2)
             val row = PdfPTable(if (itemPhotos.isNotEmpty()) 2 else 1).apply {
                 widthPercentage = 100f; spacingAfter = 6f
@@ -290,7 +290,7 @@ object PdfGenerator {
             textCell.paddingLeft = 10f; textCell.paddingTop = 8f; textCell.paddingBottom = 8f; textCell.paddingRight = 8f
             textCell.backgroundColor = cOffWhite
             val sectionName = InspectionSections.sectionNames[item.section] ?: item.section
-            textCell.addElement(Paragraph("$sectionName  ›  ${ci?.title ?: item.itemId}",
+            textCell.addElement(Paragraph("$sectionName  ›  ${checklistItem?.title ?: item.itemId}",
                 Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, color)))
             if (item.narrative.isNotBlank())
                 textCell.addElement(Paragraph(item.narrative, fBody).apply { spacingBefore = 4f })
@@ -367,11 +367,11 @@ object PdfGenerator {
             tbl.addCell(thdr("RATING"))
             tbl.addCell(thdr("FINDINGS"))
 
-            sectionItems.forEach { ci ->
-                val found  = items.find { it.itemId == ci.id }
+            sectionItems.forEach { checklistItem ->
+                val found  = items.find { it.itemId == checklistItem.id }
                 val rating = found?.rating ?: Rating.NOT_RATED
                 val color  = rColor(rating)
-                val nameCell = PdfPCell(Phrase(ci.title, fBody))
+                val nameCell = PdfPCell(Phrase(checklistItem.title, fBody))
                 nameCell.border = Rectangle.BOTTOM; nameCell.borderColorBottom = cBorder
                 nameCell.paddingTop = 7f; nameCell.paddingBottom = 7f; nameCell.paddingLeft = 7f; nameCell.paddingRight = 7f
                 tbl.addCell(nameCell)
