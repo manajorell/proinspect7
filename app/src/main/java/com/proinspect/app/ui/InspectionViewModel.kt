@@ -84,7 +84,7 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
             val reportId = _currentReportId.value ?: return@launch
             val existing = items.value[itemId]
             val item = existing?.copy(ratingName = rating.name)
-    ?: InspectionItem(reportId = reportId, itemId = itemId, section = section, ratingName = rating.name)
+                ?: InspectionItem(reportId = reportId, itemId = itemId, section = section, ratingName = rating.name)
             itemDao.insertItem(item)
         }
     }
@@ -92,9 +92,9 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
     fun setItemNarrative(itemId: String, section: String, narrative: String) {
         viewModelScope.launch {
             val reportId = _currentReportId.value ?: return@launch
-           val existingItem = items.find { it.itemId == itemId }
-    ?: InspectionItem(reportId = reportId, itemId = itemId, section = section, ratingName = Rating.NOT_RATED.name, narrative = narrative)
-                ?: InspectionItem(reportId = reportId, itemId = itemId, section = section, narrative = narrative)
+            val existingItem = items.value[itemId]
+            val item = existingItem?.copy(narrative = narrative)
+                ?: InspectionItem(reportId = reportId, itemId = itemId, section = section, ratingName = Rating.NOT_RATED.name, narrative = narrative)
             itemDao.insertItem(item)
         }
     }
@@ -202,6 +202,7 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
             settingsDao.saveSettings(updated)
         }
     }
+    
     fun saveAgreementPath(reportId: Long, path: String, isSigned: Boolean) {
         viewModelScope.launch {
             val r = reportDao.getReport(reportId) ?: return@launch
