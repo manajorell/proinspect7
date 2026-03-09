@@ -47,7 +47,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
         cameraUri = uri
         cameraLauncher.launch(uri)
     }
-    val sectionItems = InspectionSections.items[section] ?: emptyList()
+   val sectionItemsList = InspectionSections.items[section] ?: emptyList()
     val sectionName = InspectionSections.sectionNames[section] ?: section
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -73,7 +73,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
             Text("InterNACHI Checklist", fontSize = 12.sp, fontWeight = FontWeight.Bold,
                 color = Color(0xFF6B7280), modifier = Modifier.padding(top = 4.dp, bottom = 2.dp))
         }
-        items(sectionItems) { checklistItem ->
+        items(sectionItemsList) { checklistItem ->
             val itemState = items[checklistItem.id]
             ChecklistItemCard(
                 item = checklistItem,
