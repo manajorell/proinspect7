@@ -31,7 +31,9 @@ android {
         jvmTarget = "17"
         languageVersion = "1.9"
     }
-    buildFeatures { compose = true }
+    buildFeatures { 
+        compose = true 
+    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -42,8 +44,8 @@ android {
 }
 
 dependencies {
-implementation(libs.coil.compose)    
-implementation(libs.androidx.core.ktx)
+    implementation(libs.coil.compose)    
+    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -56,34 +58,8 @@ implementation(libs.androidx.core.ktx)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-  ksp(libs.androidx.room.compiler)
+    ksp(libs.androidx.room.compiler)
     implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.coil.compose)
-    implementation(libs.itext.pdf)
-    implementation(libs.accompanist.permissions)
-    implementation(libs.androidx.camera.core)
-    implementation(libs.androidx.camera.camera2)
-    implementation(libs.androidx.camera.lifecycle)
-    implementation(libs.androidx.camera.view)
-    implementation(libs.gson)
-dependencies {
-implementation(libs.coil.compose)    
-implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
-    implementation(libs.androidx.material.icons)
-    implementation(libs.androidx.navigation.compose)
-    implementation(libs.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-  ksp(libs.androidx.room.compiler)
-    implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.coil.compose)
     implementation(libs.itext.pdf)
     implementation(libs.accompanist.permissions)
     implementation(libs.androidx.camera.core)
@@ -91,6 +67,10 @@ implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     implementation(libs.okhttp)
+    implementation(libs.gson)
+    
+    // Add Google Vision API for local OCR
+    implementation("com.google.android.gms:play-services-vision:20.1.3")
+    
     debugImplementation(libs.androidx.ui.tooling)
-}
 }
