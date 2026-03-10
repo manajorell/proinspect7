@@ -109,7 +109,6 @@ if (settings.companyLogoPath.isNotBlank()) {
     } catch (_: Exception) {}
     hdr.addCell(logoCell)
 }
-        }
         doc.add(hdr)
         doc.add(Chunk(LineSeparator(3f, 100f, cGold, Element.ALIGN_CENTER, 0f)))
 
