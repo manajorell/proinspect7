@@ -84,25 +84,31 @@ object PdfGenerator {
             hCell.addElement(Paragraph(report.propertyCity,
                 Font(Font.FontFamily.HELVETICA, 12f, Font.NORMAL, BaseColor(180, 190, 210))))
         hdr.addCell(hCell)
-
-        if (settings.companyLogoPath.isNotBlank()) {
-            val logoCell = PdfPCell().apply {
-                backgroundColor = cNavy; border = Rectangle.NO_BORDER
-                paddingTop = 20f; paddingBottom = 20f; paddingLeft = 8f; paddingRight = 20f
-                verticalAlignment = Element.ALIGN_MIDDLE
-            }
-            try {
-                val bmp = BitmapFactory.decodeFile(settings.companyLogoPath)
-                if (bmp != null) {
-                    val stream = java.io.ByteArrayOutputStream()
-                    bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
-                    val img = Image.getInstance(stream.toByteArray())
-                    img.scaleToFit(140f, 100f)
-                    img.alignment = Element.ALIGN_RIGHT
-                    logoCell.addElement(img)
-                }
-            } catch (_: Exception) {}
-            hdr.addCell(logoCell)
+if (settings.companyLogoPath.isNotBlank()) {
+    val logoCell = PdfPCell().apply {
+        backgroundColor = cNavy; border = Rectangle.NO_BORDER
+        paddingTop = 20f; paddingBottom = 20f; paddingLeft = 8f; paddingRight = 20f
+        verticalAlignment = Element.ALIGN_MIDDLE
+    }
+    try {
+        val bmp = BitmapFactory.decodeFile(settings.companyLogoPath)
+        if (bmp != null) {
+            val stream = java.io.ByteArrayOutputStream()
+            bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
+            val img = Image.getInstance(stream.toByteArray())
+            
+            // ← UPDATED: Much larger logo to match header height
+            // Header has paddingTop=40f + paddingBottom=36f = 76f total padding
+            // Plus content height ≈ 80f, so total ≈ 156f
+            // We'll make logo fit within 140f height (leaves some breathing room)
+            img.scaleToFit(280f, 140f)  // ← CHANGED from (140f, 100f)
+            
+            img.alignment = Element.ALIGN_RIGHT
+            logoCell.addElement(img)
+        }
+    } catch (_: Exception) {}
+    hdr.addCell(logoCell)
+}
         }
         doc.add(hdr)
         doc.add(Chunk(LineSeparator(3f, 100f, cGold, Element.ALIGN_CENTER, 0f)))
