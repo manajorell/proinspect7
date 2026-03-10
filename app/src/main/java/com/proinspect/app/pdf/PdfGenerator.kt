@@ -17,11 +17,11 @@ object PdfGenerator {
 
     private val cNavy     = BaseColor(26, 39, 68)
     private val cGold     = BaseColor(201, 151, 58)
-    private val cRed      = BaseColor(180, 35, 35)
-    private val cOrange   = BaseColor(200, 80, 12)
-    private val cYellow   = BaseColor(160, 110, 0)
-    private val cGreen    = BaseColor(22, 130, 60)
-    private val cGray     = BaseColor(100, 110, 120)
+    private val cRed      = BaseColor(220, 38, 38)      // Bright red for Safety
+    private val cOrange   = BaseColor(249, 115, 22)     // True orange for Major
+    private val cBlue     = BaseColor(37, 99, 235)      // Blue for Monitor
+    private val cGreen    = BaseColor(34, 197, 94)      // Bright green for Good
+    private val cGray     = BaseColor(107, 114, 128)    // Medium gray for Not Rated
     private val cLightBg  = BaseColor(248, 245, 239)
     private val cBorder   = BaseColor(220, 215, 200)
     private val cWhite    = BaseColor.WHITE
@@ -39,9 +39,17 @@ object PdfGenerator {
     private fun rColor(r: Rating) = when (r) {
         Rating.SAFETY    -> cRed
         Rating.MAJOR     -> cOrange
-        Rating.MONITOR   -> cYellow
+        Rating.MONITOR   -> cBlue
         Rating.GOOD      -> cGreen
         Rating.NOT_RATED -> cGray
+    }
+
+    private fun rIcon(r: Rating) = when (r) {
+        Rating.SAFETY    -> "🛑"  // Stop sign
+        Rating.MAJOR     -> "🩹"  // Bandaid
+        Rating.MONITOR   -> "🔍"  // Magnifying glass
+        Rating.GOOD      -> "👍"  // Thumbs up
+        Rating.NOT_RATED -> ""    // Blank
     }
 
     suspend fun generate(
@@ -84,31 +92,26 @@ object PdfGenerator {
             hCell.addElement(Paragraph(report.propertyCity,
                 Font(Font.FontFamily.HELVETICA, 12f, Font.NORMAL, BaseColor(180, 190, 210))))
         hdr.addCell(hCell)
-if (settings.companyLogoPath.isNotBlank()) {
-    val logoCell = PdfPCell().apply {
-        backgroundColor = cNavy; border = Rectangle.NO_BORDER
-        paddingTop = 20f; paddingBottom = 20f; paddingLeft = 8f; paddingRight = 20f
-        verticalAlignment = Element.ALIGN_MIDDLE
-    }
-    try {
-        val bmp = BitmapFactory.decodeFile(settings.companyLogoPath)
-        if (bmp != null) {
-            val stream = java.io.ByteArrayOutputStream()
-            bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
-            val img = Image.getInstance(stream.toByteArray())
-            
-            // ← UPDATED: Much larger logo to match header height
-            // Header has paddingTop=40f + paddingBottom=36f = 76f total padding
-            // Plus content height ≈ 80f, so total ≈ 156f
-            // We'll make logo fit within 140f height (leaves some breathing room)
-            img.scaleToFit(280f, 140f)  // ← CHANGED from (140f, 100f)
-            
-            img.alignment = Element.ALIGN_RIGHT
-            logoCell.addElement(img)
+
+        if (settings.companyLogoPath.isNotBlank()) {
+            val logoCell = PdfPCell().apply {
+                backgroundColor = cNavy; border = Rectangle.NO_BORDER
+                paddingTop = 20f; paddingBottom = 20f; paddingLeft = 8f; paddingRight = 20f
+                verticalAlignment = Element.ALIGN_MIDDLE
+            }
+            try {
+                val bmp = BitmapFactory.decodeFile(settings.companyLogoPath)
+                if (bmp != null) {
+                    val stream = java.io.ByteArrayOutputStream()
+                    bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
+                    val img = Image.getInstance(stream.toByteArray())
+                    img.scaleToFit(280f, 140f)
+                    img.alignment = Element.ALIGN_RIGHT
+                    logoCell.addElement(img)
+                }
+            } catch (_: Exception) {}
+            hdr.addCell(logoCell)
         }
-    } catch (_: Exception) {}
-    hdr.addCell(logoCell)
-}
         doc.add(hdr)
         doc.add(Chunk(LineSeparator(3f, 100f, cGold, Element.ALIGN_CENTER, 0f)))
 
@@ -139,7 +142,7 @@ if (settings.companyLogoPath.isNotBlank()) {
 
         doc.add(Chunk(LineSeparator(0.5f, 100f, cBorder, Element.ALIGN_CENTER, -2f)))
 
-        // ========== NEW: RATING LEGEND ==========
+        // Rating Legend
         addRatingLegend(doc)
 
         val legend = PdfPTable(5).apply {
@@ -149,7 +152,7 @@ if (settings.companyLogoPath.isNotBlank()) {
         listOf(
             Triple("Safety Issue",  cRed,    items.count { it.rating == Rating.SAFETY }),
             Triple("Major Concern", cOrange, items.count { it.rating == Rating.MAJOR }),
-            Triple("Monitor",       cYellow, items.count { it.rating == Rating.MONITOR }),
+            Triple("Monitor",       cBlue,   items.count { it.rating == Rating.MONITOR }),
             Triple("Good",          cGreen,  items.count { it.rating == Rating.GOOD }),
             Triple("Not Rated",     cGray,   items.count { it.rating == Rating.NOT_RATED })
         ).forEach { (label, color, count) ->
@@ -214,7 +217,6 @@ if (settings.companyLogoPath.isNotBlank()) {
         doc.newPage()
     }
 
-    // ========== NEW: RATING LEGEND FUNCTION ==========
     private fun addRatingLegend(doc: Document) {
         doc.add(Paragraph("\n"))
         
@@ -232,12 +234,12 @@ if (settings.companyLogoPath.isNotBlank()) {
         legendTable.spacingAfter = 10f
         legendTable.horizontalAlignment = Element.ALIGN_CENTER
         
-        // Add each rating with colored circle
-        addLegendItem(legendTable, "Safety Issue", cRed, "Immediate correction required")
-        addLegendItem(legendTable, "Major Concern", cOrange, "Correct prior to closing")
-        addLegendItem(legendTable, "Monitor", cYellow, "Repair or maintain")
-        addLegendItem(legendTable, "Good", cGreen, "No deficiencies noted")
-        addLegendItem(legendTable, "Not Rated", cGray, "Not inspected or N/A")
+        // Add each rating with icon, colored border, and description
+        addLegendItem(legendTable, "Safety Issue", cRed, "Immediate correction required", "🛑")
+        addLegendItem(legendTable, "Major Concern", cOrange, "Correct prior to closing", "🩹")
+        addLegendItem(legendTable, "Monitor", cBlue, "Repair or maintain", "🔍")
+        addLegendItem(legendTable, "Good", cGreen, "No deficiencies noted", "👍")
+        addLegendItem(legendTable, "Not Rated", cGray, "Not inspected or N/A", "")
         
         doc.add(legendTable)
         
@@ -247,7 +249,7 @@ if (settings.companyLogoPath.isNotBlank()) {
         doc.add(Paragraph("\n"))
     }
 
-    private fun addLegendItem(table: PdfPTable, label: String, color: BaseColor, description: String) {
+    private fun addLegendItem(table: PdfPTable, label: String, color: BaseColor, description: String, icon: String) {
         val cell = PdfPCell()
         cell.border = Rectangle.BOX
         cell.borderColor = color
@@ -260,14 +262,16 @@ if (settings.companyLogoPath.isNotBlank()) {
         cell.paddingLeft = 5f
         cell.paddingRight = 5f
         
-        // Create a paragraph with colored circle and label
+        // Create a paragraph with icon and label
         val paragraph = Paragraph()
         paragraph.alignment = Element.ALIGN_CENTER
         
-        // Add colored circle
-        val circleChunk = Chunk("●", Font(Font.FontFamily.HELVETICA, 16f, Font.NORMAL, color))
-        paragraph.add(circleChunk)
-        paragraph.add(Chunk("\n"))
+        // Add icon (if provided)
+        if (icon.isNotEmpty()) {
+            val iconChunk = Chunk(icon, Font(Font.FontFamily.HELVETICA, 20f, Font.NORMAL))
+            paragraph.add(iconChunk)
+            paragraph.add(Chunk("\n"))
+        }
         
         // Add label
         val labelChunk = Chunk(label, Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, color))
@@ -313,7 +317,7 @@ if (settings.companyLogoPath.isNotBlank()) {
 
         if (safety.isNotEmpty())  summaryGroup(doc, "SAFETY ISSUES — Correct Immediately", cRed, safety, photos)
         if (major.isNotEmpty())   summaryGroup(doc, "MAJOR CONCERNS — Correct Prior to Closing", cOrange, major, photos)
-        if (monitor.isNotEmpty()) summaryGroup(doc, "MONITOR — Repair or Maintain", cYellow, monitor, photos)
+        if (monitor.isNotEmpty()) summaryGroup(doc, "MONITOR — Repair or Maintain", cBlue, monitor, photos)
 
         val good = items.filter { it.rating == Rating.GOOD }
         if (good.isNotEmpty()) {
