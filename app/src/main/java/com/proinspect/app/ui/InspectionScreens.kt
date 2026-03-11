@@ -38,17 +38,66 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
     val itemsMap by viewModel.items.collectAsState()
     val photos by viewModel.photos.collectAsState()
     val settings by viewModel.appSettings.collectAsState()
+    
     var cameraUri by remember { mutableStateOf<Uri?>(null) }
-    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+    var pendingCameraSection by remember { mutableStateOf<String?>(null) }
+    var pendingCameraItemId by remember { mutableStateOf<String?>(null) }
+    
+    // Camera launcher
+    val cameraLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
         viewModel.onPhotoCaptured(success)
     }
-    fun launchCamera(sec: String, itemId: String?) {
-        val uri = viewModel.prepareCameraUri(context, sec, itemId)
-        cameraUri = uri
-        cameraLauncher.launch(uri)
+    
+    // Permission launcher
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            val sec = pendingCameraSection
+            val itemId = pendingCameraItemId
+            if (sec != null) {
+                try {
+                    val uri = viewModel.prepareCameraUri(context, sec, itemId)
+                    cameraUri = uri
+                    cameraLauncher.launch(uri)
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Camera error: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        } else {
+            Toast.makeText(context, "Camera permission is required to take photos", Toast.LENGTH_SHORT).show()
+        }
     }
+    
+    // Launch camera with permission check
+    fun launchCamera(sec: String, itemId: String?) {
+        pendingCameraSection = sec
+        pendingCameraItemId = itemId
+        
+        when {
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.CAMERA
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED -> {
+                try {
+                    val uri = viewModel.prepareCameraUri(context, sec, itemId)
+                    cameraUri = uri
+                    cameraLauncher.launch(uri)
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Camera error: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+            else -> {
+                permissionLauncher.launch(android.Manifest.permission.CAMERA)
+            }
+        }
+    }
+    
     val sectionItemsList = InspectionSections.items.get(section) ?: emptyList()
     val sectionName = InspectionSections.sectionNames[section] ?: section
+    
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -198,6 +247,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
         item { Spacer(Modifier.height(20.dp)) }
     }
 }
+
     
 @Composable
 fun PropertyInfoScreen(viewModel: InspectionViewModel) {
