@@ -2,6 +2,7 @@ package com.proinspect.app.ui
 
 import android.content.Context
 import android.net.Uri
+import android.os.Environment
 import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -101,11 +102,20 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
 
     fun prepareCameraUri(context: Context, section: String, itemId: String?): Uri {
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-        val photoFile = File(context.filesDir, "photo_${timestamp}.jpg")
+        
+        // Use external files directory for Pictures (matches file_paths.xml)
+        val photoDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        val photoFile = File(photoDir, "photo_${timestamp}.jpg")
+        
         pendingPhotoPath = photoFile.absolutePath
         pendingSection = section
         pendingItemId = itemId
-        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", photoFile)
+        
+        return FileProvider.getUriForFile(
+            context, 
+            "${context.packageName}.fileprovider", 
+            photoFile
+        )
     }
 
     fun onPhotoCaptured(success: Boolean) {
@@ -128,7 +138,11 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
         viewModelScope.launch {
             val reportId = _currentReportId.value ?: return@launch
             val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-            val destFile = File(context.filesDir, "gallery_${timestamp}.jpg")
+            
+            // Use external files directory for Pictures
+            val photoDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+            val destFile = File(photoDir, "gallery_${timestamp}.jpg")
+            
             try {
                 context.contentResolver.openInputStream(uri)?.use { input ->
                     destFile.outputStream().use { output -> input.copyTo(output) }
