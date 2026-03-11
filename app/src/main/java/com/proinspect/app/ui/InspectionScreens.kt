@@ -248,6 +248,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
     }
 }
 
+
     
 @Composable
 fun PropertyInfoScreen(viewModel: InspectionViewModel) {
