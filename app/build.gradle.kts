@@ -39,6 +39,11 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "META-INF/NOTICE.md"
             excludes += "META-INF/LICENSE.md"
+            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/LICENSE"
+            excludes += "META-INF/LICENSE.txt"
+            excludes += "META-INF/NOTICE"
+            excludes += "META-INF/NOTICE.txt"
         }
     }
 }
@@ -60,7 +65,12 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
     implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.itext.pdf)
+    
+    // iText 7 PDF Library
+    implementation("com.itextpdf:kernel:7.2.5")
+    implementation("com.itextpdf:layout:7.2.5")
+    implementation("com.itextpdf:io:7.2.5")
+    
     implementation(libs.accompanist.permissions)
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
@@ -69,7 +79,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.gson)
     
-    // Add Google Vision API for local OCR
+    // Google Vision API for local OCR
     implementation("com.google.android.gms:play-services-vision:20.1.3")
     
     debugImplementation(libs.androidx.ui.tooling)
