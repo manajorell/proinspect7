@@ -267,30 +267,28 @@ object PdfGenerator {
         
         // Add icon (if provided)
         if (icon.isNotEmpty()) {
-            val iconChunk = Chunk(icon, Font(Font.FontFamily.HELVETICA, 20f, Font.NORMAL))
-            paragraph.add(iconChunk)
+            paragraph.add(Chunk(icon, Font(Font.FontFamily.HELVETICA, 20f, Font.NORMAL)))
             paragraph.add(Chunk("\n"))
         }
         
         // Add label
-        val labelChunk = Chunk(label, Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, color))
-        paragraph.add(labelChunk)
+        paragraph.add(Chunk(label, Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, color)))
         paragraph.add(Chunk("\n"))
         
         // Add description
-        val descChunk = Chunk(description, Font(Font.FontFamily.HELVETICA, 7f, Font.NORMAL, cGray))
-        paragraph.add(descChunk)
+        paragraph.add(Chunk(description, Font(Font.FontFamily.HELVETICA, 7f, Font.NORMAL, cGray)))
         paragraph.add(Chunk("\n\n"))
         
-        // Add clickable count with anchor
-        val anchor = Anchor("Count: $count", Font(Font.FontFamily.HELVETICA, 14f, Font.BOLD, color))
-        anchor.reference = "#executive_summary"
+        cell.addElement(paragraph)
+        
+        // Add clickable count as separate paragraph
+        val countChunk = Chunk("Count: $count", Font(Font.FontFamily.HELVETICA, 14f, Font.BOLD, color))
+        countChunk.setLocalGoto("executive_summary")
         
         val countPara = Paragraph()
-        countPara.add(anchor)
+        countPara.add(countChunk)
         countPara.alignment = Element.ALIGN_CENTER
         
-        cell.addElement(paragraph)
         cell.addElement(countPara)
         table.addCell(cell)
     }
@@ -379,10 +377,10 @@ object PdfGenerator {
         items: List<InspectionItem>, photos: List<InspectionPhoto>,
         context: Context
     ) {
-        // Add anchor/destination for the clickable link
-        val anchor = Anchor(" ")
-        anchor.name = "executive_summary"
-        doc.add(anchor)
+        // Add destination for the clickable link - must be a visible element
+        val destinationChunk = Chunk(" ")
+        destinationChunk.setLocalDestination("executive_summary")
+        doc.add(Paragraph(destinationChunk))
 
         val titleTbl = PdfPTable(1).apply { widthPercentage = 100f; spacingAfter = 16f }
         val tc = PdfPCell()
