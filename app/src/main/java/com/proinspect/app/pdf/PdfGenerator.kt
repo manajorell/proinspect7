@@ -145,55 +145,8 @@ object PdfGenerator {
 
         doc.add(Chunk(LineSeparator(0.5f, 100f, cBorder, Element.ALIGN_CENTER, -2f)))
 
-        // Rating Legend
-        addRatingLegend(doc)
-
-        // Clickable rating legend boxes
-        val legend = PdfPTable(5).apply {
-            widthPercentage = 80f; spacingBefore = 12f; spacingAfter = 8f
-            horizontalAlignment = Element.ALIGN_CENTER
-        }
-        listOf(
-            Triple("Safety Issue",  cRed,    items.count { it.rating == Rating.SAFETY }),
-            Triple("Major Concern", cOrange, items.count { it.rating == Rating.MAJOR }),
-            Triple("Monitor",       cBlue,   items.count { it.rating == Rating.MONITOR }),
-            Triple("Good",          cGreen,  items.count { it.rating == Rating.GOOD }),
-            Triple("Not Rated",     cGray,   items.count { it.rating == Rating.NOT_RATED })
-        ).forEach { (label, color, count) ->
-            val cell = PdfPCell()
-            cell.border = Rectangle.TOP; cell.borderColorTop = color; cell.borderWidthTop = 3f
-            cell.backgroundColor = cOffWhite
-            cell.paddingTop = 10f; cell.paddingBottom = 10f
-            cell.paddingLeft = 10f; cell.paddingRight = 10f
-            cell.horizontalAlignment = Element.ALIGN_CENTER
-            
-            // Create clickable chunk
-            val countChunk = Chunk(count.toString(), Font(Font.FontFamily.HELVETICA, 22f, Font.BOLD, color))
-            countChunk.setLocalGoto("executive_summary")
-            
-            val labelChunk = Chunk(label, Font(Font.FontFamily.HELVETICA, 7f, Font.NORMAL, cGray))
-            labelChunk.setLocalGoto("executive_summary")
-            
-            val countPara = Paragraph()
-            countPara.add(countChunk)
-            countPara.alignment = Element.ALIGN_CENTER
-            
-            val labelPara = Paragraph()
-            labelPara.add(labelChunk)
-            labelPara.alignment = Element.ALIGN_CENTER
-            
-            cell.addElement(countPara)
-            cell.addElement(labelPara)
-            legend.addCell(cell)
-        }
-        doc.add(legend)
-
-        // Add instruction text
-        val instructionText = Paragraph("Click on any rating above to view detailed findings", 
-            Font(Font.FontFamily.HELVETICA, 9f, Font.ITALIC, cGray))
-        instructionText.alignment = Element.ALIGN_CENTER
-        instructionText.spacingBefore = 5f
-        doc.add(instructionText)
+        // Rating Legend with integrated counts
+        addRatingLegendWithCounts(doc, items)
 
         val badgePaths = listOf(
             settings.badge1Path, settings.badge2Path,
@@ -240,6 +193,103 @@ object PdfGenerator {
             doc.add(badgeTbl)
         }
         doc.newPage()
+    }
+
+    private fun addRatingLegendWithCounts(doc: Document, items: List<InspectionItem>) {
+        doc.add(Paragraph("\n"))
+        
+        // Legend title
+        val legendTitle = Paragraph("Rating Legend", 
+            Font(Font.FontFamily.HELVETICA, 11f, Font.BOLD, cNavy))
+        legendTitle.alignment = Element.ALIGN_CENTER
+        legendTitle.spacingAfter = 6f
+        doc.add(legendTitle)
+        
+        // Count items by rating
+        val safetyCount = items.count { it.rating == Rating.SAFETY }
+        val majorCount = items.count { it.rating == Rating.MAJOR }
+        val monitorCount = items.count { it.rating == Rating.MONITOR }
+        val goodCount = items.count { it.rating == Rating.GOOD }
+        val notRatedCount = items.count { it.rating == Rating.NOT_RATED }
+        
+        // Create legend table with integrated counts
+        val legendTable = PdfPTable(5) // 5 columns for 5 ratings
+        legendTable.widthPercentage = 90f
+        legendTable.spacingBefore = 5f
+        legendTable.spacingAfter = 10f
+        legendTable.horizontalAlignment = Element.ALIGN_CENTER
+        
+        // Add each rating with icon, colored border, description, and clickable count
+        addClickableLegendItem(legendTable, "Safety Issue", cRed, "Immediate correction required", "🛑", safetyCount)
+        addClickableLegendItem(legendTable, "Major Concern", cOrange, "Correct prior to closing", "🩹", majorCount)
+        addClickableLegendItem(legendTable, "Monitor", cBlue, "Repair or maintain", "🔍", monitorCount)
+        addClickableLegendItem(legendTable, "Good", cGreen, "No deficiencies noted", "👍", goodCount)
+        addClickableLegendItem(legendTable, "Not Rated", cGray, "Not inspected or N/A", "", notRatedCount)
+        
+        doc.add(legendTable)
+        
+        // Add instruction text
+        val instructionText = Paragraph("Click on any count above to view detailed findings", 
+            Font(Font.FontFamily.HELVETICA, 9f, Font.ITALIC, cGray))
+        instructionText.alignment = Element.ALIGN_CENTER
+        instructionText.spacingBefore = 5f
+        doc.add(instructionText)
+        
+        // Add separator line
+        val line = LineSeparator(0.5f, 100f, cBorder, Element.ALIGN_CENTER, -2f)
+        doc.add(Chunk(line))
+        doc.add(Paragraph("\n"))
+    }
+
+    private fun addClickableLegendItem(
+        table: PdfPTable, 
+        label: String, 
+        color: BaseColor, 
+        description: String, 
+        icon: String,
+        count: Int
+    ) {
+        val cell = PdfPCell()
+        cell.border = Rectangle.BOX
+        cell.borderColor = color
+        cell.borderWidth = 1.5f
+        cell.backgroundColor = BaseColor(color.red, color.green, color.blue, 15) // Light tint
+        cell.horizontalAlignment = Element.ALIGN_CENTER
+        cell.verticalAlignment = Element.ALIGN_MIDDLE
+        cell.paddingTop = 10f
+        cell.paddingBottom = 10f
+        cell.paddingLeft = 8f
+        cell.paddingRight = 8f
+        
+        // Create a paragraph with icon and label
+        val paragraph = Paragraph()
+        paragraph.alignment = Element.ALIGN_CENTER
+        
+        // Add icon (if provided)
+        if (icon.isNotEmpty()) {
+            val iconChunk = Chunk(icon, Font(Font.FontFamily.HELVETICA, 20f, Font.NORMAL))
+            paragraph.add(iconChunk)
+            paragraph.add(Chunk("\n"))
+        }
+        
+        // Add label
+        val labelChunk = Chunk(label, Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, color))
+        paragraph.add(labelChunk)
+        paragraph.add(Chunk("\n"))
+        
+        // Add description
+        val descChunk = Chunk(description, Font(Font.FontFamily.HELVETICA, 7f, Font.NORMAL, cGray))
+        paragraph.add(descChunk)
+        paragraph.add(Chunk("\n\n"))
+        
+        // Add clickable count
+        val countChunk = Chunk("Count: $count", Font(Font.FontFamily.HELVETICA, 14f, Font.BOLD, color))
+        countChunk.setLocalGoto("executive_summary")
+        countChunk.setUnderline(0.5f, -1f) // Add underline to show it's clickable
+        paragraph.add(countChunk)
+        
+        cell.addElement(paragraph)
+        table.addCell(cell)
     }
 
     private fun addHousePhotoPage(doc: Document, photos: List<InspectionPhoto>) {
@@ -319,75 +369,6 @@ object PdfGenerator {
 
         // Page break to start next section
         doc.newPage()
-    }
-
-    private fun addRatingLegend(doc: Document) {
-        doc.add(Paragraph("\n"))
-        
-        // Legend title
-        val legendTitle = Paragraph("Rating Legend", 
-            Font(Font.FontFamily.HELVETICA, 11f, Font.BOLD, cNavy))
-        legendTitle.alignment = Element.ALIGN_CENTER
-        legendTitle.spacingAfter = 6f
-        doc.add(legendTitle)
-        
-        // Create legend table
-        val legendTable = PdfPTable(5) // 5 columns for 5 ratings
-        legendTable.widthPercentage = 90f
-        legendTable.spacingBefore = 5f
-        legendTable.spacingAfter = 10f
-        legendTable.horizontalAlignment = Element.ALIGN_CENTER
-        
-        // Add each rating with icon, colored border, and description
-        addLegendItem(legendTable, "Safety Issue", cRed, "Immediate correction required", "🛑")
-        addLegendItem(legendTable, "Major Concern", cOrange, "Correct prior to closing", "🩹")
-        addLegendItem(legendTable, "Monitor", cBlue, "Repair or maintain", "🔍")
-        addLegendItem(legendTable, "Good", cGreen, "No deficiencies noted", "👍")
-        addLegendItem(legendTable, "Not Rated", cGray, "Not inspected or N/A", "")
-        
-        doc.add(legendTable)
-        
-        // Add separator line
-        val line = LineSeparator(0.5f, 100f, cBorder, Element.ALIGN_CENTER, -2f)
-        doc.add(Chunk(line))
-        doc.add(Paragraph("\n"))
-    }
-
-    private fun addLegendItem(table: PdfPTable, label: String, color: BaseColor, description: String, icon: String) {
-        val cell = PdfPCell()
-        cell.border = Rectangle.BOX
-        cell.borderColor = color
-        cell.borderWidth = 1.5f
-        cell.backgroundColor = BaseColor(color.red, color.green, color.blue, 15) // Light tint
-        cell.horizontalAlignment = Element.ALIGN_CENTER
-        cell.verticalAlignment = Element.ALIGN_MIDDLE
-        cell.paddingTop = 8f
-        cell.paddingBottom = 8f
-        cell.paddingLeft = 5f
-        cell.paddingRight = 5f
-        
-        // Create a paragraph with icon and label
-        val paragraph = Paragraph()
-        paragraph.alignment = Element.ALIGN_CENTER
-        
-        // Add icon (if provided)
-        if (icon.isNotEmpty()) {
-            val iconChunk = Chunk(icon, Font(Font.FontFamily.HELVETICA, 20f, Font.NORMAL))
-            paragraph.add(iconChunk)
-            paragraph.add(Chunk("\n"))
-        }
-        
-        // Add label
-        val labelChunk = Chunk(label, Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, color))
-        paragraph.add(labelChunk)
-        paragraph.add(Chunk("\n"))
-        
-        // Add description
-        val descChunk = Chunk(description, Font(Font.FontFamily.HELVETICA, 7f, Font.NORMAL, cGray))
-        paragraph.add(descChunk)
-        
-        cell.addElement(paragraph)
-        table.addCell(cell)
     }
 
     private fun pageExecutiveSummary(
