@@ -66,10 +66,8 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.kotlinx.coroutines.android)
     
-    // iText 7 PDF Library
-    implementation("com.itextpdf:kernel:7.2.5")
-    implementation("com.itextpdf:layout:7.2.5")
-    implementation("com.itextpdf:io:7.2.5")
+    // iText 5 PDF Library (NOT iText 7)
+    implementation("com.itextpdf:itextg:5.5.10")
     
     implementation(libs.accompanist.permissions)
     implementation(libs.androidx.camera.core)
