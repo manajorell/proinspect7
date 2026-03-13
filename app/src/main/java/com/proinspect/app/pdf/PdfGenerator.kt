@@ -42,7 +42,8 @@ object PdfGenerator {
         settings: AppSettings
     ): File {
         val pdfFile = File(
-            context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS),
+            context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) 
+                ?: context.filesDir, // Fallback to internal storage
             "inspection_report_${System.currentTimeMillis()}.pdf"
         )
 
@@ -50,8 +51,11 @@ object PdfGenerator {
         val pdfDoc = PdfDocument(writer)
         val document = Document(pdfDoc)
 
-        // Add cover page
+        // PAGE 1: Cover page
         addCoverPage(document, report, settings)
+
+        // PAGE 2: House photo (NEW)
+        addHousePhotoPage(document, photos)
 
         // Add clickable rating legend summary
         addClickableRatingLegend(document, items)
@@ -155,6 +159,57 @@ object PdfGenerator {
         document.add(AreaBreak(AreaBreakType.NEXT_PAGE))
     }
 
+    private fun addHousePhotoPage(document: Document, photos: List<InspectionPhoto>) {
+        // Get house photos from "info" section (PropertyInfoScreen)
+        val housePhotos = photos.filter { it.section == "info" && it.itemId == null }
+        
+        if (housePhotos.isEmpty()) {
+            // Skip this page if no house photo - don't add a blank page
+            return
+        }
+
+        document.add(
+            Paragraph("PROPERTY PHOTO")
+                .setFontSize(24f)
+                .setBold()
+                .setFontColor(navyColor)
+                .setTextAlignment(TextAlignment.CENTER)
+                .setMarginTop(50f)
+                .setMarginBottom(30f)
+        )
+
+        try {
+            val housePhoto = housePhotos.first() // Get first photo from info section
+            val photoFile = File(housePhoto.filePath)
+            if (photoFile.exists()) {
+                val bitmap = BitmapFactory.decodeFile(photoFile.absolutePath)
+                // Scale to half page - approximately 400 points height
+                val scaledBitmap = scaleBitmap(bitmap, 500, 400)
+                val stream = ByteArrayOutputStream()
+                scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
+                val imageData = ImageDataFactory.create(stream.toByteArray())
+                val image = Image(imageData)
+                    .setWidth(UnitValue.createPercentValue(85f))
+                    .setHeight(UnitValue.createPointValue(400f))
+                    .setHorizontalAlignment(HorizontalAlignment.CENTER)
+
+                document.add(image)
+            }
+        } catch (e: Exception) {
+            // Skip photo if error
+            document.add(
+                Paragraph("House photo unavailable")
+                    .setFontSize(12f)
+                    .setFontColor(grayColor)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setItalic()
+            )
+        }
+
+        // Page break to start next section on page 3
+        document.add(AreaBreak(AreaBreakType.NEXT_PAGE))
+    }
+
     private fun addClickableRatingLegend(document: Document, items: List<InspectionItem>) {
         document.add(
             Paragraph("INSPECTION SUMMARY")
@@ -251,27 +306,23 @@ object PdfGenerator {
             .setTextAlignment(TextAlignment.CENTER)
             .setVerticalAlignment(VerticalAlignment.MIDDLE)
 
-        // Create clickable link
-        val link = Link(
-            "$icon\n$label\n$count",
-            PdfAction.createGoTo(destination)
-        )
-            .setFontColor(color)
-            .setUnderline()
-            .setBold()
-
+        // Create paragraph with content
         val para = Paragraph()
-            .add(Paragraph(icon).setFontSize(24f))
-            .add(Paragraph(label).setFontSize(12f).setBold())
-            .add(Paragraph(count.toString()).setFontSize(20f).setBold())
+            .add(icon)
+            .add("\n")
+            .add(label)
+            .add("\n")
+            .add(count.toString())
+            .setFontSize(14f)
+            .setFontColor(color)
+            .setBold()
             .setTextAlignment(TextAlignment.CENTER)
 
-        // Make entire cell content clickable
-        val clickablePara = Paragraph()
-            .add(link)
-            .setFontSize(14f)
+        // Make it clickable
+        para.setAction(PdfAction.createGoTo(destination))
+        para.setUnderline()
 
-        cell.add(clickablePara)
+        cell.add(para)
         return cell
     }
 
