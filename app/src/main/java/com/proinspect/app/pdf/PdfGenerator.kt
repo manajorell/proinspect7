@@ -51,22 +51,22 @@ object PdfGenerator {
         val pdfDoc = PdfDocument(writer)
         val document = Document(pdfDoc)
 
-        // PAGE 1: Cover page
+        // PAGE 1: Add cover page
         addCoverPage(document, report, settings)
 
-        // PAGE 2: House photo (NEW)
+        // PAGE 2: Add house photo (NEW)
         addHousePhotoPage(document, photos)
 
-        // Add clickable rating legend summary
+        // PAGE 3: Add clickable rating legend summary
         addClickableRatingLegend(document, items)
 
-        // Add detailed findings sections (destinations for clicks)
+        // PAGE 4: Add detailed findings sections (destinations for clicks)
         addDetailedFindings(document, items)
 
-        // Add property information
+        // PAGE 5: Add property information
         addPropertyInfo(document, report)
 
-        // Add each section with full details
+        // PAGE 6+: Add each section with full details
         val sections = listOf(
             "roofing", "exterior", "structure", "electrical", 
             "hvac", "plumbing", "interior", "insulation", "garage"
@@ -306,23 +306,27 @@ object PdfGenerator {
             .setTextAlignment(TextAlignment.CENTER)
             .setVerticalAlignment(VerticalAlignment.MIDDLE)
 
-        // Create paragraph with content
-        val para = Paragraph()
-            .add(icon)
-            .add("\n")
-            .add(label)
-            .add("\n")
-            .add(count.toString())
-            .setFontSize(14f)
+        // Create clickable link
+        val link = Link(
+            "$icon\n$label\n$count",
+            PdfAction.createGoTo(destination)
+        )
             .setFontColor(color)
+            .setUnderline()
             .setBold()
+
+        val para = Paragraph()
+            .add(Paragraph(icon).setFontSize(24f))
+            .add(Paragraph(label).setFontSize(12f).setBold())
+            .add(Paragraph(count.toString()).setFontSize(20f).setBold())
             .setTextAlignment(TextAlignment.CENTER)
 
-        // Make it clickable
-        para.setAction(PdfAction.createGoTo(destination))
-        para.setUnderline()
+        // Make entire cell content clickable
+        val clickablePara = Paragraph()
+            .add(link)
+            .setFontSize(14f)
 
-        cell.add(para)
+        cell.add(clickablePara)
         return cell
     }
 
