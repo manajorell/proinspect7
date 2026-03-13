@@ -69,6 +69,7 @@ object PdfGenerator {
         
         pageCover(doc, report, items, settings)
         addHousePhotoPage(doc, photos)
+        addTableOfContents(doc, items)
         pageExecutiveSummary(doc, report, items, photos, context)
         pageFullDetails(doc, report, items, photos)
         pageCertifications(doc, report, settings)
@@ -297,6 +298,163 @@ object PdfGenerator {
 
         // Page break to start next section
         doc.newPage()
+    }
+
+    private fun addTableOfContents(doc: Document, items: List<InspectionItem>) {
+        // Add navy header bar
+        val titleTbl = PdfPTable(1).apply { widthPercentage = 100f; spacingAfter = 20f }
+        val tc = PdfPCell()
+        tc.backgroundColor = cNavy
+        tc.border = Rectangle.NO_BORDER
+        tc.paddingTop = 14f
+        tc.paddingBottom = 14f
+        tc.paddingLeft = 14f
+        tc.paddingRight = 14f
+        tc.addElement(Paragraph("Table of Contents", fWhite))
+        tc.addElement(Paragraph("Quick reference guide to report sections", fWhiteSm))
+        titleTbl.addCell(tc)
+        doc.add(titleTbl)
+        doc.add(Chunk(LineSeparator(2f, 100f, cGold, Element.ALIGN_CENTER, 0f)))
+        doc.add(Paragraph("\n"))
+
+        // Count items by rating
+        val safetyCount = items.count { it.rating == Rating.SAFETY }
+        val majorCount = items.count { it.rating == Rating.MAJOR }
+        val monitorCount = items.count { it.rating == Rating.MONITOR }
+        val goodCount = items.count { it.rating == Rating.GOOD }
+
+        // Create TOC table
+        val tocTable = PdfPTable(3).apply {
+            widthPercentage = 100f
+            spacingBefore = 10f
+            spacingAfter = 20f
+            setWidths(floatArrayOf(0.5f, 3f, 1f))
+        }
+
+        // Add header row
+        fun headerCell(text: String): PdfPCell {
+            val cell = PdfPCell(Phrase(text, Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cNavy)))
+            cell.backgroundColor = cLightBg
+            cell.border = Rectangle.BOTTOM
+            cell.borderColorBottom = cBorder
+            cell.borderWidthBottom = 2f
+            cell.paddingTop = 8f
+            cell.paddingBottom = 8f
+            cell.paddingLeft = 8f
+            cell.paddingRight = 8f
+            return cell
+        }
+
+        tocTable.addCell(headerCell(""))
+        tocTable.addCell(headerCell("SECTION"))
+        tocTable.addCell(headerCell("PAGE"))
+
+        // Add TOC entries
+        var pageNum = 1
+        
+        addTocEntry(tocTable, "📄", "Cover Page", pageNum++)
+        addTocEntry(tocTable, "🏠", "Property Photo", pageNum++)
+        addTocEntry(tocTable, "📋", "Table of Contents", pageNum++)
+        addTocEntry(tocTable, "📊", "Executive Summary", pageNum++)
+        
+        // Add rating breakdown
+        doc.add(tocTable)
+        
+        doc.add(Paragraph("\n"))
+        doc.add(Paragraph("Findings Summary", Font(Font.FontFamily.HELVETICA, 14f, Font.BOLD, cNavy)))
+        doc.add(Paragraph(" "))
+
+        // Rating summary boxes
+        val summaryTable = PdfPTable(2).apply {
+            widthPercentage = 100f
+            spacingBefore = 10f
+            spacingAfter = 20f
+        }
+
+        if (safetyCount > 0) {
+            summaryTable.addCell(createSummaryBox("🛑 Safety Issues", safetyCount, cRed, 
+                "Immediate attention required. These items pose potential safety hazards."))
+        }
+        
+        if (majorCount > 0) {
+            summaryTable.addCell(createSummaryBox("🩹 Major Concerns", majorCount, cOrange,
+                "Significant defects that should be corrected prior to closing."))
+        }
+        
+        if (monitorCount > 0) {
+            summaryTable.addCell(createSummaryBox("🔍 Monitor Items", monitorCount, cBlue,
+                "Items that should be monitored, repaired, or maintained."))
+        }
+        
+        if (goodCount > 0) {
+            summaryTable.addCell(createSummaryBox("👍 Good Condition", goodCount, cGreen,
+                "Items inspected with no deficiencies noted at time of inspection."))
+        }
+
+        // Fill empty cell if odd number
+        val totalBoxes = listOf(safetyCount, majorCount, monitorCount, goodCount).count { it > 0 }
+        if (totalBoxes % 2 != 0) {
+            summaryTable.addCell(PdfPCell().apply { border = Rectangle.NO_BORDER })
+        }
+
+        doc.add(summaryTable)
+
+        doc.newPage()
+    }
+
+    private fun addTocEntry(table: PdfPTable, icon: String, title: String, page: Int) {
+        // Icon cell
+        val iconCell = PdfPCell(Phrase(icon, Font(Font.FontFamily.HELVETICA, 14f, Font.NORMAL)))
+        iconCell.border = Rectangle.BOTTOM
+        iconCell.borderColorBottom = cBorder
+        iconCell.paddingTop = 10f
+        iconCell.paddingBottom = 10f
+        iconCell.paddingLeft = 8f
+        iconCell.paddingRight = 8f
+        iconCell.horizontalAlignment = Element.ALIGN_CENTER
+        table.addCell(iconCell)
+
+        // Title cell
+        val titleCell = PdfPCell(Phrase(title, fBody))
+        titleCell.border = Rectangle.BOTTOM
+        titleCell.borderColorBottom = cBorder
+        titleCell.paddingTop = 10f
+        titleCell.paddingBottom = 10f
+        titleCell.paddingLeft = 8f
+        titleCell.paddingRight = 8f
+        table.addCell(titleCell)
+
+        // Page cell
+        val pageCell = PdfPCell(Phrase(page.toString(), fBody))
+        pageCell.border = Rectangle.BOTTOM
+        pageCell.borderColorBottom = cBorder
+        pageCell.paddingTop = 10f
+        pageCell.paddingBottom = 10f
+        pageCell.paddingLeft = 8f
+        pageCell.paddingRight = 8f
+        pageCell.horizontalAlignment = Element.ALIGN_RIGHT
+        table.addCell(pageCell)
+    }
+
+    private fun createSummaryBox(title: String, count: Int, color: BaseColor, description: String): PdfPCell {
+        val cell = PdfPCell()
+        cell.border = Rectangle.BOX
+        cell.borderColor = color
+        cell.borderWidth = 2f
+        cell.backgroundColor = BaseColor(color.red, color.green, color.blue, 15)
+        cell.paddingTop = 12f
+        cell.paddingBottom = 12f
+        cell.paddingLeft = 12f
+        cell.paddingRight = 12f
+
+        cell.addElement(Paragraph(title, Font(Font.FontFamily.HELVETICA, 12f, Font.BOLD, color)))
+        cell.addElement(Paragraph("Count: $count", Font(Font.FontFamily.HELVETICA, 16f, Font.BOLD, color)).apply {
+            spacingBefore = 4f
+            spacingAfter = 4f
+        })
+        cell.addElement(Paragraph(description, Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, cGray)))
+
+        return cell
     }
 
     private fun addRatingLegend(doc: Document) {
