@@ -282,13 +282,16 @@ object PdfGenerator {
         paragraph.add(descChunk)
         paragraph.add(Chunk("\n\n"))
         
-        // Add clickable count
-        val countChunk = Chunk("Count: $count", Font(Font.FontFamily.HELVETICA, 14f, Font.BOLD, color))
-        countChunk.setLocalGoto("executive_summary")
-        countChunk.setUnderline(0.5f, -1f) // Add underline to show it's clickable
-        paragraph.add(countChunk)
+        // Add clickable count with anchor
+        val anchor = Anchor("Count: $count", Font(Font.FontFamily.HELVETICA, 14f, Font.BOLD, color))
+        anchor.reference = "#executive_summary"
+        
+        val countPara = Paragraph()
+        countPara.add(anchor)
+        countPara.alignment = Element.ALIGN_CENTER
         
         cell.addElement(paragraph)
+        cell.addElement(countPara)
         table.addCell(cell)
     }
 
@@ -377,8 +380,8 @@ object PdfGenerator {
         context: Context
     ) {
         // Add anchor/destination for the clickable link
-        val anchor = Chunk("", fBody)
-        anchor.setLocalDestination("executive_summary")
+        val anchor = Anchor(" ")
+        anchor.name = "executive_summary"
         doc.add(anchor)
 
         val titleTbl = PdfPTable(1).apply { widthPercentage = 100f; spacingAfter = 16f }
