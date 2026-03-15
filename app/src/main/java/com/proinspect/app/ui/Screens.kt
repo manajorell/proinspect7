@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -274,7 +275,7 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Company Logo
+            // ── Company Logo ──────────────────────────────────────────────────
             item {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -325,7 +326,7 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                 }
             }
 
-            // Certification Badges
+            // ── Certification Badges ──────────────────────────────────────────
             item {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -389,6 +390,137 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                     }
                 }
             }
+
+            // ── API Key ───────────────────────────────────────────────────────
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("🔑 Anthropic API Key", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
+                        Text("Required for AI serial number decoder", fontSize = 13.sp, color = Color.Gray)
+                        var apiKeyInput by remember { mutableStateOf(settings.anthropicApiKey) }
+                        OutlinedTextField(
+                            value = apiKeyInput,
+                            onValueChange = { apiKeyInput = it },
+                            placeholder = { Text("sk-ant-api03-...", fontSize = 12.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            visualTransformation = PasswordVisualTransformation(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Gold,
+                                unfocusedBorderColor = Color(0xFFD1D5DB)
+                            )
+                        )
+                        Button(
+                            onClick = { viewModel.saveSettings(settings.copy(anthropicApiKey = apiKeyInput)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = Navy)
+                        ) {
+                            Text("Save API Key")
+                        }
+                    }
+                }
+            }
+
+            // ── Backup & Restore ──────────────────────────────────────────────
+            item {
+                var isExporting by remember { mutableStateOf(false) }
+                var showRestoreConfirm by remember { mutableStateOf(false) }
+                var restoreMessage by remember { mutableStateOf("") }
+
+                val restoreLauncher = rememberLauncherForActivityResult(
+                    ActivityResultContracts.GetContent()
+                ) { uri ->
+                    uri?.let {
+                        viewModel.restoreBackup(context, it) { count ->
+                            restoreMessage = if (count >= 0)
+                                "✅ Restored $count report(s) successfully"
+                            else
+                                "❌ Restore failed — invalid backup file"
+                            showRestoreConfirm = true
+                        }
+                    }
+                }
+
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("💾 Backup & Restore", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
+                        Text(
+                            "Export all reports to a JSON file. Share or save it to Google Drive for safekeeping.",
+                            fontSize = 13.sp,
+                            color = Color.Gray
+                        )
+                        Button(
+                            onClick = {
+                                isExporting = true
+                                viewModel.exportBackup(context) { uri ->
+                                    isExporting = false
+                                    uri?.let {
+                                        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                            type = "application/json"
+                                            putExtra(android.content.Intent.EXTRA_STREAM, it)
+                                            putExtra(android.content.Intent.EXTRA_SUBJECT, "ProInspect Backup")
+                                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        }
+                                        context.startActivity(android.content.Intent.createChooser(intent, "Save Backup"))
+                                    }
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = Navy),
+                            enabled = !isExporting
+                        ) {
+                            if (isExporting) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text("Exporting...")
+                            } else {
+                                Icon(Icons.Default.Upload, null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Export Backup")
+                            }
+                        }
+                        OutlinedButton(
+                            onClick = { restoreLauncher.launch("application/json") },
+                            modifier = Modifier.fillMaxWidth(),
+                            border = BorderStroke(1.5.dp, Navy)
+                        ) {
+                            Icon(Icons.Default.Download, null, tint = Navy, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Restore from Backup", color = Navy)
+                        }
+                        Text(
+                            "⚠ Restore adds reports — it does not overwrite existing ones.",
+                            fontSize = 11.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+
+                if (showRestoreConfirm) {
+                    AlertDialog(
+                        onDismissRequest = { showRestoreConfirm = false },
+                        title = { Text("Restore Complete") },
+                        text = { Text(restoreMessage) },
+                        confirmButton = {
+                            TextButton(onClick = { showRestoreConfirm = false }) {
+                                Text("OK")
+                            }
+                        }
+                    )
+                }
+            }
+
+            item { Spacer(Modifier.height(20.dp)) }
         }
     }
 }
