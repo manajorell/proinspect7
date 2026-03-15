@@ -760,12 +760,13 @@ fun ChecklistItemCard(
                 )
 
                if (item.id in listOf("pl3", "hv1", "hv2", "el2")) {
-                    val equipmentName = when (item.id) {
-                        "pl3" -> "Water Heater"
-                        "hv1" -> "Furnace / Air Handler"
-                        "hv2" -> "AC Condenser"
-                        else -> "Equipment"
-                    }
+                 val equipmentName = when (item.id) {
+    "pl3" -> "Water Heater"
+    "hv1" -> "Furnace / Air Handler"
+    "hv2" -> "AC Condenser"
+    "el2" -> "Electrical Panel"
+    else -> "Equipment"
+}
                     var isDecoding by remember { mutableStateOf(false) }
                     var decodedResult by remember { mutableStateOf<String?>(null) }
 
