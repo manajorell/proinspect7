@@ -211,7 +211,7 @@ object InspectionSections {
             ChecklistItem("pl10", "Sump Pump"),
             ChecklistItem("pl11", "Exterior Hose Bibs")
         ),
-        "interior" to listOf(
+     "interior" to listOf(
             ChecklistItem("in1", "Interior Walls & Ceilings"),
             ChecklistItem("in2", "Interior Floors"),
             ChecklistItem("in3", "Interior Windows & Sills"),
@@ -221,7 +221,10 @@ object InspectionSections {
             ChecklistItem("in7", "Bathrooms — Tile, Caulk & Waterproofing"),
             ChecklistItem("in8", "Smoke Detectors"),
             ChecklistItem("in9", "CO Detectors"),
-            ChecklistItem("in10", "Attic Access & Hatch")
+            ChecklistItem("in10", "Attic Access & Hatch"),
+            ChecklistItem("in11", "Range / Oven / Cooktop"),
+            ChecklistItem("in12", "Built-in Microwave / Exhaust Hood")
+                    
         ),
         "insulation" to listOf(
             ChecklistItem("is1", "Attic Insulation"),
