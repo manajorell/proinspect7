@@ -138,92 +138,110 @@ data class ChecklistItem(
 
 object InspectionSections {
     
-    private val roofingItems = listOf(
-        ChecklistItem("rf1", "Roof Surface", "Inspect shingles, tiles, or metal roofing"),
-        ChecklistItem("rf2", "Flashings", "Check chimney, vent, and skylight flashing"),
-        ChecklistItem("rf3", "Gutters/Downspouts", "Check gutters, downspouts, and drainage"),
-        ChecklistItem("rf4", "Roof Structure", "Check for sagging or structural issues"),
-        ChecklistItem("rf5", "Attic Ventilation", "Verify adequate ventilation")
+       val items: Map<String, List<ChecklistItem>> = mapOf(
+        "roofing" to listOf(
+            ChecklistItem("rf1", "Roof Covering — Shingles/Surface Material"),
+            ChecklistItem("rf2", "Flashing (Chimney, Valleys, Walls, Penetrations)"),
+            ChecklistItem("rf3", "Ridge Cap"),
+            ChecklistItem("rf4", "Gutters & Downspouts"),
+            ChecklistItem("rf5", "Chimney (Masonry, Cap, Flashing)"),
+            ChecklistItem("rf6", "Skylights & Roof Penetrations"),
+            ChecklistItem("rf7", "Fascia & Soffit"),
+            ChecklistItem("rf8", "Ventilation (Ridge, Soffit, Attic Vents)"),
+            ChecklistItem("rf9", "Evidence of Ponding Water / Ice Dams")
+        ),
+        "exterior" to listOf(
+            ChecklistItem("ex1", "Wall Cladding / Siding"),
+            ChecklistItem("ex2", "Trim & Exterior Finishes"),
+            ChecklistItem("ex3", "Exterior Windows & Frames"),
+            ChecklistItem("ex4", "Exterior Doors"),
+            ChecklistItem("ex5", "Deck / Porch / Patio"),
+            ChecklistItem("ex6", "Stairs, Handrails & Guards (Exterior)"),
+            ChecklistItem("ex7", "Grading & Drainage"),
+            ChecklistItem("ex8", "Walkways & Driveways"),
+            ChecklistItem("ex9", "Vegetation / Landscape Concerns"),
+            ChecklistItem("ex10", "Retaining Walls & Site Features")
+        ),
+        "structure" to listOf(
+            ChecklistItem("st1", "Foundation Walls"),
+            ChecklistItem("st2", "Floor Framing / Joists / Girders"),
+            ChecklistItem("st3", "Columns & Piers"),
+            ChecklistItem("st4", "Roof Framing / Rafters / Trusses"),
+            ChecklistItem("st5", "Wall Framing"),
+            ChecklistItem("st6", "Evidence of Settlement / Movement"),
+            ChecklistItem("st7", "Evidence of Water Intrusion"),
+            ChecklistItem("st8", "Crawlspace Conditions"),
+            ChecklistItem("st9", "Basement (if applicable)")
+        ),
+        "electrical" to listOf(
+            ChecklistItem("el1", "Service Entry & Conductors"),
+            ChecklistItem("el2", "Main Electrical Panel"),
+            ChecklistItem("el3", "Sub-Panel(s)"),
+            ChecklistItem("el4", "Branch Circuit Wiring"),
+            ChecklistItem("el5", "GFCI Protection"),
+            ChecklistItem("el6", "AFCI Protection"),
+            ChecklistItem("el7", "Outlets / Receptacles"),
+            ChecklistItem("el8", "Switches & Fixtures"),
+            ChecklistItem("el9", "Smoke & CO Detectors"),
+            ChecklistItem("el10", "Grounding & Bonding"),
+            ChecklistItem("el11", "Aluminum Branch Circuit Wiring")
+        ),
+        "hvac" to listOf(
+            ChecklistItem("hv1", "Heating System Operation"),
+            ChecklistItem("hv2", "Cooling System Operation"),
+            ChecklistItem("hv3", "Ductwork & Distribution"),
+            ChecklistItem("hv4", "Flue / Venting / Combustion Air"),
+            ChecklistItem("hv5", "Thermostat"),
+            ChecklistItem("hv6", "Filter Condition"),
+            ChecklistItem("hv7", "Gas Connections"),
+            ChecklistItem("hv8", "Fireplace / Wood Stove"),
+            ChecklistItem("hv9", "Kitchen Exhaust Fan"),
+            ChecklistItem("hv10", "Bath Exhaust Fans")
+        ),
+        "plumbing" to listOf(
+            ChecklistItem("pl1", "Water Supply Lines"),
+            ChecklistItem("pl2", "Drain, Waste & Vent System"),
+            ChecklistItem("pl3", "Water Heater"),
+            ChecklistItem("pl4", "Kitchen Plumbing & Fixtures"),
+            ChecklistItem("pl5", "Bathroom 1 — Fixtures & Drains"),
+            ChecklistItem("pl6", "Bathroom 2 — Fixtures & Drains"),
+            ChecklistItem("pl7", "Bathroom 3 — Fixtures & Drains"),
+            ChecklistItem("pl8", "Laundry / Utility Connections"),
+            ChecklistItem("pl9", "Main Water Shut-Off Valve"),
+            ChecklistItem("pl10", "Sump Pump"),
+            ChecklistItem("pl11", "Exterior Hose Bibs")
+        ),
+        "interior" to listOf(
+            ChecklistItem("in1", "Interior Walls & Ceilings"),
+            ChecklistItem("in2", "Interior Floors"),
+            ChecklistItem("in3", "Interior Windows & Sills"),
+            ChecklistItem("in4", "Interior Doors & Hardware"),
+            ChecklistItem("in5", "Stairs, Handrails & Guardrails"),
+            ChecklistItem("in6", "Kitchen — Cabinets, Counters & Appliances"),
+            ChecklistItem("in7", "Bathrooms — Tile, Caulk & Waterproofing"),
+            ChecklistItem("in8", "Smoke Detectors"),
+            ChecklistItem("in9", "CO Detectors"),
+            ChecklistItem("in10", "Attic Access & Hatch")
+        ),
+        "insulation" to listOf(
+            ChecklistItem("is1", "Attic Insulation"),
+            ChecklistItem("is2", "Attic Ventilation"),
+            ChecklistItem("is3", "Crawlspace / Basement Insulation"),
+            ChecklistItem("is4", "Vapor Barrier"),
+            ChecklistItem("is5", "Wall Insulation (visible)"),
+            ChecklistItem("is6", "Exhaust Fan Terminations")
+        ),
+        "garage" to listOf(
+            ChecklistItem("ga1", "Garage Door Operation & Safety Reverse"),
+            ChecklistItem("ga2", "Garage Door Opener"),
+            ChecklistItem("ga3", "Fire-Rated Door to Living Space"),
+            ChecklistItem("ga4", "Garage Floor"),
+            ChecklistItem("ga5", "Garage Walls & Ceiling"),
+            ChecklistItem("ga6", "Overhead Gas Heater"),
+            ChecklistItem("ga7", "Attic Access in Garage")
+        )
     )
-    
-    private val exteriorItems = listOf(
-        ChecklistItem("ex1", "Siding/Trim", "Inspect for damage, rot, or deterioration"),
-        ChecklistItem("ex2", "Eaves/Soffits/Fascia", "Check for damage or pest entry"),
-        ChecklistItem("ex3", "Windows/Doors", "Check operation, seals, and weatherstripping"),
-        ChecklistItem("ex4", "Foundation & Grading", "Inspect for cracks or water issues"),
-        ChecklistItem("ex5", "Decks & Porches", "Check structural integrity and safety")
-    )
-    
-    private val structureItems = listOf(
-        ChecklistItem("st1", "Foundation", "Check for cracks, bowing, or moisture"),
-        ChecklistItem("st2", "Basement/Crawlspace", "Inspect for moisture, pests, or damage"),
-        ChecklistItem("st3", "Floor Structure", "Check for sagging or rot"),
-        ChecklistItem("st4", "Wall Framing", "Check for plumb and structural issues"),
-        ChecklistItem("st5", "Stairs & Railings", "Verify code compliance and safety")
-    )
-    
-    private val electricalItems = listOf(
-        ChecklistItem("el1", "Main Panel", "Inspect service size, breakers, and labeling"),
-        ChecklistItem("el2", "Outlets/Switches", "Test GFCI/AFCI protection"),
-        ChecklistItem("el3", "Wiring", "Check for aluminum wiring or hazards"),
-        ChecklistItem("el4", "Grounding", "Verify proper grounding system"),
-        ChecklistItem("el5", "Smoke/CO Detectors", "Check presence and operation")
-    )
-    
-    private val hvacItems = listOf(
-        ChecklistItem("hv1", "Heating Equipment", "Inspect furnace or heat pump operation"),
-        ChecklistItem("hv2", "Cooling Equipment", "Check AC unit and operation"),
-        ChecklistItem("hv3", "Ductwork", "Inspect for leaks and insulation"),
-        ChecklistItem("hv4", "Ventilation", "Check exhaust fans and fresh air"),
-        ChecklistItem("hv5", "Thermostat", "Test operation and temperature control")
-    )
-    
-    private val plumbingItems = listOf(
-        ChecklistItem("pl1", "Main Water Shutoff", "Locate and test main shutoff valve"),
-        ChecklistItem("pl2", "Visible Piping", "Check for leaks or corrosion"),
-        ChecklistItem("pl3", "Water Heater", "Inspect age, operation, and TPR valve"),
-        ChecklistItem("pl4", "Fixtures", "Test sinks, toilets, showers, and tubs"),
-        ChecklistItem("pl5", "Drains & Vents", "Check for proper drainage and venting")
-    )
-    
-    private val interiorItems = listOf(
-        ChecklistItem("in1", "Walls/Ceilings/Floors", "Check for cracks or water damage"),
-        ChecklistItem("in2", "Attic/Insulation", "Check insulation type and depth"),
-        ChecklistItem("in3", "Interior Doors", "Check operation and hardware"),
-        ChecklistItem("in4", "Windows", "Test operation and check for condensation"),
-        ChecklistItem("in5", "Kitchen", "Inspect cabinets and appliances")
-    )
-    
-    private val insulationItems = listOf(
-        ChecklistItem("ins1", "Attic Insulation", "Check type, depth, and coverage"),
-        ChecklistItem("ins2", "Wall Insulation", "Verify presence and adequacy"),
-        ChecklistItem("ins3", "Crawlspace Insulation", "Inspect insulation and vapor barriers"),
-        ChecklistItem("ins4", "Ventilation", "Check for adequate airflow"),
-        ChecklistItem("ins5", "Moisture Control", "Look for signs of moisture problems")
-    )
-    
-    private val garageItems = listOf(
-        ChecklistItem("gr1", "Garage Door & Opener", "Test operation and safety sensors"),
-        ChecklistItem("gr2", "Garage Structure", "Inspect walls, ceiling, and floor"),
-        ChecklistItem("gr3", "Garage Electrical", "Check outlets and GFCI protection"),
-        ChecklistItem("gr4", "Fire Separation", "Verify fire-rated walls and door"),
-        ChecklistItem("gr5", "Garage Ventilation", "Check for adequate ventilation")
-    )
-    
-    // Map with LOWERCASE keys (matching your code)
-    val items: Map<String, List<ChecklistItem>> = mapOf(
-        "roofing" to roofingItems,
-        "exterior" to exteriorItems,
-        "structure" to structureItems,
-        "electrical" to electricalItems,
-        "hvac" to hvacItems,
-        "plumbing" to plumbingItems,
-        "interior" to interiorItems,
-        "insulation" to insulationItems,
-        "garage" to garageItems
-    )
-    
-    // List of section keys for iteration
+
     val sections: List<String> = listOf(
         "roofing",
         "exterior",
@@ -235,33 +253,31 @@ object InspectionSections {
         "insulation",
         "garage"
     )
-    
-    // All items flattened for summary screen
+
     val allItems: List<ChecklistItem> = items.values.flatten()
-    
-    // Section display names
+
     val sectionNames = mapOf(
-        "roofing" to "Roofing",
+        "roofing" to "Roofing System",
         "exterior" to "Exterior",
-        "structure" to "Structure",
-        "electrical" to "Electrical",
-        "hvac" to "HVAC",
-        "plumbing" to "Plumbing",
+        "structure" to "Structural Components",
+        "electrical" to "Electrical System",
+        "hvac" to "HVAC System",
+        "plumbing" to "Plumbing System",
         "interior" to "Interior",
         "insulation" to "Insulation & Ventilation",
-        "garage" to "Garage & Carport"
+        "garage" to "Garage"
     )
-    
-    // Icons for PDF headers
+
     val sectionIcons = mapOf(
         "roofing" to "🏠",
-        "exterior" to "🌳",
+        "exterior" to "🧱",
         "structure" to "🏗️",
         "electrical" to "⚡",
         "hvac" to "🌡️",
-        "plumbing" to "💧",
-        "interior" to "🛋️",
-        "insulation" to "🧊",
+        "plumbing" to "🔧",
+        "interior" to "🪟",
+        "insulation" to "🌿",
         "garage" to "🚗"
     )
 }
+
