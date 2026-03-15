@@ -88,7 +88,7 @@ class Converters {
         AppSettings::class,
         SerialDecodePattern::class  // ← ADD THIS
     ],
-    version = 5,  // ← INCREMENT VERSION (was 4, now 5)
+    version = 6,  // ← INCREMENT VERSION (was 4, now 5)
     exportSchema = false
 )
 @TypeConverters(Converters::class) 
