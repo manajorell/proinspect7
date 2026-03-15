@@ -517,6 +517,33 @@ object DefectLibrary {
             DefectOption("Good Condition", "The attic access in the garage appeared to be in good condition."),
             DefectOption("Not Present", "No attic access was present in the garage.")
         )
+        "in11" to listOf(
+            DefectOption("Range/Oven Not Operating", "The range or oven was observed to not operate properly during testing. Further evaluation by a qualified appliance technician is recommended."),
+            DefectOption("Burners Not Functioning", "One or more burners were observed to not function during testing. The appliance should be repaired or replaced."),
+            DefectOption("No Anti-Tip Bracket", "An anti-tip bracket was not observed on the freestanding range. Anti-tip brackets are required to prevent the range from tipping when weight is applied to the open oven door."),
+            DefectOption("Gas Connections Concern", "The gas connection at the range was observed to be flexible corrugated tubing that appeared to be damaged or improper. Evaluation by a licensed plumber or gas contractor is recommended."),
+            DefectOption("Good Condition", "The range, oven, and cooktop were observed to be operating normally at the time of inspection.")
+        ),
+        "in12" to listOf(
+            DefectOption("Microwave Not Operating", "The built-in microwave was observed to not operate properly during testing. Repair or replacement is recommended."),
+            DefectOption("Exhaust Hood Not Vented to Exterior", "The exhaust hood was observed to recirculate air rather than vent to the exterior. Exterior venting is recommended for improved air quality."),
+            DefectOption("Exhaust Fan Not Working", "The exhaust hood fan was observed to not function during testing. The fan should be repaired or replaced."),
+            DefectOption("Good Condition", "The built-in microwave and exhaust hood were observed to be operating normally.")
+        ),
+        "pl12" to listOf(
+            DefectOption("Dishwasher Not Draining", "The dishwasher was observed to not drain properly at the end of the cycle. Further evaluation by a qualified appliance technician is recommended."),
+            DefectOption("Dishwasher Leaking", "Evidence of leaking was observed at the dishwasher. The source should be identified and repaired by a licensed plumber or appliance technician."),
+            DefectOption("High Loop Absent", "A high loop or air gap was not observed at the dishwasher drain connection. A high loop prevents contaminated water from siphoning back into the dishwasher and should be installed."),
+            DefectOption("Door Seal Failing", "The dishwasher door seal was observed to be failing, allowing water to escape during operation. The seal should be replaced."),
+            DefectOption("Good Condition", "The dishwasher was observed to be operating normally with no significant deficiencies noted.")
+        ),
+        "pl13" to listOf(
+            DefectOption("Disposal Not Operating", "The garbage disposal was observed to not operate during testing. The disposal should be repaired or replaced."),
+            DefectOption("Disposal Leaking", "Evidence of leaking was observed at the garbage disposal. The source should be identified and repaired."),
+            DefectOption("Disposal Humming — Jammed", "The garbage disposal hummed but did not operate, indicating a jam. The disposal should be reset and cleared."),
+            DefectOption("No Stopper/Splash Guard", "The garbage disposal splash guard was observed to be missing or damaged. A splash guard should be installed."),
+            DefectOption("Good Condition", "The garbage disposal was observed to be operating normally at the time of inspection.")
+        ),
     )
 
     fun getDefectsForItem(itemId: String): List<DefectOption> = defects[itemId] ?: emptyList()
