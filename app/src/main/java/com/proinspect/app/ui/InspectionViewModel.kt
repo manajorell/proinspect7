@@ -479,3 +479,4 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
             }
         }
     }
+}
