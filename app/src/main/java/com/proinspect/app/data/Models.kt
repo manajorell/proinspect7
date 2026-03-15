@@ -198,7 +198,7 @@ object InspectionSections {
             ChecklistItem("hv9", "Kitchen Exhaust Fan"),
             ChecklistItem("hv10", "Bath Exhaust Fans")
         ),
-        "plumbing" to listOf(
+       "plumbing" to listOf(
             ChecklistItem("pl1", "Water Supply Lines"),
             ChecklistItem("pl2", "Drain, Waste & Vent System"),
             ChecklistItem("pl3", "Water Heater"),
@@ -209,8 +209,10 @@ object InspectionSections {
             ChecklistItem("pl8", "Laundry / Utility Connections"),
             ChecklistItem("pl9", "Main Water Shut-Off Valve"),
             ChecklistItem("pl10", "Sump Pump"),
-            ChecklistItem("pl11", "Exterior Hose Bibs")
-        ),
+            ChecklistItem("pl11", "Exterior Hose Bibs"),
+            ChecklistItem("pl12", "Dishwasher"),
+            ChecklistItem("pl13", "Garbage Disposal")
+                ),
      "interior" to listOf(
             ChecklistItem("in1", "Interior Walls & Ceilings"),
             ChecklistItem("in2", "Interior Floors"),
