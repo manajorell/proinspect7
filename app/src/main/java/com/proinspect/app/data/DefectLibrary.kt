@@ -516,7 +516,7 @@ object DefectLibrary {
             DefectOption("Attic Access Not Insulated", "The attic access in the garage was observed to lack insulation. The hatch should be insulated."),
             DefectOption("Good Condition", "The attic access in the garage appeared to be in good condition."),
             DefectOption("Not Present", "No attic access was present in the garage.")
-        )
+        ),
         "in11" to listOf(
             DefectOption("Range/Oven Not Operating", "The range or oven was observed to not operate properly during testing. Further evaluation by a qualified appliance technician is recommended."),
             DefectOption("Burners Not Functioning", "One or more burners were observed to not function during testing. The appliance should be repaired or replaced."),
