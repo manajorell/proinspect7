@@ -225,4 +225,257 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
             reportDao.insertReport(updated)
         }
     }
-}
+    fun exportBackup(context: Context, onComplete: (Uri?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val reports = allReports.value
+                val jsonReports = org.json.JSONArray()
+                reports.forEach { report ->
+                    val items = itemDao.getItemsForReport(report.id).first()
+                    val photos = photoDao.getPhotosForReport(report.id).first()
+                    val reportJson = org.json.JSONObject().apply {
+                        put("id", report.id)
+                        put("reportNumber", report.reportNumber)
+                        put("propertyAddress", report.propertyAddress)
+                        put("propertyCity", report.propertyCity)
+                        put("clientName", report.clientName)
+                        put("clientEmail", report.clientEmail)
+                        put("inspectorName", report.inspectorName)
+                        put("inspectorCert", report.inspectorCert)
+                        put("inspectorCompany", report.inspectorCompany)
+                        put("inspectorPhone", report.inspectorPhone)
+                        put("inspectionDate", report.inspectionDate)
+                        put("inspectionTime", report.inspectionTime)
+                        put("weatherConditions", report.weatherConditions)
+                        put("yearBuilt", report.yearBuilt)
+                        put("squareFootage", report.squareFootage)
+                        put("propertyType", report.propertyType)
+                        put("limitations", report.limitations)
+                        put("overviewNarrative", report.overviewNarrative)
+                        put("roofType", report.roofType)
+                        put("roofAge", report.roofAge)
+                        put("roofMethod", report.roofMethod)
+                        put("roofingNarrative", report.roofingNarrative)
+                        put("sidingType", report.sidingType)
+                        put("drivewayType", report.drivewayType)
+                        put("exteriorNarrative", report.exteriorNarrative)
+                        put("foundationType", report.foundationType)
+                        put("framingType", report.framingType)
+                        put("structureNarrative", report.structureNarrative)
+                        put("panelBrand", report.panelBrand)
+                        put("panelAmps", report.panelAmps)
+                        put("panelType", report.panelType)
+                        put("wiringType", report.wiringType)
+                        put("serviceEntrance", report.serviceEntrance)
+                        put("electricalNarrative", report.electricalNarrative)
+                        put("heatType", report.heatType)
+                        put("heatBrand", report.heatBrand)
+                        put("heatAge", report.heatAge)
+                        put("acType", report.acType)
+                        put("acBrand", report.acBrand)
+                        put("acAge", report.acAge)
+                        put("fuelType", report.fuelType)
+                        put("filterDate", report.filterDate)
+                        put("hvacNarrative", report.hvacNarrative)
+                        put("supplyMaterial", report.supplyMaterial)
+                        put("drainMaterial", report.drainMaterial)
+                        put("whType", report.whType)
+                        put("whAge", report.whAge)
+                        put("whCapacity", report.whCapacity)
+                        put("plumbingNarrative", report.plumbingNarrative)
+                        put("interiorNarrative", report.interiorNarrative)
+                        put("atticInsulation", report.atticInsulation)
+                        put("atticRValue", report.atticRValue)
+                        put("crawlInsulation", report.crawlInsulation)
+                        put("insulationNarrative", report.insulationNarrative)
+                        put("garageType", report.garageType)
+                        put("garageCars", report.garageCars)
+                        put("garageNarrative", report.garageNarrative)
+                        put("agreementSentPath", report.agreementSentPath)
+                        put("signedAgreementPath", report.signedAgreementPath)
+                        put("createdAt", report.createdAt)
+                        put("updatedAt", report.updatedAt)
+                        // Items
+                        val itemsJson = org.json.JSONArray()
+                        items.forEach { item ->
+                            itemsJson.put(org.json.JSONObject().apply {
+                                put("itemId", item.itemId)
+                                put("section", item.section)
+                                put("ratingName", item.ratingName)
+                                put("narrative", item.narrative)
+                            })
+                        }
+                        put("items", itemsJson)
+                        // Photos
+                        val photosJson = org.json.JSONArray()
+                        photos.forEach { photo ->
+                            photosJson.put(org.json.JSONObject().apply {
+                                put("filePath", photo.filePath)
+                                put("section", photo.section)
+                                put("itemId", photo.itemId ?: "")
+                                put("caption", photo.caption)
+                                put("createdAt", photo.createdAt)
+                            })
+                        }
+                        put("photos", photosJson)
+                    }
+                    jsonReports.put(reportJson)
+                }
+                val settings = appSettings.value
+                val settingsJson = org.json.JSONObject().apply {
+                    put("companyLogoPath", settings.companyLogoPath)
+                    put("badge1Path", settings.badge1Path)
+                    put("badge2Path", settings.badge2Path)
+                    put("badge3Path", settings.badge3Path)
+                    put("badge4Path", settings.badge4Path)
+                    put("anthropicApiKey", settings.anthropicApiKey)
+                }
+                val backup = org.json.JSONObject().apply {
+                    put("version", 1)
+                    put("exportDate", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date()))
+                    put("reportCount", reports.size)
+                    put("reports", jsonReports)
+                    put("settings", settingsJson)
+                }
+                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                val backupFile = File(
+                    context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOCUMENTS),
+                    "ProInspect_Backup_$timestamp.json"
+                )
+                backupFile.writeText(backup.toString(2))
+                val uri = FileProvider.getUriForFile(
+                    context, "${context.packageName}.fileprovider", backupFile
+                )
+                onComplete(uri)
+            } catch (_: Exception) {
+                onComplete(null)
+            }
+        }
+    }
+
+    fun restoreBackup(context: Context, uri: Uri, onComplete: (Int) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val json = context.contentResolver.openInputStream(uri)?.use {
+                    it.bufferedReader().readText()
+                } ?: throw Exception("Could not read file")
+                val backup = org.json.JSONObject(json)
+                val reportsJson = backup.getJSONArray("reports")
+                var restoredCount = 0
+                for (i in 0 until reportsJson.length()) {
+                    val r = reportsJson.getJSONObject(i)
+                    val report = Report(
+                        reportNumber = r.optString("reportNumber"),
+                        propertyAddress = r.optString("propertyAddress"),
+                        propertyCity = r.optString("propertyCity"),
+                        clientName = r.optString("clientName"),
+                        clientEmail = r.optString("clientEmail"),
+                        inspectorName = r.optString("inspectorName"),
+                        inspectorCert = r.optString("inspectorCert"),
+                        inspectorCompany = r.optString("inspectorCompany"),
+                        inspectorPhone = r.optString("inspectorPhone"),
+                        inspectionDate = r.optString("inspectionDate"),
+                        inspectionTime = r.optString("inspectionTime"),
+                        weatherConditions = r.optString("weatherConditions"),
+                        yearBuilt = r.optString("yearBuilt"),
+                        squareFootage = r.optString("squareFootage"),
+                        propertyType = r.optString("propertyType", "Single Family"),
+                        limitations = r.optString("limitations"),
+                        overviewNarrative = r.optString("overviewNarrative"),
+                        roofType = r.optString("roofType", "Asphalt Shingles"),
+                        roofAge = r.optString("roofAge"),
+                        roofMethod = r.optString("roofMethod", "Walked"),
+                        roofingNarrative = r.optString("roofingNarrative"),
+                        sidingType = r.optString("sidingType", "Vinyl"),
+                        drivewayType = r.optString("drivewayType", "Concrete"),
+                        exteriorNarrative = r.optString("exteriorNarrative"),
+                        foundationType = r.optString("foundationType", "Poured Concrete"),
+                        framingType = r.optString("framingType", "Wood Frame"),
+                        structureNarrative = r.optString("structureNarrative"),
+                        panelBrand = r.optString("panelBrand"),
+                        panelAmps = r.optString("panelAmps", "200 Amp"),
+                        panelType = r.optString("panelType", "Circuit Breaker"),
+                        wiringType = r.optString("wiringType", "Copper"),
+                        serviceEntrance = r.optString("serviceEntrance", "Overhead"),
+                        electricalNarrative = r.optString("electricalNarrative"),
+                        heatType = r.optString("heatType", "Gas Forced Air"),
+                        heatBrand = r.optString("heatBrand"),
+                        heatAge = r.optString("heatAge"),
+                        acType = r.optString("acType", "Central AC"),
+                        acBrand = r.optString("acBrand"),
+                        acAge = r.optString("acAge"),
+                        fuelType = r.optString("fuelType", "Natural Gas"),
+                        filterDate = r.optString("filterDate"),
+                        hvacNarrative = r.optString("hvacNarrative"),
+                        supplyMaterial = r.optString("supplyMaterial", "Copper"),
+                        drainMaterial = r.optString("drainMaterial", "PVC"),
+                        whType = r.optString("whType", "Tank — Gas"),
+                        whAge = r.optString("whAge"),
+                        whCapacity = r.optString("whCapacity"),
+                        plumbingNarrative = r.optString("plumbingNarrative"),
+                        interiorNarrative = r.optString("interiorNarrative"),
+                        atticInsulation = r.optString("atticInsulation", "Fiberglass Batt"),
+                        atticRValue = r.optString("atticRValue"),
+                        crawlInsulation = r.optString("crawlInsulation", "None"),
+                        insulationNarrative = r.optString("insulationNarrative"),
+                        garageType = r.optString("garageType", "Attached"),
+                        garageCars = r.optString("garageCars", "2 Car"),
+                        garageNarrative = r.optString("garageNarrative"),
+                        agreementSentPath = r.optString("agreementSentPath"),
+                        signedAgreementPath = r.optString("signedAgreementPath"),
+                        createdAt = r.optLong("createdAt", System.currentTimeMillis()),
+                        updatedAt = r.optLong("updatedAt", System.currentTimeMillis())
+                    )
+                    val newReportId = reportDao.insertReport(report)
+                    // Restore items
+                    val itemsJson = r.optJSONArray("items")
+                    if (itemsJson != null) {
+                        for (j in 0 until itemsJson.length()) {
+                            val item = itemsJson.getJSONObject(j)
+                            itemDao.insertItem(InspectionItem(
+                                reportId = newReportId,
+                                itemId = item.optString("itemId"),
+                                section = item.optString("section"),
+                                ratingName = item.optString("ratingName", Rating.NOT_RATED.name),
+                                narrative = item.optString("narrative")
+                            ))
+                        }
+                    }
+                    // Restore photos (paths only — files must still exist on device)
+                    val photosJson = r.optJSONArray("photos")
+                    if (photosJson != null) {
+                        for (j in 0 until photosJson.length()) {
+                            val photo = photosJson.getJSONObject(j)
+                            val filePath = photo.optString("filePath")
+                            if (filePath.isNotBlank() && File(filePath).exists()) {
+                                photoDao.insertPhoto(InspectionPhoto(
+                                    reportId = newReportId,
+                                    filePath = filePath,
+                                    section = photo.optString("section"),
+                                    itemId = photo.optString("itemId").ifBlank { null },
+                                    caption = photo.optString("caption"),
+                                    createdAt = photo.optLong("createdAt", System.currentTimeMillis())
+                                ))
+                            }
+                        }
+                    }
+                    restoredCount++
+                }
+                // Restore settings
+                if (backup.has("settings")) {
+                    val s = backup.getJSONObject("settings")
+                    settingsDao.saveSettings(AppSettings(
+                        companyLogoPath = s.optString("companyLogoPath"),
+                        badge1Path = s.optString("badge1Path"),
+                        badge2Path = s.optString("badge2Path"),
+                        badge3Path = s.optString("badge3Path"),
+                        badge4Path = s.optString("badge4Path"),
+                        anthropicApiKey = s.optString("anthropicApiKey")
+                    ))
+                }
+                onComplete(restoredCount)
+            } catch (_: Exception) {
+                onComplete(-1)
+            }
+        }
+    }
