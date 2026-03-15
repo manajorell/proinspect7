@@ -759,7 +759,7 @@ fun ChecklistItemCard(
                     placeholder = "Describe findings for: ${item.title}..."
                 )
 
-                if (item.id in listOf("pl3", "hv1", "hv2")) {
+               if (item.id in listOf("pl3", "hv1", "hv2", "el2")) {
                     val equipmentName = when (item.id) {
                         "pl3" -> "Water Heater"
                         "hv1" -> "Furnace / Air Handler"
