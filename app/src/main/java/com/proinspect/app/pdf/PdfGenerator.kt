@@ -111,11 +111,12 @@ object PdfGenerator {
         writer.pageEvent = HeaderFooterEvent(report)
         doc.open()
 
-        pageCover(doc, report, items, settings)
+pageCover(doc, report, items, settings)
         addHousePhotoPage(doc, photos)
         pageExecutiveSummary(doc, report, items, photos, context)
         pageFullDetails(doc, report, items, photos)
         pageCertifications(doc, report, settings)
+        pageScopeAndPurpose(doc)
 
         doc.close()
         return file
@@ -945,6 +946,85 @@ object PdfGenerator {
             "\nInspection performed in accordance with InterNACHI Standards of Practice  |  www.nachi.org",
             Font(Font.FontFamily.HELVETICA, 8f, Font.ITALIC, cGray)
         ).apply { alignment = Element.ALIGN_CENTER })
+    }
+
+    private fun pageScopeAndPurpose(doc: Document) {
+        doc.newPage()
+        addSectionHeader(doc, "📋", "Scope and Purpose of a Home Inspection")
+
+        data class Section(val title: String, val body: String)
+
+        val sections = listOf(
+            Section(
+                "Purchasing Property Involves Risk",
+                "The purpose of a home inspection is to help reduce the risk associated with the purchase of a structure by providing a professional opinion about the overall condition of the structure. A home inspection is a limited visual inspection and it cannot eliminate this risk. Some homes present more risks than others. We cannot control this, but we try to help educate you about what we don't know during the inspection process. This is more difficult to convey in a report and one of many reasons why we recommend that you attend the inspection."
+            ),
+            Section(
+                "A Home Inspection is Not an Insurance Policy",
+                "This report does not substitute for or serve as a warranty or guarantee of any kind. Home warranties can be purchased separately from insuring firms that provide this service."
+            ),
+            Section(
+                "A Home Inspection is Visual and Not Destructive",
+                "The descriptions and observations in this report are based on a visual inspection of the structure. We inspect the aspects of the structure that can be viewed without dismantling, damaging or disfiguring the structure and without moving furniture and interior furnishings. Areas that are concealed, hidden or inaccessible to view are not covered by this inspection. Some systems cannot be tested during this inspection as testing risks damaging the building. For example, overflow drains on bathtubs are generally not tested because if they were found to be leaking they could damage the finishes below. Our procedures involve non-invasive investigation and non-destructive testing which will limit the scope of the inspection."
+            ),
+            Section(
+                "This is Not an Inspection for Code Compliance",
+                "This inspection and report are not intended for city or local code compliance. During the construction process structures are inspected for code compliance by municipal inspectors. Framing is open at this time and conditions can be fully viewed. Framing is not open during inspections of finished homes, and this limits the inspection. All houses fall out of code compliance shortly after they are built, as the codes continually change. National codes are augmented at least every three years for all of the varying disciplines. Municipalities can choose to adopt and phase in sections of the codes on their own timetables. There are generally no requirements to bring older homes into compliance unless substantial renovation is being done."
+            ),
+            Section(
+                "This is Just Our Opinion",
+                "Construction techniques and standards vary. There is no one way to build a house or install a system in a house. The observations in this report are the opinions of the home inspector. Other inspectors and contractors are likely to have some differing opinions. You are welcome to seek opinions from other professionals."
+            ),
+            Section(
+                "The Scope of This Inspection",
+                "This inspection includes the following systems: exterior, roof, structure, drainage, foundation, attic, interior, plumbing, electrical and heating. The evaluation is based on limited observations that are primarily visual and non-invasive. This inspection and report are not intended to be technically exhaustive."
+            ),
+            Section(
+                "Your Expectations",
+                "The overall goal of a home inspection is to help ensure that your expectations are appropriate with the house you are proposing to buy. To this end we assist with discovery by showing and documenting observations during the home inspection. This should not be mistaken for a technically exhaustive inspection designed to uncover every defect with a building. Such inspections are available but they are generally cost-prohibitive to most homebuyers."
+            ),
+            Section(
+                "Your Participation is Requested",
+                "Your presence is requested during this inspection. A written report will not substitute for all the possible information that can be conveyed verbally by a shared visual observation of the conditions of the property."
+            )
+        )
+
+        sections.forEach { section ->
+            // Section title box
+            val titleTbl = PdfPTable(1).apply {
+                widthPercentage = 100f
+                spacingBefore = 12f
+                spacingAfter = 0f
+            }
+            val titleCell = PdfPCell()
+            titleCell.backgroundColor = BaseColor(240, 244, 255)
+            titleCell.border = Rectangle.LEFT
+            titleCell.borderColorLeft = cNavy
+            titleCell.borderWidthLeft = 4f
+            titleCell.paddingTop = 8f
+            titleCell.paddingBottom = 8f
+            titleCell.paddingLeft = 12f
+            titleCell.paddingRight = 12f
+            titleCell.addElement(Paragraph(section.title,
+                Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cNavy)))
+            titleTbl.addCell(titleCell)
+            doc.add(titleTbl)
+
+            // Body text
+            val bodyPara = Paragraph(section.body, fBody)
+            bodyPara.spacingBefore = 4f
+            bodyPara.spacingAfter = 4f
+            bodyPara.indentationLeft = 16f
+            bodyPara.indentationRight = 16f
+            doc.add(bodyPara)
+        }
+
+        doc.add(Paragraph(" "))
+        addThinLine(doc)
+        doc.add(Paragraph(
+            "This report was prepared in accordance with the InterNACHI Standards of Practice  |  www.nachi.org",
+            Font(Font.FontFamily.HELVETICA, 8f, Font.ITALIC, cGray)
+       ).apply { alignment = Element.ALIGN_CENTER; spacingBefore = 8f })
     }
 }
 
