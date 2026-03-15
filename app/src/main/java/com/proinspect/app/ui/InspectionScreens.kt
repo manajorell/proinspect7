@@ -1,3 +1,4 @@
+import androidx.compose.foundation.layout.imePadding
 package com.proinspect.app.ui
 
 import android.content.Intent
@@ -686,11 +687,13 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
 
     if (report == null) return
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .imePadding(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+        ) {
         item {
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
