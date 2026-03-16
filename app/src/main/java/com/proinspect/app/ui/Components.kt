@@ -308,32 +308,58 @@ fun PhotoStrip(
 fun NarrativeBox(
     value: String,
     onValueChange: (String) -> Unit,
-    label: String = "📝 Inspector Narrative",
-    placeholder: String = "Add narrative notes...",
-    modifier: Modifier = Modifier
+    label: String = "📝 Notes",
+    placeholder: String = "Add notes...",
+    modifier: Modifier = Modifier,
+    onVoiceInput: (() -> Unit)? = null  // NEW parameter
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(Color(0xFFFDF9F2))
-            .border(1.5.dp, Gold, RoundedCornerShape(10.dp))
-            .padding(12.dp)
-    ) {
-        Text(
-            label, fontSize = 11.sp, fontWeight = FontWeight.Bold,
-            color = Gold, modifier = Modifier.padding(bottom = 6.dp)
-        )
-        ProTextField(
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                label,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Navy
+            )
+            
+            // Voice input button (if callback provided)
+            if (onVoiceInput != null) {
+                IconButton(
+                    onClick = onVoiceInput,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Mic,
+                        contentDescription = "Voice input",
+                        tint = Gold,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+        
+        Spacer(Modifier.height(4.dp))
+        
+        OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            placeholder = placeholder,
-            singleLine = false,
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text(placeholder, fontSize = 13.sp, color = Color(0xFF9CA3AF)) },
             minLines = 3,
-            modifier = Modifier.fillMaxWidth()
+            maxLines = 8,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Gold,
+                unfocusedBorderColor = Color(0xFFD1D5DB)
+            ),
+            shape = RoundedCornerShape(8.dp)
         )
     }
 }
+
 
 @Composable
 fun FormField(
