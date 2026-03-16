@@ -311,6 +311,8 @@ fun NarrativeBox(
     label: String = "📝 Notes",
     placeholder: String = "Add notes...",
     modifier: Modifier = Modifier,
+     onVoiceInput = onVoiceInput  // ADD THIS LINE
+)
     onVoiceInput: (() -> Unit)? = null  // NEW parameter
 ) {
     Column(modifier = modifier) {
@@ -698,7 +700,8 @@ fun ChecklistItemCard(
     onCameraClick: () -> Unit,
     onGalleryPick: (Uri) -> Unit,
     onDeletePhoto: (InspectionPhoto) -> Unit,
-    apiKey: String = "",
+    onVoiceInput: (() -> Unit)? = null,  // ADD THIS LINE
+    apiKey: String = ""
 ) {
     var expanded by remember { mutableStateOf(false) }
     val rColor = ratingColor(rating)
