@@ -203,9 +203,9 @@ fun CustomItemCard(
     onGalleryPick: (Uri) -> Unit,
     onDeletePhoto: (InspectionPhoto) -> Unit,
     onDeleteItem: () -> Unit,
+    onVoiceInput: (() -> Unit)? = null,  // NEW parameter
     apiKey: String = ""
 ) {
-    // Reuse ChecklistItemCard appearance by wrapping in same style
     var expanded by remember { mutableStateOf(true) }
     val rColor = ratingColor(rating)
 
@@ -282,7 +282,8 @@ fun CustomItemCard(
                     value = narrative,
                     onValueChange = onNarrativeChanged,
                     label = "📝 Item Notes",
-                    placeholder = "Describe findings for: ${item.title}..."
+                    placeholder = "Describe findings for: ${item.title}...",
+                    onVoiceInput = onVoiceInput  // NEW
                 )
             }
         }
@@ -357,6 +358,114 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
 
     var pendingCameraSection by remember { mutableStateOf<String?>(null) }
     var pendingCameraItemId by remember { mutableStateOf<String?>(null) }
+
+    // Voice input state
+    var pendingVoiceItemId by remember { mutableStateOf<String?>(null) }
+    var pendingVoiceIsSection by remember { mutableStateOf(false) }
+
+    // Speech recognizer launcher
+    val speechLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val spokenText = result.data?.getStringArrayListExtra(
+                android.speech.RecognizerIntent.EXTRA_RESULTS
+            )?.get(0) ?: ""
+
+            if (spokenText.isNotBlank()) {
+                if (pendingVoiceIsSection) {
+                    // Update section narrative
+                    report?.let { r ->
+                        val currentNarrative = when (section) {
+                            "roofing" -> r.roofingNarrative
+                            "exterior" -> r.exteriorNarrative
+                            "structure" -> r.structureNarrative
+                            "electrical" -> r.electricalNarrative
+                            "hvac" -> r.hvacNarrative
+                            "plumbing" -> r.plumbingNarrative
+                            "interior" -> r.interiorNarrative
+                            "insulation" -> r.insulationNarrative
+                            "garage" -> r.garageNarrative
+                            else -> ""
+                        }
+                        val updatedText = if (currentNarrative.isBlank()) {
+                            spokenText
+                        } else {
+                            "$currentNarrative $spokenText"
+                        }
+                        val updated = when (section) {
+                            "roofing" -> r.copy(roofingNarrative = updatedText)
+                            "exterior" -> r.copy(exteriorNarrative = updatedText)
+                            "structure" -> r.copy(structureNarrative = updatedText)
+                            "electrical" -> r.copy(electricalNarrative = updatedText)
+                            "hvac" -> r.copy(hvacNarrative = updatedText)
+                            "plumbing" -> r.copy(plumbingNarrative = updatedText)
+                            "interior" -> r.copy(interiorNarrative = updatedText)
+                            "insulation" -> r.copy(insulationNarrative = updatedText)
+                            "garage" -> r.copy(garageNarrative = updatedText)
+                            else -> r
+                        }
+                        viewModel.saveReport(updated)
+                    }
+                } else {
+                    // Update item narrative
+                    pendingVoiceItemId?.let { itemId ->
+                        // Check if it's a custom item
+                        if (itemId.startsWith("custom_")) {
+                            val currentNarrative = customItemNarratives[itemId] ?: ""
+                            val updatedText = if (currentNarrative.isBlank()) {
+                                spokenText
+                            } else {
+                                "$currentNarrative $spokenText"
+                            }
+                            customItemNarratives = customItemNarratives + (itemId to updatedText)
+                        } else {
+                            // Standard checklist item
+                            val currentNarrative = itemsMap[itemId]?.narrative ?: ""
+                            val updatedText = if (currentNarrative.isBlank()) {
+                                spokenText
+                            } else {
+                                "$currentNarrative $spokenText"
+                            }
+                            viewModel.setItemNarrative(itemId, section, updatedText)
+                        }
+                    }
+                }
+                Toast.makeText(context, "Voice input added", Toast.LENGTH_SHORT).show()
+            }
+        }
+        pendingVoiceItemId = null
+        pendingVoiceIsSection = false
+    }
+
+    fun startVoiceInput(itemId: String?, isSection: Boolean = false) {
+        pendingVoiceItemId = itemId
+        pendingVoiceIsSection = isSection
+        
+        val sectionName = InspectionSections.sectionNames[section] ?: section
+        val intent = Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(
+                android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+            )
+            putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "en-US")
+            putExtra(
+                android.speech.RecognizerIntent.EXTRA_PROMPT,
+                if (isSection) "Describe overall $sectionName findings..." 
+                else "Describe item findings..."
+            )
+        }
+        
+        try {
+            speechLauncher.launch(intent)
+        } catch (e: Exception) {
+            Toast.makeText(
+                context,
+                "Voice input not available on this device",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture()
@@ -489,6 +598,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                 onCameraClick = { launchCamera(section, checklistItem.id) },
                 onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, section, checklistItem.id) },
                 onDeletePhoto = { photo -> viewModel.deletePhoto(photo) },
+                onVoiceInput = { startVoiceInput(checklistItem.id, false) },  // NEW
                 apiKey = settings.anthropicApiKey
             )
         }
@@ -514,6 +624,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                     customItemRatings = customItemRatings - customItem.id
                     customItemNarratives = customItemNarratives - customItem.id
                 },
+                onVoiceInput = { startVoiceInput(customItem.id, false) },  // NEW
                 apiKey = settings.anthropicApiKey
             )
         }
