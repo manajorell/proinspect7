@@ -311,9 +311,7 @@ fun NarrativeBox(
     label: String = "📝 Notes",
     placeholder: String = "Add notes...",
     modifier: Modifier = Modifier,
-     onVoiceInput = onVoiceInput  // ADD THIS LINE
-)
-    onVoiceInput: (() -> Unit)? = null  // NEW parameter
+    onVoiceInput: (() -> Unit)? = null  // FIXED: Removed duplicate parameter
 ) {
     Column(modifier = modifier) {
         Row(
@@ -700,7 +698,7 @@ fun ChecklistItemCard(
     onCameraClick: () -> Unit,
     onGalleryPick: (Uri) -> Unit,
     onDeletePhoto: (InspectionPhoto) -> Unit,
-    onVoiceInput: (() -> Unit)? = null,  // ADD THIS LINE
+    onVoiceInput: (() -> Unit)? = null,
     apiKey: String = ""
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -785,17 +783,18 @@ fun ChecklistItemCard(
                     value = narrative,
                     onValueChange = onNarrativeChanged,
                     label = "📝 Item Notes",
-                    placeholder = "Describe findings for: ${item.title}..."
+                    placeholder = "Describe findings for: ${item.title}...",
+                    onVoiceInput = onVoiceInput  // FIXED: Now properly passing the parameter
                 )
 
-               if (item.id in listOf("pl3", "hv1", "hv2", "el2")) {
-                 val equipmentName = when (item.id) {
-    "pl3" -> "Water Heater"
-    "hv1" -> "Furnace / Air Handler"
-    "hv2" -> "AC Condenser"
-    "el2" -> "Electrical Panel"
-    else -> "Equipment"
-}
+                if (item.id in listOf("pl3", "hv1", "hv2", "el2")) {
+                    val equipmentName = when (item.id) {
+                        "pl3" -> "Water Heater"
+                        "hv1" -> "Furnace / Air Handler"
+                        "hv2" -> "AC Condenser"
+                        "el2" -> "Electrical Panel"
+                        else -> "Equipment"
+                    }
                     var isDecoding by remember { mutableStateOf(false) }
                     var decodedResult by remember { mutableStateOf<String?>(null) }
 
