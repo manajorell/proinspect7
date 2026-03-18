@@ -72,7 +72,7 @@ data class Report(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val agreementSentPath: String = "",
-    val signedAgreementPath: String = ""
+    val signedAgreementPath: String = "",
     
         // NEW: Payment fields
     val inspectionAmount: String = "",
