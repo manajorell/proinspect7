@@ -111,15 +111,218 @@ object PdfGenerator {
         writer.pageEvent = HeaderFooterEvent(report)
         doc.open()
 
-pageCover(doc, report, items, settings)
+        pageCover(doc, report, items, settings)
         addHousePhotoPage(doc, photos)
         pageExecutiveSummary(doc, report, items, photos, context)
+        addReceiptSummary(doc, report)  // NEW: Add receipt summary before full details
         pageFullDetails(doc, report, items, photos)
         pageCertifications(doc, report, settings)
         pageScopeAndPurpose(doc)
 
         doc.close()
         return file
+    }
+
+    // ── NEW: Receipt Summary Page ──────────────────────────────────────────────
+    private fun addReceiptSummary(doc: Document, report: Report) {
+        val inspectionAmt = report.inspectionAmount.replace("$", "").replace(",", "").toDoubleOrNull() ?: 0.0
+        val ancillaryAmt = report.ancillaryAmount.replace("$", "").replace(",", "").toDoubleOrNull() ?: 0.0
+        val total = inspectionAmt + ancillaryAmt
+
+        // Only add receipt if there's payment info
+        if (total == 0.0 && report.inspectionService.isBlank()) return
+
+        doc.newPage()
+        addSectionHeader(doc, "💳", "Receipt Summary", "Payment and service details")
+
+        // Receipt container
+        val receiptTbl = PdfPTable(1).apply {
+            widthPercentage = 85f
+            spacingBefore = 10f
+            spacingAfter = 20f
+            horizontalAlignment = Element.ALIGN_CENTER
+        }
+
+        val receiptCell = PdfPCell()
+        receiptCell.border = Rectangle.BOX
+        receiptCell.borderColor = cGold
+        receiptCell.borderWidth = 2f
+        receiptCell.backgroundColor = cOffWhite
+        receiptCell.paddingTop = 20f
+        receiptCell.paddingBottom = 20f
+        receiptCell.paddingLeft = 24f
+        receiptCell.paddingRight = 24f
+
+        // Header with payment status
+        val headerTbl = PdfPTable(2).apply {
+            widthPercentage = 100f
+            spacingAfter = 12f
+        }
+        val titleCell = PdfPCell(Phrase("RECEIPT", 
+            Font(Font.FontFamily.HELVETICA, 16f, Font.BOLD, cNavy)))
+        titleCell.border = Rectangle.NO_BORDER
+        titleCell.verticalAlignment = Element.ALIGN_MIDDLE
+        headerTbl.addCell(titleCell)
+
+        val statusCell = PdfPCell()
+        statusCell.border = Rectangle.BOX
+        statusCell.borderWidth = 1.5f
+        statusCell.horizontalAlignment = Element.ALIGN_RIGHT
+        statusCell.verticalAlignment = Element.ALIGN_MIDDLE
+        statusCell.paddingTop = 6f
+        statusCell.paddingBottom = 6f
+        statusCell.paddingLeft = 12f
+        statusCell.paddingRight = 12f
+        
+        if (report.paymentStatus == "Paid") {
+            statusCell.backgroundColor = cGreenLight
+            statusCell.borderColor = cGreen
+            statusCell.addElement(Paragraph("PAID", 
+                Font(Font.FontFamily.HELVETICA, 11f, Font.BOLD, cGreen)))
+        } else {
+            statusCell.backgroundColor = cOrangeLight
+            statusCell.borderColor = cOrange
+            statusCell.addElement(Paragraph("AMOUNT DUE", 
+                Font(Font.FontFamily.HELVETICA, 11f, Font.BOLD, cOrange)))
+        }
+        headerTbl.addCell(statusCell)
+        receiptCell.addElement(headerTbl)
+
+        // Divider
+        receiptCell.addElement(Chunk(LineSeparator(1f, 100f, cBorder, Element.ALIGN_CENTER, -2f)))
+        receiptCell.addElement(Paragraph(" "))
+
+        // Service details table
+        val detailsTbl = PdfPTable(2).apply {
+            widthPercentage = 100f
+            setWidths(floatArrayOf(3f, 1.5f))
+            spacingAfter = 8f
+        }
+
+        // Inspection service
+        val serviceLabel = PdfPCell(Phrase(report.inspectionService, fBody))
+        serviceLabel.border = Rectangle.NO_BORDER
+        serviceLabel.paddingTop = 6f
+        serviceLabel.paddingBottom = 6f
+        detailsTbl.addCell(serviceLabel)
+
+        val serviceAmount = PdfPCell(Phrase("$%.2f".format(inspectionAmt), 
+            Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cNavy)))
+        serviceAmount.border = Rectangle.NO_BORDER
+        serviceAmount.horizontalAlignment = Element.ALIGN_RIGHT
+        serviceAmount.paddingTop = 6f
+        serviceAmount.paddingBottom = 6f
+        detailsTbl.addCell(serviceAmount)
+
+        // Ancillary services (if any)
+        if (report.ancillaryServices.isNotBlank()) {
+            val ancillaryLabel = PdfPCell()
+            ancillaryLabel.border = Rectangle.NO_BORDER
+            ancillaryLabel.paddingTop = 4f
+            ancillaryLabel.paddingBottom = 6f
+            ancillaryLabel.addElement(Paragraph("Ancillary Services:", 
+                Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, cGray)))
+            ancillaryLabel.addElement(Paragraph(report.ancillaryServices, fBodySm))
+            detailsTbl.addCell(ancillaryLabel)
+
+            val ancillaryAmount = PdfPCell(Phrase("$%.2f".format(ancillaryAmt), 
+                Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cNavy)))
+            ancillaryAmount.border = Rectangle.NO_BORDER
+            ancillaryAmount.horizontalAlignment = Element.ALIGN_RIGHT
+            ancillaryAmount.paddingTop = 4f
+            ancillaryAmount.paddingBottom = 6f
+            detailsTbl.addCell(ancillaryAmount)
+        }
+
+        receiptCell.addElement(detailsTbl)
+
+        // Divider before total
+        receiptCell.addElement(Chunk(LineSeparator(1f, 100f, cBorder, Element.ALIGN_CENTER, -2f)))
+        receiptCell.addElement(Paragraph(" "))
+
+        // Total amount
+        val totalTbl = PdfPTable(2).apply {
+            widthPercentage = 100f
+            setWidths(floatArrayOf(3f, 1.5f))
+            spacingAfter = 12f
+        }
+
+        val totalLabel = PdfPCell(Phrase("TOTAL", 
+            Font(Font.FontFamily.HELVETICA, 14f, Font.BOLD, cNavy)))
+        totalLabel.border = Rectangle.NO_BORDER
+        totalLabel.paddingTop = 8f
+        totalLabel.paddingBottom = 8f
+        totalTbl.addCell(totalLabel)
+
+        val totalAmount = PdfPCell(Phrase("$%.2f".format(total), 
+            Font(Font.FontFamily.HELVETICA, 18f, Font.BOLD, cGold)))
+        totalAmount.border = Rectangle.NO_BORDER
+        totalAmount.horizontalAlignment = Element.ALIGN_RIGHT
+        totalAmount.paddingTop = 8f
+        totalAmount.paddingBottom = 8f
+        totalTbl.addCell(totalAmount)
+
+        receiptCell.addElement(totalTbl)
+
+        // Payment method (if paid)
+        if (report.paymentStatus == "Paid" && report.paymentMethod.isNotBlank()) {
+            val paymentMethodTbl = PdfPTable(1).apply {
+                widthPercentage = 100f
+                spacingBefore = 8f
+            }
+            val pmCell = PdfPCell()
+            pmCell.backgroundColor = cGreenLight
+            pmCell.border = Rectangle.NO_BORDER
+            pmCell.paddingTop = 8f
+            pmCell.paddingBottom = 8f
+            pmCell.paddingLeft = 10f
+            pmCell.paddingRight = 10f
+            pmCell.addElement(Paragraph("✓ Paid via ${report.paymentMethod}", 
+                Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, cGreen)))
+            paymentMethodTbl.addCell(pmCell)
+            receiptCell.addElement(paymentMethodTbl)
+        }
+
+        // Payment notes (if any)
+        if (report.paymentNotes.isNotBlank()) {
+            receiptCell.addElement(Paragraph(" "))
+            val notesTbl = PdfPTable(1).apply {
+                widthPercentage = 100f
+            }
+            val notesCell = PdfPCell()
+            notesCell.backgroundColor = BaseColor(249, 250, 251)
+            notesCell.border = Rectangle.NO_BORDER
+            notesCell.paddingTop = 8f
+            notesCell.paddingBottom = 8f
+            notesCell.paddingLeft = 10f
+            notesCell.paddingRight = 10f
+            notesCell.addElement(Paragraph("Notes:", fSmallB))
+            notesCell.addElement(Paragraph(report.paymentNotes, fSmall))
+            notesTbl.addCell(notesCell)
+            receiptCell.addElement(notesTbl)
+        }
+
+        // Footer info
+        receiptCell.addElement(Paragraph(" "))
+        receiptCell.addElement(Chunk(LineSeparator(0.5f, 100f, cBorder, Element.ALIGN_CENTER, -2f)))
+        receiptCell.addElement(Paragraph(" "))
+        
+        val footerInfo = Paragraph()
+        footerInfo.alignment = Element.ALIGN_CENTER
+        footerInfo.add(Chunk("${report.inspectorCompany}\n", fSmallB))
+        footerInfo.add(Chunk("${report.inspectorName}  |  ${report.inspectorPhone}\n", fSmall))
+        footerInfo.add(Chunk("Inspection Date: ${report.inspectionDate}", fSmall))
+        receiptCell.addElement(footerInfo)
+
+        receiptTbl.addCell(receiptCell)
+        doc.add(receiptTbl)
+
+        // Thank you message
+        val thankYou = Paragraph("Thank you for your business!", 
+            Font(Font.FontFamily.HELVETICA, 11f, Font.ITALIC, cGray))
+        thankYou.alignment = Element.ALIGN_CENTER
+        thankYou.spacingBefore = 10f
+        doc.add(thankYou)
     }
 
     // ── Cover Page ─────────────────────────────────────────────────────────────
@@ -1024,7 +1227,7 @@ pageCover(doc, report, items, settings)
         doc.add(Paragraph(
             "This report was prepared in accordance with the InterNACHI Standards of Practice  |  www.nachi.org",
             Font(Font.FontFamily.HELVETICA, 8f, Font.ITALIC, cGray)
-       ).apply { alignment = Element.ALIGN_CENTER; spacingBefore = 8f })
+     ).apply { alignment = Element.ALIGN_CENTER; spacingBefore = 8f })
     }
 }
 
