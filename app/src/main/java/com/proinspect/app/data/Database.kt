@@ -2,6 +2,8 @@ package com.proinspect.app.data
 
 import android.content.Context
 import androidx.room.*
+import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.room.migration.Migration
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -55,7 +57,6 @@ interface AppSettingsDao {
     suspend fun saveSettings(settings: AppSettings)
 }
 
-// ========== NEW: SERIAL DECODE PATTERNS DAO ==========
 @Dao
 interface SerialDecodePatternDao {
     @Query("SELECT * FROM serial_decode_patterns WHERE LOWER(manufacturer) = LOWER(:mfg) ORDER BY priority DESC")
@@ -80,15 +81,28 @@ class Converters {
         Rating.values().find { it.name == value } ?: Rating.NOT_RATED
 }
 
+// Migration from version 7 to 8 - adds payment fields
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("ALTER TABLE reports ADD COLUMN inspectionAmount TEXT NOT NULL DEFAULT ''")
+        database.execSQL("ALTER TABLE reports ADD COLUMN inspectionService TEXT NOT NULL DEFAULT 'Standard Home Inspection'")
+        database.execSQL("ALTER TABLE reports ADD COLUMN ancillaryServices TEXT NOT NULL DEFAULT ''")
+        database.execSQL("ALTER TABLE reports ADD COLUMN ancillaryAmount TEXT NOT NULL DEFAULT ''")
+        database.execSQL("ALTER TABLE reports ADD COLUMN paymentStatus TEXT NOT NULL DEFAULT 'Amount Due'")
+        database.execSQL("ALTER TABLE reports ADD COLUMN paymentMethod TEXT NOT NULL DEFAULT ''")
+        database.execSQL("ALTER TABLE reports ADD COLUMN paymentNotes TEXT NOT NULL DEFAULT ''")
+    }
+}
+
 @Database(
     entities = [
         Report::class, 
         InspectionItem::class, 
         InspectionPhoto::class, 
         AppSettings::class,
-        SerialDecodePattern::class  // ← ADD THIS
+        SerialDecodePattern::class
     ],
-    version = 7,  // ← INCREMENT VERSION (was 4, now 5)
+    version = 8,  // Incremented from 7 to 8
     exportSchema = false
 )
 @TypeConverters(Converters::class) 
@@ -97,14 +111,16 @@ abstract class ProInspectDatabase : RoomDatabase() {
     abstract fun inspectionItemDao(): InspectionItemDao
     abstract fun inspectionPhotoDao(): InspectionPhotoDao
     abstract fun appSettingsDao(): AppSettingsDao
-    abstract fun serialDecodePatternDao(): SerialDecodePatternDao  // ← ADD THIS
+    abstract fun serialDecodePatternDao(): SerialDecodePatternDao
 
     companion object {
         @Volatile private var INSTANCE: ProInspectDatabase? = null
+        
         fun getInstance(context: Context): ProInspectDatabase =
             INSTANCE ?: synchronized(this) {
                 Room.databaseBuilder(context, ProInspectDatabase::class.java, "proinspect.db")
-                    .fallbackToDestructiveMigration()
+                    .addMigrations(MIGRATION_7_8)  // Add the migration here
+                    .fallbackToDestructiveMigration()  // Keep this as fallback
                     .build().also { INSTANCE = it }
             }
     }
