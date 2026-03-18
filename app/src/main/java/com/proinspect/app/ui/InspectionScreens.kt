@@ -441,43 +441,88 @@ fun PaymentCard(
             }
 
             // Inspection Amount
-            FormField(
-                label = "Inspection Amount",
-                value = report?.inspectionAmount ?: "",
-                onValueChange = { v ->
-                    report?.let { r ->
-                        onReportUpdate(r.copy(inspectionAmount = v))
-                    }
-                },
-                placeholder = "$0.00"
-            )
-
-            // Ancillary Services
-            FormField(
-                label = "Ancillary Services (Optional)",
-                value = report?.ancillaryServices ?: "",
-                onValueChange = { v ->
-                    report?.let { r ->
-                        onReportUpdate(r.copy(ancillaryServices = v))
-                    }
-                },
-                placeholder = "e.g., Radon Testing, Mold Inspection, Pool/Spa",
-                singleLine = false
-            )
-
-            // Ancillary Amount
-            if (report?.ancillaryServices?.isNotBlank() == true) {
-                FormField(
-                    label = "Ancillary Services Amount",
-                    value = report.ancillaryAmount,
+            Column {
+                Text(
+                    "Inspection Amount",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Navy
+                )
+                Spacer(Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = report?.inspectionAmount ?: "",
                     onValueChange = { v ->
-                        onReportUpdate(report.copy(ancillaryAmount = v))
+                        report?.let { r ->
+                            onReportUpdate(r.copy(inspectionAmount = v))
+                        }
                     },
-                    placeholder = "$0.00"
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("$0.00", fontSize = 13.sp) },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Gold,
+                        unfocusedBorderColor = Color(0xFFD1D5DB)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
                 )
             }
 
-            HorizontalDivider(color = Color(0xFFE5E7EB))
+            // Ancillary Services
+            Column {
+                Text(
+                    "Ancillary Services (Optional)",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Navy
+                )
+                Spacer(Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = report?.ancillaryServices ?: "",
+                    onValueChange = { v ->
+                        report?.let { r ->
+                            onReportUpdate(r.copy(ancillaryServices = v))
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("e.g., Radon Testing, Mold Inspection, Pool/Spa", fontSize = 13.sp) },
+                    minLines = 2,
+                    maxLines = 4,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Gold,
+                        unfocusedBorderColor = Color(0xFFD1D5DB)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                )
+            }
+
+            // Ancillary Amount
+            if (report?.ancillaryServices?.isNotBlank() == true) {
+                Column {
+                    Text(
+                        "Ancillary Services Amount",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Navy
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = report.ancillaryAmount,
+                        onValueChange = { v ->
+                            onReportUpdate(report.copy(ancillaryAmount = v))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("$0.00", fontSize = 13.sp) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Gold,
+                            unfocusedBorderColor = Color(0xFFD1D5DB)
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                }
+            }
+
+            Divider(color = Color(0xFFE5E7EB))
 
             // Total Amount Display
             val inspectionAmt = report?.inspectionAmount?.replace("$", "")?.replace(",", "")?.toDoubleOrNull() ?: 0.0
@@ -517,77 +562,8 @@ fun PaymentCard(
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.outlinedButtonColors(
                         containerColor = if (report?.paymentStatus == "Amount Due") 
-                            RatingOrange.copy(alpha = 0.1f) else Color.Transparent,
-                        contentColor = if (report?.paymentStatus == "Amount Due") 
-                            RatingOrange else Color(0xFF6B7280)
-                    ),
-                    border = BorderStroke(
-                        1.5.dp,
-                        if (report?.paymentStatus == "Amount Due") RatingOrange else Color(0xFFD1D5DB)
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Warning,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text("Amount Due", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                }
+                            RatingOrange.copy(alpha = 0.1f) else Color.
 
-                Button(
-                    onClick = {
-                        report?.let { r ->
-                            onReportUpdate(r.copy(paymentStatus = "Paid"))
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (report?.paymentStatus == "Paid") 
-                            RatingGreen else Color(0xFFE5E7EB),
-                        contentColor = if (report?.paymentStatus == "Paid") 
-                            Color.White else Color(0xFF6B7280)
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Icon(
-                        Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text("Paid", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                }
-            }
-
-            // Payment Method (only show if paid)
-            if (report?.paymentStatus == "Paid") {
-                FormField(
-                    label = "Payment Method",
-                    value = report.paymentMethod,
-                    onValueChange = { v ->
-                        onReportUpdate(report.copy(paymentMethod = v))
-                    },
-                    placeholder = "e.g., Cash, Check #1234, Credit Card, Zelle"
-                )
-            }
-
-            // Payment Notes
-            FormField(
-                label = "Payment Notes (Optional)",
-                value = report?.paymentNotes ?: "",
-                onValueChange = { v ->
-                    report?.let { r ->
-                        onReportUpdate(r.copy(paymentNotes = v))
-                    }
-                },
-                placeholder = "Additional payment details...",
-                singleLine = false
-            )
-        }
-    }
-}
 
 // ─── NEW: Receipt Summary Card ─────────────────────────────────────────────────
 @Composable
