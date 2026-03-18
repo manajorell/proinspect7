@@ -203,7 +203,7 @@ fun CustomItemCard(
     onGalleryPick: (Uri) -> Unit,
     onDeletePhoto: (InspectionPhoto) -> Unit,
     onDeleteItem: () -> Unit,
-    onVoiceInput: (() -> Unit)? = null,  // NEW parameter
+    onVoiceInput: (() -> Unit)? = null,
     apiKey: String = ""
 ) {
     var expanded by remember { mutableStateOf(true) }
@@ -283,7 +283,7 @@ fun CustomItemCard(
                     onValueChange = onNarrativeChanged,
                     label = "📝 Item Notes",
                     placeholder = "Describe findings for: ${item.title}...",
-                    onVoiceInput = onVoiceInput  // NEW
+                    onVoiceInput = onVoiceInput
                 )
             }
         }
@@ -338,6 +338,413 @@ fun AddCustomItemDialog(
             }
         }
     )
+}
+
+// ─── NEW: Payment Card ─────────────────────────────────────────────────────────
+@Composable
+fun PaymentCard(
+    report: Report?,
+    onReportUpdate: (Report) -> Unit
+) {
+    val inspectionServices = listOf(
+        "Standard Home Inspection",
+        "Pre-Purchase Inspection",
+        "Pre-Listing Inspection",
+        "New Construction Inspection",
+        "11th Month Warranty Inspection",
+        "Commercial Inspection"
+    )
+    
+    var showServiceMenu by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(2.dp),
+        shape = RoundedCornerShape(10.dp)
+    ) {
+        Column(
+            Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "💳 Payment & Receipt",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = Navy,
+                    modifier = Modifier.weight(1f)
+                )
+                Surface(
+                    color = if (report?.paymentStatus == "Paid") RatingGreen else RatingOrange,
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        report?.paymentStatus ?: "Amount Due",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            // Inspection Service Dropdown
+            Column {
+                Text(
+                    "Inspection Service",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Navy
+                )
+                Spacer(Modifier.height(4.dp))
+                Box {
+                    OutlinedButton(
+                        onClick = { showServiceMenu = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        border = BorderStroke(1.dp, Color(0xFFD1D5DB)),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = Color.White
+                        )
+                    ) {
+                        Text(
+                            report?.inspectionService ?: "Select Service",
+                            fontSize = 13.sp,
+                            color = Color(0xFF374151),
+                            modifier = Modifier.weight(1f),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Start
+                        )
+                        Icon(
+                            Icons.Default.ArrowDropDown,
+                            contentDescription = null,
+                            tint = Gold
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showServiceMenu,
+                        onDismissRequest = { showServiceMenu = false }
+                    ) {
+                        inspectionServices.forEach { service ->
+                            DropdownMenuItem(
+                                text = { Text(service, fontSize = 13.sp) },
+                                onClick = {
+                                    report?.let { r ->
+                                        onReportUpdate(r.copy(inspectionService = service))
+                                    }
+                                    showServiceMenu = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Inspection Amount
+            FormField(
+                label = "Inspection Amount",
+                value = report?.inspectionAmount ?: "",
+                onValueChange = { v ->
+                    report?.let { r ->
+                        onReportUpdate(r.copy(inspectionAmount = v))
+                    }
+                },
+                placeholder = "$0.00"
+            )
+
+            // Ancillary Services
+            FormField(
+                label = "Ancillary Services (Optional)",
+                value = report?.ancillaryServices ?: "",
+                onValueChange = { v ->
+                    report?.let { r ->
+                        onReportUpdate(r.copy(ancillaryServices = v))
+                    }
+                },
+                placeholder = "e.g., Radon Testing, Mold Inspection, Pool/Spa",
+                singleLine = false
+            )
+
+            // Ancillary Amount
+            if (report?.ancillaryServices?.isNotBlank() == true) {
+                FormField(
+                    label = "Ancillary Services Amount",
+                    value = report.ancillaryAmount,
+                    onValueChange = { v ->
+                        onReportUpdate(report.copy(ancillaryAmount = v))
+                    },
+                    placeholder = "$0.00"
+                )
+            }
+
+            HorizontalDivider(color = Color(0xFFE5E7EB))
+
+            // Total Amount Display
+            val inspectionAmt = report?.inspectionAmount?.replace("$", "")?.replace(",", "")?.toDoubleOrNull() ?: 0.0
+            val ancillaryAmt = report?.ancillaryAmount?.replace("$", "")?.replace(",", "")?.toDoubleOrNull() ?: 0.0
+            val total = inspectionAmt + ancillaryAmt
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Total Amount",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Navy
+                )
+                Text(
+                    "$%.2f".format(total),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Gold
+                )
+            }
+
+            // Payment Status Toggle
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        report?.let { r ->
+                            onReportUpdate(r.copy(paymentStatus = "Amount Due"))
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = if (report?.paymentStatus == "Amount Due") 
+                            RatingOrange.copy(alpha = 0.1f) else Color.Transparent,
+                        contentColor = if (report?.paymentStatus == "Amount Due") 
+                            RatingOrange else Color(0xFF6B7280)
+                    ),
+                    border = BorderStroke(
+                        1.5.dp,
+                        if (report?.paymentStatus == "Amount Due") RatingOrange else Color(0xFFD1D5DB)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Warning,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("Amount Due", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                }
+
+                Button(
+                    onClick = {
+                        report?.let { r ->
+                            onReportUpdate(r.copy(paymentStatus = "Paid"))
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (report?.paymentStatus == "Paid") 
+                            RatingGreen else Color(0xFFE5E7EB),
+                        contentColor = if (report?.paymentStatus == "Paid") 
+                            Color.White else Color(0xFF6B7280)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("Paid", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+
+            // Payment Method (only show if paid)
+            if (report?.paymentStatus == "Paid") {
+                FormField(
+                    label = "Payment Method",
+                    value = report.paymentMethod,
+                    onValueChange = { v ->
+                        onReportUpdate(report.copy(paymentMethod = v))
+                    },
+                    placeholder = "e.g., Cash, Check #1234, Credit Card, Zelle"
+                )
+            }
+
+            // Payment Notes
+            FormField(
+                label = "Payment Notes (Optional)",
+                value = report?.paymentNotes ?: "",
+                onValueChange = { v ->
+                    report?.let { r ->
+                        onReportUpdate(r.copy(paymentNotes = v))
+                    }
+                },
+                placeholder = "Additional payment details...",
+                singleLine = false
+            )
+        }
+    }
+}
+
+// ─── NEW: Receipt Summary Card ─────────────────────────────────────────────────
+@Composable
+fun ReceiptSummaryCard(report: Report?) {
+    if (report == null) return
+    
+    val inspectionAmt = report.inspectionAmount.replace("$", "").replace(",", "").toDoubleOrNull() ?: 0.0
+    val ancillaryAmt = report.ancillaryAmount.replace("$", "").replace(",", "").toDoubleOrNull() ?: 0.0
+    val total = inspectionAmt + ancillaryAmt
+    
+    // Only show if there's payment info
+    if (total == 0.0 && report.inspectionService.isBlank()) return
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(2.dp),
+        shape = RoundedCornerShape(10.dp)
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Receipt Summary",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = Navy
+                )
+                Surface(
+                    color = if (report.paymentStatus == "Paid") RatingGreen else RatingOrange,
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        report.paymentStatus,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider(color = Color(0xFFE5E7EB))
+            Spacer(Modifier.height(12.dp))
+
+            // Inspection Service
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    report.inspectionService,
+                    fontSize = 13.sp,
+                    color = Color(0xFF374151)
+                )
+                Text(
+                    "$%.2f".format(inspectionAmt),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF374151)
+                )
+            }
+
+            // Ancillary Services
+            if (report.ancillaryServices.isNotBlank()) {
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Ancillary Services:",
+                            fontSize = 12.sp,
+                            color = Color(0xFF6B7280),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            report.ancillaryServices,
+                            fontSize = 12.sp,
+                            color = Color(0xFF6B7280)
+                        )
+                    }
+                    Text(
+                        "$%.2f".format(ancillaryAmt),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF374151)
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider(color = Color(0xFFE5E7EB))
+            Spacer(Modifier.height(12.dp))
+
+            // Total
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Total",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Navy
+                )
+                Text(
+                    "$%.2f".format(total),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Gold
+                )
+            }
+
+            // Payment Method
+            if (report.paymentStatus == "Paid" && report.paymentMethod.isNotBlank()) {
+                Spacer(Modifier.height(12.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = RatingGreen,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "Paid via ${report.paymentMethod}",
+                        fontSize = 12.sp,
+                        color = RatingGreen,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            // Payment Notes
+            if (report.paymentNotes.isNotBlank()) {
+                Spacer(Modifier.height(8.dp))
+                Surface(
+                    color = Color(0xFFF9FAFB),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        report.paymentNotes,
+                        fontSize = 11.sp,
+                        color = Color(0xFF6B7280),
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+            }
+        }
+    }
 }
 
 // ─── Main Inspection Section Screen ───────────────────────────────────────────
@@ -598,7 +1005,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                 onCameraClick = { launchCamera(section, checklistItem.id) },
                 onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, section, checklistItem.id) },
                 onDeletePhoto = { photo -> viewModel.deletePhoto(photo) },
-                onVoiceInput = { startVoiceInput(checklistItem.id, false) },  // NEW
+                onVoiceInput = { startVoiceInput(checklistItem.id, false) },
                 apiKey = settings.anthropicApiKey
             )
         }
@@ -624,7 +1031,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                     customItemRatings = customItemRatings - customItem.id
                     customItemNarratives = customItemNarratives - customItem.id
                 },
-                onVoiceInput = { startVoiceInput(customItem.id, false) },  // NEW
+                onVoiceInput = { startVoiceInput(customItem.id, false) },
                 apiKey = settings.anthropicApiKey
             )
         }
@@ -797,13 +1204,13 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
 
     if (report == null) return
 
-LazyColumn(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .imePadding(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+    ) {
         item {
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -892,6 +1299,17 @@ LazyColumn(
                 }
             }
         }
+        
+        // ── NEW: Payment & Receipt Card ──
+        item {
+            PaymentCard(
+                report = report,
+                onReportUpdate = { updatedReport ->
+                    viewModel.saveReport(updatedReport)
+                }
+            )
+        }
+        
         item {
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -1039,6 +1457,11 @@ fun SummaryScreen(viewModel: InspectionViewModel) {
                     }
                 }
             }
+        }
+
+        // ── NEW: Receipt Summary (before PDF buttons) ──
+        item {
+            ReceiptSummaryCard(report)
         }
 
         item {
