@@ -73,7 +73,17 @@ data class Report(
     val updatedAt: Long = System.currentTimeMillis(),
     val agreementSentPath: String = "",
     val signedAgreementPath: String = ""
+    
+        // NEW: Payment fields
+    val inspectionAmount: String = "",
+    val inspectionService: String = "Standard Home Inspection",
+    val ancillaryServices: String = "",
+    val ancillaryAmount: String = "",
+    val paymentStatus: String = "Amount Due",  // "Paid" or "Amount Due"
+    val paymentMethod: String = "",  // "Cash", "Check", "Credit Card", "Zelle", etc.
+    val paymentNotes: String = ""
 )
+
 
 @Entity(
     tableName = "inspection_items",
