@@ -340,6 +340,7 @@ fun AddCustomItemDialog(
     )
 }
 
+
 // ─── NEW: Payment Card ─────────────────────────────────────────────────────────
 @Composable
 fun PaymentCard(
@@ -356,6 +357,23 @@ fun PaymentCard(
     )
     
     var showServiceMenu by remember { mutableStateOf(false) }
+    
+    // Local state for text fields to prevent cursor jumping
+    var inspectionAmountText by remember(report?.inspectionAmount) { 
+        mutableStateOf(report?.inspectionAmount ?: "") 
+    }
+    var ancillaryServicesText by remember(report?.ancillaryServices) { 
+        mutableStateOf(report?.ancillaryServices ?: "") 
+    }
+    var ancillaryAmountText by remember(report?.ancillaryAmount) { 
+        mutableStateOf(report?.ancillaryAmount ?: "") 
+    }
+    var paymentMethodText by remember(report?.paymentMethod) { 
+        mutableStateOf(report?.paymentMethod ?: "") 
+    }
+    var paymentNotesText by remember(report?.paymentNotes) { 
+        mutableStateOf(report?.paymentNotes ?: "") 
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -450,8 +468,9 @@ fun PaymentCard(
                 )
                 Spacer(Modifier.height(4.dp))
                 OutlinedTextField(
-                    value = report?.inspectionAmount ?: "",
+                    value = inspectionAmountText,
                     onValueChange = { v ->
+                        inspectionAmountText = v
                         report?.let { r ->
                             onReportUpdate(r.copy(inspectionAmount = v))
                         }
@@ -477,8 +496,9 @@ fun PaymentCard(
                 )
                 Spacer(Modifier.height(4.dp))
                 OutlinedTextField(
-                    value = report?.ancillaryServices ?: "",
+                    value = ancillaryServicesText,
                     onValueChange = { v ->
+                        ancillaryServicesText = v
                         report?.let { r ->
                             onReportUpdate(r.copy(ancillaryServices = v))
                         }
@@ -496,7 +516,7 @@ fun PaymentCard(
             }
 
             // Ancillary Amount
-            if (report?.ancillaryServices?.isNotBlank() == true) {
+            if (ancillaryServicesText.isNotBlank()) {
                 Column {
                     Text(
                         "Ancillary Services Amount",
@@ -506,9 +526,12 @@ fun PaymentCard(
                     )
                     Spacer(Modifier.height(4.dp))
                     OutlinedTextField(
-                        value = report.ancillaryAmount,
+                        value = ancillaryAmountText,
                         onValueChange = { v ->
-                            onReportUpdate(report.copy(ancillaryAmount = v))
+                            ancillaryAmountText = v
+                            report?.let { r ->
+                                onReportUpdate(r.copy(ancillaryAmount = v))
+                            }
                         },
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = { Text("$0.00", fontSize = 13.sp) },
@@ -525,8 +548,8 @@ fun PaymentCard(
             Divider(color = Color(0xFFE5E7EB))
 
             // Total Amount Display
-            val inspectionAmt = report?.inspectionAmount?.replace("$", "")?.replace(",", "")?.toDoubleOrNull() ?: 0.0
-            val ancillaryAmt = report?.ancillaryAmount?.replace("$", "")?.replace(",", "")?.toDoubleOrNull() ?: 0.0
+            val inspectionAmt = inspectionAmountText.replace("$", "").replace(",", "").toDoubleOrNull() ?: 0.0
+            val ancillaryAmt = ancillaryAmountText.replace("$", "").replace(",", "").toDoubleOrNull() ?: 0.0
             val total = inspectionAmt + ancillaryAmt
 
             Row(
@@ -619,9 +642,12 @@ fun PaymentCard(
                     )
                     Spacer(Modifier.height(4.dp))
                     OutlinedTextField(
-                        value = report.paymentMethod,
+                        value = paymentMethodText,
                         onValueChange = { v ->
-                            onReportUpdate(report.copy(paymentMethod = v))
+                            paymentMethodText = v
+                            report?.let { r ->
+                                onReportUpdate(r.copy(paymentMethod = v))
+                            }
                         },
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = { Text("e.g., Cash, Check, Credit Card, Zelle", fontSize = 13.sp) },
@@ -643,9 +669,12 @@ fun PaymentCard(
                     )
                     Spacer(Modifier.height(4.dp))
                     OutlinedTextField(
-                        value = report.paymentNotes,
+                        value = paymentNotesText,
                         onValueChange = { v ->
-                            onReportUpdate(report.copy(paymentNotes = v))
+                            paymentNotesText = v
+                            report?.let { r ->
+                                onReportUpdate(r.copy(paymentNotes = v))
+                            }
                         },
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = { Text("Transaction ID, receipt number, etc.", fontSize = 13.sp) },
@@ -662,6 +691,7 @@ fun PaymentCard(
         }
     }
 }
+
 
 // ─── NEW: Receipt Summary Card ─────────────────────────────────────────────────
 @Composable
