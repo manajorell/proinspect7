@@ -562,8 +562,106 @@ fun PaymentCard(
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.outlinedButtonColors(
                         containerColor = if (report?.paymentStatus == "Amount Due") 
-                            RatingOrange.copy(alpha = 0.1f) else Color.
-
+                            RatingOrange.copy(alpha = 0.1f) else Color.Transparent,
+                        contentColor = if (report?.paymentStatus == "Amount Due")
+                            RatingOrange else Color(0xFF6B7280)
+                    ),
+                    border = BorderStroke(
+                        1.5.dp,
+                        if (report?.paymentStatus == "Amount Due") RatingOrange else Color(0xFFD1D5DB)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        "Amount Due",
+                        fontSize = 13.sp,
+                        fontWeight = if (report?.paymentStatus == "Amount Due") 
+                            FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+                
+                OutlinedButton(
+                    onClick = {
+                        report?.let { r ->
+                            onReportUpdate(r.copy(paymentStatus = "Paid"))
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = if (report?.paymentStatus == "Paid") 
+                            RatingGreen.copy(alpha = 0.1f) else Color.Transparent,
+                        contentColor = if (report?.paymentStatus == "Paid")
+                            RatingGreen else Color(0xFF6B7280)
+                    ),
+                    border = BorderStroke(
+                        1.5.dp,
+                        if (report?.paymentStatus == "Paid") RatingGreen else Color(0xFFD1D5DB)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        "Paid",
+                        fontSize = 13.sp,
+                        fontWeight = if (report?.paymentStatus == "Paid") 
+                            FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+            }
+            
+            // Payment Method (if paid)
+            if (report?.paymentStatus == "Paid") {
+                Column {
+                    Text(
+                        "Payment Method",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Navy
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = report.paymentMethod,
+                        onValueChange = { v ->
+                            onReportUpdate(report.copy(paymentMethod = v))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("e.g., Cash, Check, Credit Card, Zelle", fontSize = 13.sp) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Gold,
+                            unfocusedBorderColor = Color(0xFFD1D5DB)
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                }
+                
+                Column {
+                    Text(
+                        "Payment Notes (Optional)",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Navy
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = report.paymentNotes,
+                        onValueChange = { v ->
+                            onReportUpdate(report.copy(paymentNotes = v))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Transaction ID, receipt number, etc.", fontSize = 13.sp) },
+                        minLines = 2,
+                        maxLines = 3,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Gold,
+                            unfocusedBorderColor = Color(0xFFD1D5DB)
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                }
+            }
+        }
+    }
+}
 
 // ─── NEW: Receipt Summary Card ─────────────────────────────────────────────────
 @Composable
@@ -1073,7 +1171,8 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                     }
                 },
                 label = "📝 Overall $sectionName Narrative",
-                placeholder = "Summarize overall $sectionName findings..."
+                placeholder = "Summarize overall $sectionName findings...",
+                onVoiceInput = { startVoiceInput(null, true) }
             )
         }
 
