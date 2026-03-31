@@ -937,10 +937,11 @@ if (item.id in listOf("pl3", "hv1", "hv2", "el2")) {
                         ) {
                             Text("Clear", fontSize = 12.sp, color = Color(0xFF6B7280))
                         }
+                        }
                     }
                 }
             }
         }
     }
 }
-            }
+            
