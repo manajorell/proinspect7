@@ -808,17 +808,7 @@ if (item.id in listOf("pl3", "hv1", "hv2", "el2")) {
         )
     }
 
-    // Add permission launcher first
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            serialCameraLauncher.launch(photoUri)
-        } else {
-            android.widget.Toast.makeText(context, "Camera permission denied", android.widget.Toast.LENGTH_SHORT).show()
-        }
-    }
-
+    // Define serialCameraLauncher FIRST
     val serialCameraLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success ->
@@ -838,6 +828,17 @@ if (item.id in listOf("pl3", "hv1", "hv2", "el2")) {
         } catch (e: Exception) {
             android.widget.Toast.makeText(context, "Error: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
             isDecoding = false
+        }
+    }
+
+    // Then define cameraPermissionLauncher (which uses serialCameraLauncher)
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            serialCameraLauncher.launch(photoUri)
+        } else {
+            android.widget.Toast.makeText(context, "Camera permission denied", android.widget.Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -869,6 +870,9 @@ if (item.id in listOf("pl3", "hv1", "hv2", "el2")) {
             Text("📷 Decode Serial Number", color = Gold)
         }
     }
+
+    // ... rest of your decodedResult code stays the same
+
 
     decodedResult?.let { result ->
         Spacer(Modifier.height(8.dp))
