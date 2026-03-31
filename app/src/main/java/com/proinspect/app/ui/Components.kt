@@ -787,40 +787,49 @@ fun ChecklistItemCard(
                     onVoiceInput = onVoiceInput  // FIXED: Now properly passing the parameter
                 )
 
-                if (item.id in listOf("pl3", "hv1", "hv2", "el2")) {
-                    val equipmentName = when (item.id) {
-                        "pl3" -> "Water Heater"
-                        "hv1" -> "Furnace / Air Handler"
-                        "hv2" -> "AC Condenser"
-                        "el2" -> "Electrical Panel"
-                        else -> "Equipment"
-                    }
-                    var isDecoding by remember { mutableStateOf(false) }
-                    var decodedResult by remember { mutableStateOf<String?>(null) }
+if (item.id in listOf("pl3", "hv1", "hv2", "el2")) {
+    val equipmentName = when (item.id) {
+        "pl3" -> "Water Heater"
+        "hv1" -> "Furnace / Air Handler"
+        "hv2" -> "AC Condenser"
+        "el2" -> "Electrical Panel"
+        else -> "Equipment"
+    }
+    var isDecoding by remember { mutableStateOf(false) }
+    var decodedResult by remember { mutableStateOf<String?>(null) }
 
-                    // Create a temporary file URI for the camera to save to
-val photoUri = remember {
-    val photoFile = File(context.cacheDir, "serial_decode_${System.currentTimeMillis()}.jpg")
-    androidx.core.content.FileProvider.getUriForFile(
-        context,
-        "${context.packageName}.fileprovider",
-        photoFile
-    )
-}
+    // Create a temporary file URI for the camera to save to
+    val photoUri = remember {
+        val photoFile = File(context.cacheDir, "serial_decode_${System.currentTimeMillis()}.jpg")
+        androidx.core.content.FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            photoFile
+        )
+    }
 
-val serialCameraLauncher = rememberLauncherForActivityResult(
-    ActivityResultContracts.TakePicture()
-) { success ->
-    if (success) {
-        isDecoding = true
-        decodedResult = null
-        scope.launch {
-            val result = decodeSerialNumber(context, photoUri, equipmentName, apiKey)
-            decodedResult = result
-            isDecoding = false
+    val serialCameraLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            isDecoding = true
+            decodedResult = null
+            scope.launch {
+                val result = decodeSerialNumber(context, photoUri, equipmentName, apiKey)
+                decodedResult = result
+                isDecoding = false
+            }
         }
     }
-}
+
+    Spacer(modifier = Modifier.height(8.dp))
+    OutlinedButton(
+        onClick = { serialCameraLauncher.launch(photoUri) },
+        modifier = Modifier.fillMaxWidth(),
+        border = BorderStroke(1.dp, Gold),
+        enabled = !isDecoding
+    ) {
+
 
                     Spacer(modifier = Modifier.height(8.dp))
                   OutlinedButton(
