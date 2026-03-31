@@ -798,27 +798,37 @@ fun ChecklistItemCard(
                     var isDecoding by remember { mutableStateOf(false) }
                     var decodedResult by remember { mutableStateOf<String?>(null) }
 
-                    val serialGalleryLauncher = rememberLauncherForActivityResult(
-                        ActivityResultContracts.GetContent()
-                    ) { uri ->
-                        uri?.let {
-                            isDecoding = true
-                            decodedResult = null
-                            scope.launch {
-                                val result = decodeSerialNumber(context, uri, equipmentName, apiKey)
-                                decodedResult = result
-                                isDecoding = false
-                            }
-                        }
-                    }
+                    // Create a temporary file URI for the camera to save to
+val photoUri = remember {
+    val photoFile = File(context.cacheDir, "serial_decode_${System.currentTimeMillis()}.jpg")
+    androidx.core.content.FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        photoFile
+    )
+}
+
+val serialCameraLauncher = rememberLauncherForActivityResult(
+    ActivityResultContracts.TakePicture()
+) { success ->
+    if (success) {
+        isDecoding = true
+        decodedResult = null
+        scope.launch {
+            val result = decodeSerialNumber(context, photoUri, equipmentName, apiKey)
+            decodedResult = result
+            isDecoding = false
+        }
+    }
+}
 
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedButton(
-                        onClick = { serialGalleryLauncher.launch("image/*") },
-                        modifier = Modifier.fillMaxWidth(),
-                        border = BorderStroke(1.dp, Gold),
-                        enabled = !isDecoding
-                    ) {
+                  OutlinedButton(
+    onClick = { serialCameraLauncher.launch(photoUri) },  // Changed this line
+    modifier = Modifier.fillMaxWidth(),
+    border = BorderStroke(1.dp, Gold),
+    enabled = !isDecoding
+) {
                         if (isDecoding) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(16.dp), 
