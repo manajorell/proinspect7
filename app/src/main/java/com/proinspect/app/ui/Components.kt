@@ -914,7 +914,7 @@ if (item.id in listOf("pl3", "hv1", "hv2", "el2")) {
                 if (!result.startsWith("❌")) {
                     Spacer(Modifier.height(4.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(
+                                                Button(
                             onClick = { 
                                 val cleanResult = result
                                     .replace("✅ Local Decode:\n", "")
@@ -937,11 +937,13 @@ if (item.id in listOf("pl3", "hv1", "hv2", "el2")) {
                         ) {
                             Text("Clear", fontSize = 12.sp, color = Color(0xFF6B7280))
                         }
-                        }
                     }
                 }
             }
         }
     }
 }
-            
+            }
+        }
+    }
+}
