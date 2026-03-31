@@ -808,124 +808,138 @@ if (item.id in listOf("pl3", "hv1", "hv2", "el2")) {
         )
     }
 
+    // Add permission launcher first
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            serialCameraLauncher.launch(photoUri)
+        } else {
+            android.widget.Toast.makeText(context, "Camera permission denied", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
     val serialCameraLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success ->
-        if (success) {
-            isDecoding = true
-            decodedResult = null
-            scope.launch {
-                val result = decodeSerialNumber(context, photoUri, equipmentName, apiKey)
-                decodedResult = result
-                isDecoding = false
+        try {
+            if (success) {
+                android.widget.Toast.makeText(context, "Photo captured, decoding...", android.widget.Toast.LENGTH_SHORT).show()
+                isDecoding = true
+                decodedResult = null
+                scope.launch {
+                    val result = decodeSerialNumber(context, photoUri, equipmentName, apiKey)
+                    decodedResult = result
+                    isDecoding = false
+                }
+            } else {
+                android.widget.Toast.makeText(context, "Photo capture cancelled", android.widget.Toast.LENGTH_SHORT).show()
             }
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(context, "Error: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+            isDecoding = false
         }
     }
 
     Spacer(modifier = Modifier.height(8.dp))
     OutlinedButton(
-        onClick = { serialCameraLauncher.launch(photoUri) },
+        onClick = { 
+            // Check permission first
+            val permission = android.Manifest.permission.CAMERA
+            if (androidx.core.content.ContextCompat.checkSelfPermission(context, permission) == 
+                android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                serialCameraLauncher.launch(photoUri)
+            } else {
+                cameraPermissionLauncher.launch(permission)
+            }
+        },
         modifier = Modifier.fillMaxWidth(),
         border = BorderStroke(1.dp, Gold),
         enabled = !isDecoding
     ) {
+        if (isDecoding) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(16.dp), 
+                strokeWidth = 2.dp, 
+                color = Gold
+            )
+            Spacer(Modifier.width(8.dp))
+            Text("Decoding (trying local first)...", color = Gold, fontSize = 12.sp)
+        } else {
+            Text("📷 Decode Serial Number", color = Gold)
+        }
+    }
 
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                  OutlinedButton(
-    onClick = { serialCameraLauncher.launch(photoUri) },  // Changed this line
-    modifier = Modifier.fillMaxWidth(),
-    border = BorderStroke(1.dp, Gold),
-    enabled = !isDecoding
-) {
-                        if (isDecoding) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp), 
-                                strokeWidth = 2.dp, 
-                                color = Gold
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text("Decoding (trying local first)...", color = Gold, fontSize = 12.sp)
-                        } else {
-                            Text("📷 Decode Serial Number", color = Gold)
-                        }
-                    }
-
-                    decodedResult?.let { result ->
-                        Spacer(Modifier.height(8.dp))
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = when {
-                                    result.startsWith("✅") -> Color(0xFFECFDF5)
-                                    result.startsWith("🤖") -> Color(0xFFFFFBF0)
-                                    result.startsWith("⚠️") -> Color(0xFFFEF3C7)
-                                    else -> Color(0xFFFEE2E2)
-                                }
-                            ),
-                            border = BorderStroke(
-                                1.dp, 
-                                when {
-                                    result.startsWith("❌") -> Color(0xFFEF4444)
-                                    result.startsWith("⚠️") -> Color(0xFFF59E0B)
-                                    else -> Gold
-                                }
-                            )
+    decodedResult?.let { result ->
+        Spacer(Modifier.height(8.dp))
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = when {
+                    result.startsWith("✅") -> Color(0xFFECFDF5)
+                    result.startsWith("🤖") -> Color(0xFFFFFBF0)
+                    result.startsWith("⚠️") -> Color(0xFFFEF3C7)
+                    else -> Color(0xFFFEE2E2)
+                }
+            ),
+            border = BorderStroke(
+                1.dp, 
+                when {
+                    result.startsWith("❌") -> Color(0xFFEF4444)
+                    result.startsWith("⚠️") -> Color(0xFFF59E0B)
+                    else -> Gold
+                }
+            )
+        ) {
+            Column(
+                Modifier.padding(12.dp), 
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    when {
+                        result.startsWith("✅") -> "📋 Decoded Locally"
+                        result.startsWith("🤖") -> "📋 Decoded via AI"
+                        result.startsWith("⚠️") -> "⚠️ Partial Result"
+                        else -> "❌ Decode Failed"
+                    },
+                    fontWeight = FontWeight.Bold, 
+                    fontSize = 13.sp, 
+                    color = Navy
+                )
+                Text(
+                    result, 
+                    fontSize = 12.sp, 
+                    color = Color(0xFF374151)
+                )
+                if (!result.startsWith("❌")) {
+                    Spacer(Modifier.height(4.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = { 
+                                val cleanResult = result
+                                    .replace("✅ Local Decode:\n", "")
+                                    .replace("🤖 AI Decode:\n", "")
+                                    .replace("⚠️ ", "")
+                                onNarrativeChanged(
+                                    if (narrative.isBlank()) cleanResult
+                                    else "$narrative\n\n$cleanResult"
+                                )
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Navy),
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Column(
-                                Modifier.padding(12.dp), 
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    when {
-                                        result.startsWith("✅") -> "📋 Decoded Locally"
-                                        result.startsWith("🤖") -> "📋 Decoded via AI"
-                                        result.startsWith("⚠️") -> "⚠️ Partial Result"
-                                        else -> "❌ Decode Failed"
-                                    },
-                                    fontWeight = FontWeight.Bold, 
-                                    fontSize = 13.sp, 
-                                    color = Navy
-                                )
-                                Text(
-                                    result, 
-                                    fontSize = 12.sp, 
-                                    color = Color(0xFF374151)
-                                )
-                                if (!result.startsWith("❌")) {
-                                    Spacer(Modifier.height(4.dp))
-                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        Button(
-                                            onClick = { 
-                                                val cleanResult = result
-                                                    .replace("✅ Local Decode:\n", "")
-                                                    .replace("🤖 AI Decode:\n", "")
-                                                    .replace("⚠️ ", "")
-                                                onNarrativeChanged(
-                                                    if (narrative.isBlank()) cleanResult
-                                                    else "$narrative\n\n$cleanResult"
-                                                )
-                                            },
-                                            colors = ButtonDefaults.buttonColors(containerColor = Navy),
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            Text("Copy to Notes", fontSize = 12.sp)
-                                        }
-                                        OutlinedButton(
-                                            onClick = { decodedResult = null },
-                                            modifier = Modifier.weight(1f),
-                                            border = BorderStroke(1.dp, Color(0xFF9CA3AF))
-                                        ) {
-                                            Text("Clear", fontSize = 12.sp, color = Color(0xFF6B7280))
-                                        }
-                                    }
-                                }
-                            }
+                            Text("Copy to Notes", fontSize = 12.sp)
+                        }
+                        OutlinedButton(
+                            onClick = { decodedResult = null },
+                            modifier = Modifier.weight(1f),
+                            border = BorderStroke(1.dp, Color(0xFF9CA3AF))
+                        ) {
+                            Text("Clear", fontSize = 12.sp, color = Color(0xFF6B7280))
                         }
                     }
                 }
             }
         }
     }
-}
 }
