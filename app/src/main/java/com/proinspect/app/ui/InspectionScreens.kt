@@ -1184,7 +1184,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                         color = Navy
-                    )
+)
                     Spacer(Modifier.height(10.dp))
                     PhotoStrip(
                         photos = photos.filter { it.section == section && it.itemId == null },
