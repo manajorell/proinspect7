@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.proinspect.app.data.*
 import java.io.File
 
@@ -294,7 +295,11 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                                 contentAlignment = Alignment.Center
                             ) {
                                 AsyncImage(
-                                    model = File(settings.companyLogoPath),
+                                    model = ImageRequest.Builder(context)
+                                        .data(File(settings.companyLogoPath))
+                                        .size(800) // Limit size to prevent OOM
+                                        .crossfade(true)
+                                        .build(),
                                     contentDescription = "Company Logo",
                                     modifier = Modifier.fillMaxSize().padding(8.dp),
                                     contentScale = ContentScale.Fit
@@ -356,7 +361,11 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                                 ) {
                                     if (path.isNotBlank() && File(path).exists()) {
                                         AsyncImage(
-                                            model = File(path),
+                                            model = ImageRequest.Builder(context)
+                                                .data(File(path))
+                                                .size(200) // Limit size
+                                                .crossfade(true)
+                                                .build(),
                                             contentDescription = badgeLabels[index],
                                             modifier = Modifier.fillMaxSize().padding(4.dp),
                                             contentScale = ContentScale.Fit
@@ -385,7 +394,7 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                                     )
                                 }
                             }
-                            if (index < 3) Divider(color = Color(0xFFEEEEEE))
+                            if (index < 3) HorizontalDivider(color = Color(0xFFEEEEEE))
                         }
                     }
                 }
