@@ -608,7 +608,7 @@ object PdfGenerator {
             val goodTbl = PdfPTable(3).apply { widthPercentage = 100f; spacingAfter = 16f }
             good.forEach { item ->
                 val ci = InspectionSections.allItems.find { it.id == item.itemId }
-                val gc = PdfPCell(Phrase("✓  ${ci?.title ?: item.itemId}",
+                val gc = PdfPCell(Phrase("✓  ${ci?.label ?: item.itemId}",
                     Font(Font.FontFamily.HELVETICA, 9f, Font.NORMAL, cGreen)))
                 gc.border = Rectangle.NO_BORDER
                 gc.paddingTop = 3f; gc.paddingBottom = 3f; gc.paddingLeft = 3f; gc.paddingRight = 3f
@@ -647,7 +647,7 @@ object PdfGenerator {
             textCell.paddingLeft = 10f; textCell.paddingTop = 8f; textCell.paddingBottom = 8f; textCell.paddingRight = 8f
             textCell.backgroundColor = cOffWhite
             val sectionName = InspectionSections.sectionNames[item.section] ?: item.section
-            textCell.addElement(Paragraph("$sectionName  ›  ${ci?.title ?: item.itemId}",
+            textCell.addElement(Paragraph("$sectionName  ›  ${ci?.label ?: item.itemId}",
                 Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, color)))
             if (item.narrative.isNotBlank())
                 textCell.addElement(Paragraph(item.narrative, fBody).apply { spacingBefore = 4f })
@@ -805,7 +805,7 @@ object PdfGenerator {
                 val rating = found?.rating ?: Rating.NOT_RATED
                 val color  = rColor(rating)
 
-                val nameCell = PdfPCell(Phrase(ci.title, fBody))
+                val nameCell = PdfPCell(Phrase(ci.label, fBody))
                 nameCell.border = Rectangle.BOTTOM; nameCell.borderColorBottom = cBorder
                 nameCell.paddingTop = 7f; nameCell.paddingBottom = 7f
                 nameCell.paddingLeft = 7f; nameCell.paddingRight = 7f
@@ -850,7 +850,7 @@ object PdfGenerator {
                 doc.add(gHdr)
                 val goodTbl = PdfPTable(3).apply { widthPercentage = 100f; spacingAfter = 8f }
                 goodItems.forEach { (ci, _) ->
-                    val gc = PdfPCell(Phrase("✓  ${ci.title}",
+                    val gc = PdfPCell(Phrase("✓  ${ci.label}",
                         Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, cGreen)))
                     gc.border = Rectangle.NO_BORDER
                     gc.paddingTop = 2f; gc.paddingBottom = 2f; gc.paddingLeft = 3f; gc.paddingRight = 3f
@@ -1086,7 +1086,7 @@ object PdfGenerator {
             val titlePara = Paragraph()
             titlePara.add(Chunk(item.rating.short + "  ",
                 Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, color)))
-            titlePara.add(Chunk(ci.title,
+            titlePara.add(Chunk(ci.label,
                 Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cNavy)))
             itemCell.addElement(titlePara)
 
