@@ -2,7 +2,22 @@ package com.proinspect.app.data
 
 import androidx.room.*
 
-// ── IRC Code Data ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// ENUMS
+// ══════════════════════════════════════════════════════════════════════════════
+
+enum class Rating(val short: String) {
+    SAFETY("Safety"),
+    MAJOR("Major"),
+    MONITOR("Monitor"),
+    GOOD("Good"),
+    NOT_RATED("N/R"),
+    NOT_PRESENT("N/A")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// IRC CODE DATA
+// ══════════════════════════════════════════════════════════════════════════════
 
 data class IrcCodeReference(
     val section: String,
@@ -118,14 +133,61 @@ object IrcCodes {
         return when {
             version.contains("2021") -> codes2021[section]
             version.contains("2018") -> codes2018[section]
-            version.contains("2015") -> codes2018[section] // Fallback to 2018
-            version.contains("2012") -> codes2018[section] // Fallback to 2018
-            else -> codes2021[section] // Default to 2021
+            version.contains("2015") -> codes2018[section]
+            version.contains("2012") -> codes2018[section]
+            else -> codes2021[section]
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // METHODS REQUIRED BY InspectionScreens.kt
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    fun getCodeForItem(section: String, itemId: String, ircVersion: String): String {
+        val sectionKey = section.lowercase()
+        val codeRef = getCode(ircVersion, sectionKey)
+        
+        return if (codeRef != null) {
+            """
+            ${codeRef.section} - ${codeRef.code}
+            
+            ${codeRef.description}
+            
+            Version: $ircVersion
+            Item: $itemId
+            """.trimIndent()
+        } else {
+            "IRC code information not available for this item."
+        }
+    }
+
+    fun getCodesForSection(section: String, ircVersion: String): String {
+        val sectionKey = section.lowercase()
+        val codeRef = getCode(ircVersion, sectionKey)
+        
+        return if (codeRef != null) {
+            """
+            ${section.uppercase()} INSPECTION - IRC CODES
+            
+            Section: ${codeRef.section}
+            Code: ${codeRef.code}
+            
+            ${codeRef.description}
+            
+            IRC Version: $ircVersion
+            
+            Note: This is a summary of key IRC requirements for ${section.lowercase()} inspection. 
+            Always refer to the complete IRC code book for comprehensive requirements.
+            """.trimIndent()
+        } else {
+            "IRC code information not available for this section."
         }
     }
 }
 
-// ── Report Entity ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// ROOM ENTITIES
+// ══════════════════════════════════════════════════════════════════════════════
 
 @Entity(tableName = "reports")
 data class Report(
@@ -157,8 +219,6 @@ data class Report(
     val garageNarrative: String = "",
     val agreementPath: String = "",
     val signedAgreementPath: String = "",
-    
-    // Payment fields
     val inspectionService: String = "",
     val inspectionAmount: String = "",
     val ancillaryServices: String = "",
@@ -166,31 +226,19 @@ data class Report(
     val paymentStatus: String = "Amount Due",
     val paymentMethod: String = "",
     val paymentNotes: String = "",
-    
-    // Property details
     val propertyType: String = "",
-    
-    // Roof details
     val roofType: String = "",
     val roofAge: String = "",
     val roofMethod: String = "",
-    
-    // Exterior details
     val sidingType: String = "",
     val drivewayType: String = "",
-    
-    // Structure details
     val foundationType: String = "",
     val framingType: String = "",
-    
-    // Electrical details
     val panelBrand: String = "",
     val panelAmps: String = "",
     val panelType: String = "",
     val wiringType: String = "",
     val serviceEntrance: String = "",
-    
-    // HVAC details
     val heatType: String = "",
     val heatBrand: String = "",
     val heatAge: String = "",
@@ -199,32 +247,18 @@ data class Report(
     val acAge: String = "",
     val fuelType: String = "",
     val filterDate: String = "",
-    
-    // Plumbing details
     val supplyMaterial: String = "",
     val drainMaterial: String = "",
     val whType: String = "",
     val whAge: String = "",
     val whCapacity: String = "",
-    
-    // Insulation details
     val atticInsulation: String = "",
     val atticRValue: String = "",
     val crawlInsulation: String = "",
-    
-    // Garage details
     val garageType: String = "",
     val garageCars: String = "",
-    
     val createdAt: Long = System.currentTimeMillis()
 )
-
-// ── Inspection Item Entity ────────────────────────────────────────────────────
-
-package com.proinspect.app.data
-
-import androidx.room.Entity
-import androidx.room.PrimaryKey
 
 @Entity(tableName = "inspection_items")
 data class InspectionItem(
@@ -234,16 +268,8 @@ data class InspectionItem(
     val itemId: String,
     val section: String,
     val rating: Rating = Rating.NOT_RATED,
-    val narrative: String = "",
-    val label: String = ""  // ← ADD THIS PROPERTY
-) {
-    // Helper function to get display label
-    fun getDisplayLabel(): String {
-        return if (label.isNotEmpty()) label else itemId
-    }
-}
-
-// ── Inspection Photo Entity ───────────────────────────────────────────────────
+    val narrative: String = ""
+)
 
 @Entity(tableName = "inspection_photos")
 data class InspectionPhoto(
@@ -254,8 +280,6 @@ data class InspectionPhoto(
     val photoPath: String,
     val timestamp: Long = System.currentTimeMillis()
 )
-
-// ── App Settings Entity ───────────────────────────────────────────────────────
 
 @Entity(tableName = "app_settings")
 data class AppSettings(
@@ -269,11 +293,13 @@ data class AppSettings(
     val ircState: String = "2021 IRC"
 )
 
-// ── Checklist Data ────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// CHECKLIST DATA
+// ══════════════════════════════════════════════════════════════════════════════
 
 data class ChecklistItem(
     val id: String,
-    val title: String,
+    val label: String,  // Changed from 'title' to 'label' to match InspectionScreens.kt
     val section: String
 )
 
