@@ -784,7 +784,7 @@ fun ChecklistItemCard(
                     value = narrative,
                     onValueChange = onNarrativeChanged,
                     label = "📝 Item Notes",
-                    placeholder = "Describe findings for: ${item.title}...",
+                   placeholder = "Describe findings for: ${item.label}..."
                     onVoiceInput = onVoiceInput  // FIXED: Now properly passing the parameter
                 )
 
