@@ -143,23 +143,80 @@ object IrcCodes {
     // METHODS REQUIRED BY InspectionScreens.kt
     // ═══════════════════════════════════════════════════════════════════════════
 
-    fun getCodeForItem(section: String, itemId: String, ircVersion: String): String {
-        val sectionKey = section.lowercase()
-        val codeRef = getCode(ircVersion, sectionKey)
-        
-        return if (codeRef != null) {
-            """
-            ${codeRef.section} - ${codeRef.code}
-            
-            ${codeRef.description}
-            
-            Version: $ircVersion
-            Item: $itemId
-            """.trimIndent()
-        } else {
-            "IRC code information not available for this item."
-        }
+fun getCodeForItem(section: String, itemId: String, ircVersion: String): String {
+    val itemCodes = mapOf(
+        // ROOFING
+        "rf1" to "R905 — Roof Coverings: Roof coverings shall be applied per manufacturer instructions. Asphalt shingles require minimum 4 fasteners per strip shingle.",
+        "rf2" to "R903.4 — Roof Drainage: Roof drainage systems shall be designed to collect and discharge roof drainage.",
+        "rf3" to "R903.2 — Flashings: Flashings shall be installed at wall and roof intersections, at gutters, and at all other locations where moisture could infiltrate.",
+        "rf4" to "R903.2.1 — Skylights and Roof Penetrations: All penetrations through the roof deck shall be flashed and sealed.",
+        "rf5" to "R802 — Roof Structure: Rafters shall be framed to ridge board or to each other with gusset plates.",
+        // EXTERIOR
+        "ex1" to "R703 — Exterior Covering: Exterior walls shall provide a weather-resistant exterior wall envelope to prevent accumulation of water.",
+        "ex2" to "R612 — Exterior Doors: Exterior doors shall be weathertight with proper flashing at head and sill.",
+        "ex3" to "R609 — Exterior Windows: Windows shall be installed per manufacturer instructions with proper flashing.",
+        "ex4" to "R507 — Exterior Decks: Decks shall be designed for minimum 40 psf live load. Guardrails required when deck is 30 inches above grade.",
+        "ex5" to "R903.2.1 — Eaves, Soffits & Fascias: Eaves shall be properly ventilated and protected from moisture intrusion.",
+        "ex6" to "R401.3 — Grading: The ground adjacent to the foundation shall be sloped away at 6 inches in 10 feet minimum.",
+        "ex7" to "R309 — Driveways & Walkways: Driveways shall drain away from the structure to prevent water infiltration.",
+        "ex8" to "R404 — Retaining Walls: Retaining walls shall be designed to resist lateral soil loads.",
+        // STRUCTURE
+        "st1" to "R403 — Foundation: Footings shall be sized for the load and soil conditions. Minimum depth below frost line required.",
+        "st2" to "R408 — Crawlspace: Crawlspaces shall have 18 inch minimum clearance and adequate cross-ventilation of 1 sq ft per 150 sq ft of floor area.",
+        "st3" to "R502 — Floor Structure: Floor joists shall be sized per span tables. Notching and boring limited to code allowances.",
+        "st4" to "R602 — Wall Structure: Studs shall be continuous from foundation to roof. Load-bearing walls require proper headers.",
+        "st5" to "R802.4 — Ceiling Structure: Ceiling joists shall be sized per span tables and properly connected to rafters.",
+        "st6" to "R802 — Roof Structure: Roof framing shall be sized per span tables. Ridge board minimum 1-inch nominal thickness.",
+        // ELECTRICAL
+        "el1" to "E3601 — Service Entrance: Service entrance conductors shall have adequate ampacity. Minimum 100-amp service required for dwellings.",
+        "el2" to "E3706 — Main Panel: Panelboards shall be protected by overcurrent devices not exceeding panel rating. Dead front required.",
+        "el3" to "E3706 — Branch Circuits: Branch circuit conductors shall have ampacity not less than the maximum load served.",
+        "el4" to "E3903 — Devices & Fixtures: All outlets, switches and fixtures shall be properly installed and grounded.",
+        "el5" to "E3902 — GFCI & AFCI: GFCI protection required within 6 feet of sinks, bathrooms, garages, outdoors, crawlspaces. AFCI required for bedrooms.",
+        "el6" to "R314 — Smoke Detectors: Required in each sleeping room, outside each sleeping area, and on each level. CO detectors required within 15 feet of sleeping rooms.",
+        // HVAC
+        "hv1" to "M1401 — Heating Equipment: Heating equipment shall be sized per ACCA Manual J. Minimum efficiency standards apply.",
+        "hv2" to "M1401.3 — Cooling Equipment: Cooling equipment shall be sized per ACCA Manual S. Condensate drain required.",
+        "hv3" to "M1601 — Duct Systems: Ducts shall be properly sized, insulated, and sealed. Minimum R-8 insulation in unconditioned spaces.",
+        "hv4" to "M1801 — Vents & Flues: Venting shall be sized and installed per appliance manufacturer instructions. Minimum clearances required.",
+        "hv5" to "M1401.3 — Thermostat: At least one thermostat shall be provided for each separate heating/cooling system.",
+        // PLUMBING
+        "pl1" to "P2903 — Water Supply: Water supply system shall be designed to provide adequate pressure and flow. Minimum 40 psi at fixtures.",
+        "pl2" to "P3001 — Drain Waste & Vent: DWV systems shall be designed to prevent siphoning, back-pressure, and leakage.",
+        "pl3" to "P2801 — Water Heater: TPR valve required and shall discharge to within 6 inches of floor. Seismic straps required in seismic zones.",
+        "pl4" to "G2414 — Gas Distribution: Gas piping shall be properly sized, supported, and protected. Sediment trap required at each appliance.",
+        "pl5" to "P3113 — Sump Pump: Sump pumps shall discharge to approved location. Check valve required on discharge line.",
+        // INTERIOR
+        "in1" to "R702 — Interior Covering: Wall and ceiling finishes shall comply with flame spread and smoke development requirements.",
+        "in2" to "R612 — Interior Doors & Windows: Doors shall provide minimum 32-inch clear opening. Safety glazing required in hazardous locations.",
+        "in3" to "R311.7 — Stairs & Handrails: Handrails required for stairs with 4 or more risers. Grip-able profile required. Height 34-38 inches.",
+        "in4" to "R302.1 — Counters & Cabinets: Cabinets shall be properly secured. Countertops in wet areas shall be water-resistant.",
+        "in5" to "P2701 — Plumbing Fixtures: Fixtures shall be properly installed, sealed, and have adequate water supply and drainage.",
+        "in6" to "M1507 — Ventilation: Bathrooms shall have mechanical ventilation of minimum 50 cfm or openable window of 1.5 sq ft.",
+        // INSULATION
+        "is1" to "N1102.1 — Attic Insulation: Minimum R-38 required in climate zone 4, R-49 in zones 5-8. Ventilation baffles required at eaves.",
+        "is2" to "N1102.1 — Wall Insulation: Minimum R-13 required for wood frame walls in most climate zones.",
+        "is3" to "N1102.1 — Floor Insulation: Minimum R-19 required for floors over unconditioned spaces in most climate zones.",
+        "is4" to "R601.3 — Vapor Retarders: Class I or II vapor retarder required on warm-in-winter side of insulation in climate zones 5-8.",
+        "is5" to "R806 — Ventilation: Attic ventilation ratio of 1:150 of floor area, or 1:300 with vapor retarder. Ridge and soffit vents recommended.",
+        // GARAGE
+        "gr1" to "R309.5 — Garage Door: Automatic garage door openers shall have auto-reverse and photo-eye safety features.",
+        "gr2" to "R302.6 — Garage Walls & Ceiling: Walls and ceilings adjacent to living space require minimum 1/2-inch Type X gypsum board on garage side.",
+        "gr3" to "R309 — Garage Floor: Garage floors shall be of approved noncombustible material and slope to drain.",
+        "gr4" to "R302.5 — Garage Vehicle Door: Door between garage and residence shall be solid wood, solid steel, or 20-minute fire-rated.",
+        "gr5" to "E3902 — Garage Electrical: All 125-volt, single-phase, 15 and 20-amp receptacles in garages require GFCI protection."
+    )
+
+    val baseCode = itemCodes[itemId] ?: "IRC code reference not available for this item."
+    val versionNote = when {
+        ircVersion.contains("2021") -> "\n\nIRC Version: 2021"
+        ircVersion.contains("2018") -> "\n\nIRC Version: 2018"
+        ircVersion.contains("2015") -> "\n\nIRC Version: 2015"
+        ircVersion.contains("2012") -> "\n\nIRC Version: 2012"
+        else -> "\n\nIRC Version: 2021"
     }
+    return baseCode + versionNote
+}
 
     fun getCodesForSection(section: String, ircVersion: String): String {
         val sectionKey = section.lowercase()
