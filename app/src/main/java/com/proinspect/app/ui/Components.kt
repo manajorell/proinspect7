@@ -281,7 +281,7 @@ fun PhotoStrip(
             photos.forEach { photo ->
                 Box(modifier = Modifier.size(size)) {
                     AsyncImage(
-                        model = File(photo.filePath),
+                        model = File(photo.photoPath),  // ← FIXED: Changed from filePath to photoPath
                         contentDescription = "Photo",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp))
@@ -303,6 +303,7 @@ fun PhotoStrip(
         }
     }
 }
+
 
 @Composable
 fun NarrativeBox(
