@@ -229,6 +229,7 @@ fun ReportScreen(
 
 // ── Settings Screen ───────────────────────────────────────────────────────────
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
@@ -297,7 +298,7 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                                 AsyncImage(
                                     model = ImageRequest.Builder(context)
                                         .data(File(settings.companyLogoPath))
-                                        .size(800) // Limit size to prevent OOM
+                                        .size(800)
                                         .crossfade(true)
                                         .build(),
                                     contentDescription = "Company Logo",
@@ -363,7 +364,7 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                                         AsyncImage(
                                             model = ImageRequest.Builder(context)
                                                 .data(File(path))
-                                                .size(200) // Limit size
+                                                .size(200)
                                                 .crossfade(true)
                                                 .build(),
                                             contentDescription = badgeLabels[index],
@@ -432,7 +433,8 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                     }
                 }
             }
-                        // ── IRC Code Version ──────────────────────────────────────────────
+
+            // ── IRC Code Version ──────────────────────────────────────────────
             item {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -479,7 +481,6 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                     }
                 }
             }
-
 
             // ── Backup & Restore ──────────────────────────────────────────────
             item {
@@ -580,7 +581,9 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
             item { Spacer(Modifier.height(20.dp)) }
         }
     }
-    // ── IRC Code Button Component ─────────────────────────────────────────────────
+}
+
+// ── IRC Code Button Component ─────────────────────────────────────────────────
 
 @Composable
 fun IrcCodeButton(
@@ -593,14 +596,15 @@ fun IrcCodeButton(
     OutlinedButton(
         onClick = { showIrcDialog = true },
         modifier = modifier,
-        border = BorderStroke(1.dp, Color(0xFF059669)),
+        border = BorderStroke(1.5.dp, Color(0xFF059669)),
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = Color(0xFF059669)
-        )
+        ),
+        shape = RoundedCornerShape(8.dp)
     ) {
         Text("📖", fontSize = 16.sp)
-        Spacer(Modifier.width(4.dp))
-        Text("IRC Code", fontSize = 13.sp)
+        Spacer(Modifier.width(6.dp))
+        Text("IRC Code Reference", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
     }
     
     if (showIrcDialog) {
@@ -609,56 +613,98 @@ fun IrcCodeButton(
         AlertDialog(
             onDismissRequest = { showIrcDialog = false },
             title = { 
-                Text("IRC Code Reference", fontWeight = FontWeight.Bold, color = Navy) 
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("📖", fontSize = 20.sp)
+                    Spacer(Modifier.width(8.dp))
+                    Text("IRC Code Reference", fontWeight = FontWeight.Bold, color = Navy) 
+                }
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        "Version: $ircVersion",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp,
-                        color = Navy
-                    )
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Surface(
+                        color = Color(0xFFF3F4F6),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            "Version: $ircVersion",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            color = Navy,
+                            modifier = Modifier.padding(10.dp)
+                        )
+                    }
+                    
                     if (ircCode != null) {
                         HorizontalDivider(color = Color(0xFFE5E7EB))
-                        Text(
-                            "Section: ${ircCode.section}",
-                            fontSize = 13.sp,
-                            color = Color.Gray
-                        )
-                        Text(
-                            "Code: ${ircCode.code}",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            color = Navy
-                        )
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(
+                                    "Section",
+                                    fontSize = 11.sp,
+                                    color = Color.Gray,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    ircCode.section,
+                                    fontSize = 14.sp,
+                                    color = Navy,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(
+                                    "Code",
+                                    fontSize = 11.sp,
+                                    color = Color.Gray,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    ircCode.code,
+                                    fontSize = 14.sp,
+                                    color = Gold,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                        
                         Spacer(Modifier.height(4.dp))
-                        Text(
-                            ircCode.description,
-                            fontSize = 13.sp,
-                            lineHeight = 18.sp,
-                            color = Color(0xFF374151)
-                        )
+                        
+                        Surface(
+                            color = Color(0xFFFFFBF0),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                ircCode.description,
+                                fontSize = 13.sp,
+                                lineHeight = 19.sp,
+                                color = Color(0xFF374151),
+                                modifier = Modifier.padding(12.dp)
+                            )
+                        }
                     } else {
                         Text(
                             "No IRC code available for this section",
                             color = Color.Gray,
-                            fontSize = 13.sp
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(vertical = 8.dp)
                         )
                     }
                 }
             },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = { showIrcDialog = false },
-                    colors = ButtonDefaults.textButtonColors(contentColor = Navy)
+                    colors = ButtonDefaults.buttonColors(containerColor = Navy)
                 ) {
                     Text("Close")
                 }
             },
-            containerColor = Color.White
+            containerColor = Color.White,
+            shape = RoundedCornerShape(12.dp)
         )
     }
-}
-
 }
