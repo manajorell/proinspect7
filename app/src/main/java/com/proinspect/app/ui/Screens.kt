@@ -499,7 +499,7 @@ fun SummaryScreen(viewModel: InspectionViewModel) {
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Navy),
                             border = BorderStroke(1.dp, Navy)
                         ) {
-                            Icon(Send, contentDescription = null)
+                           Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
                             Text("Email Report")
                         }
