@@ -545,12 +545,12 @@ fun GenericSectionScreen(
                         .heightIn(max = 500.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
-                    Text(
-                        sectionCodes,
-                        fontSize = 13.sp,
-                        color = Color(0xFF374151),
-                        lineHeight = 19.sp
-                    )
+              Text(
+    text = sectionCodes,
+    fontSize = 13.sp,
+    color = Color(0xFF374151),
+    lineHeight = 19.sp
+)
                 }
             },
             confirmButton = {
@@ -599,7 +599,11 @@ fun IrcCodeButton(section: String, ircVersion: String, modifier: Modifier = Modi
                         .heightIn(max = 400.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
-                    Text(codes, fontSize = 13.sp, lineHeight = 19.sp)
+                    Text(
+    text = codes,
+    fontSize = 13.sp,
+    lineHeight = 19.sp
+)
                 }
             },
             confirmButton = {
