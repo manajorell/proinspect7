@@ -722,13 +722,12 @@ fun ChecklistItemCard(
                         .clip(RoundedCornerShape(50))
                         .background(rColor)
                 )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                  Text(
+          Spacer(Modifier.width(8.dp))
+Text(
     item.label, fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.weight(1f)
-                )
+    fontWeight = FontWeight.Medium,
+    modifier = Modifier.weight(1f)
+)
                 if (hasDefects) {
                     Surface(
                         color = Gold.copy(alpha = 0.15f),
