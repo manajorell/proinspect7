@@ -54,6 +54,7 @@ object PdfGenerator {
         Rating.MONITOR   -> cBlue
         Rating.GOOD      -> cGreen
         Rating.NOT_RATED -> cGray
+        Rating.NOT_PRESENT -> cGray
     }
 
     private fun rLightBg(r: Rating) = when (r) {
@@ -62,6 +63,7 @@ object PdfGenerator {
         Rating.MONITOR   -> cBlueLight
         Rating.GOOD      -> cGreenLight
         Rating.NOT_RATED -> cOffWhite
+        Rating.NOT_PRESENT -> cOffWhite
     }
 
     private fun noBorderCell(content: String, font: Font): PdfPCell {
@@ -532,7 +534,7 @@ object PdfGenerator {
         addSectionHeader(doc, "📷", "Property Photo", "Front exterior view of inspected property")
 
         try {
-            val photoFile = File(housePhotos.first().filePath)
+            val photoFile = File(housePhotos.first().photoPath)
             if (photoFile.exists()) {
                 val bmp = BitmapFactory.decodeFile(photoFile.absolutePath)
                 if (bmp != null) {
@@ -656,7 +658,7 @@ object PdfGenerator {
                 photoCell.backgroundColor = cOffWhite
                 itemPhotos.forEach { photo ->
                     try {
-                        val bmp = BitmapFactory.decodeFile(photo.filePath)
+                        val bmp = BitmapFactory.decodeFile(photo.photoPath)
                         if (bmp != null) {
                             val stream = java.io.ByteArrayOutputStream()
                             bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 75, stream)
@@ -887,7 +889,7 @@ object PdfGenerator {
                 val photoTbl = PdfPTable(cols).apply { widthPercentage = 100f; spacingAfter = 12f }
                 sectionPhotos.forEach { photo ->
                     try {
-                        val bmp = BitmapFactory.decodeFile(photo.filePath)
+                        val bmp = BitmapFactory.decodeFile(photo.photoPath)
                         if (bmp != null) {
                             val stream = java.io.ByteArrayOutputStream()
                             bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 75, stream)
@@ -1102,7 +1104,7 @@ object PdfGenerator {
                 }
                 itemPhotos.take(3).forEach { photo ->
                     try {
-                        val bmp = BitmapFactory.decodeFile(photo.filePath)
+                        val bmp = BitmapFactory.decodeFile(photo.photoPath)
                         if (bmp != null) {
                             val stream = java.io.ByteArrayOutputStream()
                             bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 80, stream)
@@ -1227,7 +1229,7 @@ object PdfGenerator {
         doc.add(Paragraph(
             "This report was prepared in accordance with the InterNACHI Standards of Practice  |  www.nachi.org",
             Font(Font.FontFamily.HELVETICA, 8f, Font.ITALIC, cGray)
-     ).apply { alignment = Element.ALIGN_CENTER; spacingBefore = 8f })
+        ).apply { alignment = Element.ALIGN_CENTER; spacingBefore = 8f })
     }
 }
 
