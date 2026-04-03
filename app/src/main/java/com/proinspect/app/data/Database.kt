@@ -6,16 +6,6 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.room.migration.Migration
 import kotlinx.coroutines.flow.Flow
 
-// ADD THIS:
-@Entity(tableName = "serial_decode_patterns")
-data class SerialDecodePattern(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val manufacturer: String,
-    val pattern: String,
-    val yearGroup: Int,
-    val monthGroup: Int,
-    val priority: Int = 0
-)
 
 @Dao
 interface ReportDao {
