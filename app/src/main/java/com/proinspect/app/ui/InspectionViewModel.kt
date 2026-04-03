@@ -6,6 +6,7 @@ import android.os.Environment
 import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.proinspect.app.data.InspectionSections
 import com.proinspect.app.data.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -352,5 +353,123 @@ fun getCodesForSection(section: String): List<String> {
         else -> emptyList()
     }
 }
+// ═══════════════════════════════════════════════════════════════════════════
+    // ALIASES — match what the UI expects
+    // ═══════════════════════════════════════════════════════════════════════════
 
+    val currentItems = items
+    val currentPhotos = photos
+    val settings = appSettings
+
+    private val _currentItemId = MutableStateFlow<String?>(null)
+    val currentItemId: StateFlow<String?> = _currentItemId
+
+    fun setCurrentItem(itemId: String) {
+        _currentItemId.value = itemId
+    }
+
+    fun clearCurrentItem() {
+        _currentItemId.value = null
+    }
+
+    fun updateRating(itemId: String, rating: Rating) {
+        val section = items.value[itemId]?.section
+            ?: InspectionSections.allItems.find { it.id == itemId }?.section
+            ?: ""
+        setItemRating(itemId, section, rating)
+    }
+
+    fun updateNarrative(itemId: String, narrative: String) {
+        val section = items.value[itemId]?.section
+            ?: InspectionSections.allItems.find { it.id == itemId }?.section
+            ?: ""
+        setItemNarrative(itemId, section, narrative)
+    }
+
+    fun addPhoto(itemId: String, uri: android.net.Uri) {
+        viewModelScope.launch {
+            val reportId = _currentReportId.value ?: return@launch
+            val section = items.value[itemId]?.section
+                ?: InspectionSections.allItems.find { it.id == itemId }?.section
+                ?: ""
+            photoDao.insertPhoto(
+                InspectionPhoto(
+                    reportId = reportId,
+                    photoPath = uri.toString(),
+                    section = section,
+                    itemId = itemId
+                )
+            )
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // REPORT FIELD UPDATERS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    private fun updateReport(transform: (Report) -> Report) {
+        viewModelScope.launch {
+            val report = currentReport.value ?: return@launch
+            reportDao.insertReport(transform(report))
+        }
+    }
+
+    fun updatePropertyAddress(value: String) = updateReport { it.copy(propertyAddress = value) }
+    fun updateClientName(value: String)       = updateReport { it.copy(clientName = value) }
+    fun updateInspectorName(value: String)    = updateReport { it.copy(inspectorName = value) }
+    fun updateInspectionDate(value: String)   = updateReport { it.copy(inspectionDate = value) }
+    fun updateYearBuilt(value: String)        = updateReport { it.copy(yearBuilt = value) }
+    fun updateSquareFootage(value: String)    = updateReport { it.copy(squareFootage = value) }
+    fun updatePropertyType(value: String)     = updateReport { it.copy(propertyType = value) }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PDF + EMAIL
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    fun generatePdf(context: android.content.Context, onComplete: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val report = currentReport.value ?: return@launch
+                val itemsList = items.value.values.toList()
+                val photosList = photos.value
+                val appSettingsValue = appSettings.value
+                val file = com.proinspect.app.pdf.PdfGenerator.generate(
+                    context, report, itemsList, photosList, appSettingsValue
+                )
+                onComplete(file.exists())
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onComplete(false)
+            }
+        }
+    }
+
+    fun emailReport(context: android.content.Context, email: String) {
+        viewModelScope.launch {
+            try {
+                val report = currentReport.value ?: return@launch
+                val itemsList = items.value.values.toList()
+                val photosList = photos.value
+                val appSettingsValue = appSettings.value
+                val file = com.proinspect.app.pdf.PdfGenerator.generate(
+                    context, report, itemsList, photosList, appSettingsValue
+                )
+                val uri = androidx.core.content.FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    file
+                )
+                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                    type = "application/pdf"
+                    putExtra(android.content.Intent.EXTRA_EMAIL, arrayOf(email))
+                    putExtra(android.content.Intent.EXTRA_SUBJECT, "Inspection Report — ${report.propertyAddress}")
+                    putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                context.startActivity(android.content.Intent.createChooser(intent, "Email Report"))
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
 }
