@@ -694,6 +694,7 @@ fun ChecklistItemCard(
     rating: Rating,
     narrative: String,
     photos: List<InspectionPhoto>,
+    ircVersion: String = "",
     onRatingChanged: (Rating) -> Unit,
     onNarrativeChanged: (String) -> Unit,
     onCameraClick: () -> Unit,
@@ -704,6 +705,8 @@ fun ChecklistItemCard(
 ) {
     var expanded by remember { mutableStateOf(false) }
     val rColor = ratingColor(rating)
+    var showIrcDialog by remember { mutableStateOf(false) }
+    var ircContent by remember { mutableStateOf("") }
     val hasDefects = DefectLibrary.getDefectsForItem(item.id).isNotEmpty()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
