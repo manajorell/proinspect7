@@ -130,15 +130,16 @@ data class InspectionPhoto(
 )
 @Entity(tableName = "app_settings")
 data class AppSettings(
-    val inspectorName: String = "",
-    val inspectorCert: String = "",
-    val inspectorCompany: String = "",
-    val inspectorPhone: String = "",
+    @PrimaryKey val id: Int = 1,  // ← Add this line
+    val companyLogoPath: String = "",
+    val badge1Path: String = "",
+    val badge2Path: String = "",
+    val badge3Path: String = "",
+    val badge4Path: String = "",
     val anthropicApiKey: String = "",
-    val ircState: String = ""  // ← Make sure there's NO comma after the last item
+    val ircState: String = ""
 )
 
-// Data class for the UI checklist items
 // Data class for the UI checklist items
 data class ChecklistItem(
     val id: String, 
