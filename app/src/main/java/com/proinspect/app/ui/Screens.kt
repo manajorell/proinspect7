@@ -394,9 +394,10 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                             }
                             if (index < 3) HorizontalDivider(color = Color(0xFFEEEEEE))
                         }
-                    }
-                }
-            }
+  }
+        }
+    }
+}
 item {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -426,6 +427,13 @@ item {
         }
     }
 }
+item {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("🔑 Anthropic API Key",
 
             item {
                 var isExporting by remember { mutableStateOf(false) }
