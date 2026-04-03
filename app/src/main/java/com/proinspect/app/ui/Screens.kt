@@ -432,6 +432,54 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                     }
                 }
             }
+                        // ── IRC Code Version ──────────────────────────────────────────────
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("📖 IRC Code Version", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
+                        Text("Select your state's adopted IRC version for code references", fontSize = 13.sp, color = Color.Gray)
+                        
+                        var expanded by remember { mutableStateOf(false) }
+                        val versions = IrcCodes.getAvailableVersions()
+                        
+                        ExposedDropdownMenuBox(
+                            expanded = expanded,
+                            onExpandedChange = { expanded = !expanded }
+                        ) {
+                            OutlinedTextField(
+                                value = settings.ircState.ifBlank { "2021 IRC" },
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("IRC Version") },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                                modifier = Modifier.fillMaxWidth().menuAnchor(),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Gold,
+                                    unfocusedBorderColor = Color(0xFFD1D5DB)
+                                )
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                versions.forEach { version ->
+                                    DropdownMenuItem(
+                                        text = { Text(version) },
+                                        onClick = {
+                                            viewModel.updateSettings(settings.copy(ircState = version))
+                                            expanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
 
             // ── Backup & Restore ──────────────────────────────────────────────
             item {
@@ -532,4 +580,85 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
             item { Spacer(Modifier.height(20.dp)) }
         }
     }
+    // ── IRC Code Button Component ─────────────────────────────────────────────────
+
+@Composable
+fun IrcCodeButton(
+    section: String,
+    ircVersion: String,
+    modifier: Modifier = Modifier
+) {
+    var showIrcDialog by remember { mutableStateOf(false) }
+    
+    OutlinedButton(
+        onClick = { showIrcDialog = true },
+        modifier = modifier,
+        border = BorderStroke(1.dp, Color(0xFF059669)),
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = Color(0xFF059669)
+        )
+    ) {
+        Text("📖", fontSize = 16.sp)
+        Spacer(Modifier.width(4.dp))
+        Text("IRC Code", fontSize = 13.sp)
+    }
+    
+    if (showIrcDialog) {
+        val ircCode = IrcCodes.getCode(ircVersion, section)
+        
+        AlertDialog(
+            onDismissRequest = { showIrcDialog = false },
+            title = { 
+                Text("IRC Code Reference", fontWeight = FontWeight.Bold, color = Navy) 
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "Version: $ircVersion",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                        color = Navy
+                    )
+                    if (ircCode != null) {
+                        HorizontalDivider(color = Color(0xFFE5E7EB))
+                        Text(
+                            "Section: ${ircCode.section}",
+                            fontSize = 13.sp,
+                            color = Color.Gray
+                        )
+                        Text(
+                            "Code: ${ircCode.code}",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = Navy
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            ircCode.description,
+                            fontSize = 13.sp,
+                            lineHeight = 18.sp,
+                            color = Color(0xFF374151)
+                        )
+                    } else {
+                        Text(
+                            "No IRC code available for this section",
+                            color = Color.Gray,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { showIrcDialog = false },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Navy)
+                ) {
+                    Text("Close")
+                }
+            },
+            containerColor = Color.White
+        )
+    }
+}
+
 }
