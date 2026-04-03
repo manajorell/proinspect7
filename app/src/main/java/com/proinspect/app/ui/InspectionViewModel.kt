@@ -324,4 +324,35 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
             }
         }
     }
+    // Add these methods to InspectionViewModel class
+
+fun getCodeForItem(itemId: String): String {
+    // Return a code based on the item ID
+    // You can customize this logic based on your needs
+    return when {
+        itemId.startsWith("EXT") -> "E-${itemId.takeLast(3)}"
+        itemId.startsWith("INT") -> "I-${itemId.takeLast(3)}"
+        itemId.startsWith("ROOF") -> "R-${itemId.takeLast(3)}"
+        itemId.startsWith("ELEC") -> "EL-${itemId.takeLast(3)}"
+        itemId.startsWith("PLUMB") -> "P-${itemId.takeLast(3)}"
+        itemId.startsWith("HVAC") -> "H-${itemId.takeLast(3)}"
+        else -> itemId
+    }
+}
+
+fun getCodesForSection(section: String): List<String> {
+    // Return a list of codes for a given section
+    // Customize based on your inspection standards
+    return when (section.uppercase()) {
+        "EXTERIOR" -> listOf("E-001", "E-002", "E-003", "E-004", "E-005")
+        "INTERIOR" -> listOf("I-001", "I-002", "I-003", "I-004", "I-005")
+        "ROOF" -> listOf("R-001", "R-002", "R-003", "R-004")
+        "ELECTRICAL" -> listOf("EL-001", "EL-002", "EL-003", "EL-004")
+        "PLUMBING" -> listOf("P-001", "P-002", "P-003", "P-004")
+        "HVAC" -> listOf("H-001", "H-002", "H-003")
+        "STRUCTURE" -> listOf("S-001", "S-002", "S-003", "S-004")
+        else -> emptyList()
+    }
+}
+
 }
