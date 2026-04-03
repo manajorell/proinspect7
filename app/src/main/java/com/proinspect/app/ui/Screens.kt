@@ -266,32 +266,20 @@ fun SettingsScreen(viewModel: InspectionViewModel) {
     ) {
         // ... existing settings fields ...
         
-        // NEW: IRC Building Code State Selection
-        item {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(2.dp),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Column(
-                    Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.Book,
-                            contentDescription = null,
-                            tint = Navy,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "IRC Building Code Reference",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            color = Navy
-                        )
-                    }
+// ── IRC Building Code State ──
+item {
+    var showStateMenu by remember { mutableStateOf(false) }
+    
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // ... IRC content ...
+        }
+    }
+}  // ← Make sure this closing brace is here
+
                     
                     Text(
                         "Select your state to access relevant IRC building code sections during inspections",
