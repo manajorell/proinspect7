@@ -25,8 +25,8 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val appSettings: StateFlow<AppSettings> = settingsDao.getSettings()
-        .map { it ?: AppSettings() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AppSettings())
+        .map { it ?: AppSettings(id = 1) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AppSettings(id = 1))
 
     private val _currentReportId = MutableStateFlow<Long?>(null)
 
@@ -166,8 +166,11 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
         }
     }
 
-    fun saveSettings(settings: AppSettings) {
-        viewModelScope.launch { settingsDao.saveSettings(settings) }
+    // Changed from saveSettings to updateSettings
+    fun updateSettings(settings: AppSettings) {
+        viewModelScope.launch { 
+            settingsDao.insertSettings(settings.copy(id = 1)) 
+        }
     }
 
     fun saveCompanyLogo(context: Context, uri: Uri) {
@@ -178,7 +181,7 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
                     dest.outputStream().use { output -> input.copyTo(output) }
                 }
                 val current = appSettings.value
-                settingsDao.saveSettings(current.copy(companyLogoPath = dest.absolutePath))
+                updateSettings(current.copy(companyLogoPath = dest.absolutePath))
             } catch (_: Exception) {}
         }
     }
@@ -198,7 +201,7 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
                     4 -> current.copy(badge4Path = dest.absolutePath)
                     else -> current
                 }
-                settingsDao.saveSettings(updated)
+                updateSettings(updated)
             } catch (_: Exception) {}
         }
     }
@@ -213,7 +216,7 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
                 4 -> current.copy(badge4Path = "")
                 else -> current
             }
-            settingsDao.saveSettings(updated)
+            updateSettings(updated)
         }
     }
     
@@ -225,6 +228,7 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
             reportDao.insertReport(updated)
         }
     }
+    
     fun exportBackup(context: Context, onComplete: (Uri?) -> Unit) {
         viewModelScope.launch {
             try {
@@ -329,6 +333,7 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
                     put("badge3Path", settings.badge3Path)
                     put("badge4Path", settings.badge4Path)
                     put("anthropicApiKey", settings.anthropicApiKey)
+                    put("ircState", settings.ircState)
                 }
                 val backup = org.json.JSONObject().apply {
                     put("version", 1)
@@ -464,13 +469,15 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
                 // Restore settings
                 if (backup.has("settings")) {
                     val s = backup.getJSONObject("settings")
-                    settingsDao.saveSettings(AppSettings(
+                    updateSettings(AppSettings(
+                        id = 1,
                         companyLogoPath = s.optString("companyLogoPath"),
                         badge1Path = s.optString("badge1Path"),
                         badge2Path = s.optString("badge2Path"),
                         badge3Path = s.optString("badge3Path"),
                         badge4Path = s.optString("badge4Path"),
-                        anthropicApiKey = s.optString("anthropicApiKey")
+                        anthropicApiKey = s.optString("anthropicApiKey"),
+                        ircState = s.optString("ircState")
                     ))
                 }
                 onComplete(restoredCount)
