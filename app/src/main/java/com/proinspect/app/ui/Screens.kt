@@ -26,7 +26,9 @@ import coil.request.ImageRequest
 import com.proinspect.app.data.*
 import java.io.File
 
-// ── Reports List ──────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// REPORTS LIST SCREEN
+// ══════════════════════════════════════════════════════════════════════════════
 
 @Composable
 fun ReportsListScreen(
@@ -152,7 +154,9 @@ fun ReportsListScreen(
     }
 }
 
-// ── Report Screen (tabs) ──────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// REPORT SCREEN (WITH TABS)
+// ══════════════════════════════════════════════════════════════════════════════
 
 @Composable
 fun ReportScreen(
@@ -227,7 +231,9 @@ fun ReportScreen(
     }
 }
 
-// ── Settings Screen ───────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// SETTINGS SCREEN
+// ══════════════════════════════════════════════════════════════════════════════
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -489,18 +495,18 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                 var restoreMessage by remember { mutableStateOf("") }
 
                 val restoreLauncher = rememberLauncherForActivityResult(
-    ActivityResultContracts.GetContent()
-) { uri ->
-    uri?.let {
-        viewModel.restoreBackup(context, it) { success ->  // Changed from 'count' to 'success'
-            restoreMessage = if (success)  // Changed from 'count >= 0' to just 'success'
-                "✅ Backup restored successfully"
-            else
-                "❌ Restore failed — invalid backup file"
-            showRestoreConfirm = true
-        }
-    }
-}
+                    ActivityResultContracts.GetContent()
+                ) { uri ->
+                    uri?.let {
+                        viewModel.restoreBackup(context, it) { success ->
+                            restoreMessage = if (success)
+                                "✅ Backup restored successfully"
+                            else
+                                "❌ Restore failed — invalid backup file"
+                            showRestoreConfirm = true
+                        }
+                    }
+                }
 
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -509,7 +515,7 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text("💾 Backup & Restore", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
                         Text(
-                            "Export all reports to a JSON file. Share or save it to Google Drive for safekeeping.",
+                            "Export all reports to a database file. Share or save it to Google Drive for safekeeping.",
                             fontSize = 13.sp,
                             color = Color.Gray
                         )
@@ -520,7 +526,7 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                                     isExporting = false
                                     uri?.let {
                                         val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                                            type = "application/json"
+                                            type = "application/octet-stream"
                                             putExtra(android.content.Intent.EXTRA_STREAM, it)
                                             putExtra(android.content.Intent.EXTRA_SUBJECT, "ProInspect Backup")
                                             addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -548,7 +554,7 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                             }
                         }
                         OutlinedButton(
-                            onClick = { restoreLauncher.launch("application/json") },
+                            onClick = { restoreLauncher.launch("*/*") },
                             modifier = Modifier.fillMaxWidth(),
                             border = BorderStroke(1.5.dp, Navy)
                         ) {
@@ -557,7 +563,7 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                             Text("Restore from Backup", color = Navy)
                         }
                         Text(
-                            "⚠ Restore adds reports — it does not overwrite existing ones.",
+                            "⚠ Restoring will replace all current data with the backup.",
                             fontSize = 11.sp,
                             color = Color.Gray
                         )
@@ -582,4 +588,3 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
         }
     }
 }
-
