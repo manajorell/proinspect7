@@ -11,13 +11,15 @@ object SerialDecodeLibrary {
                 description = "Chars 5-6 are year",
                 priority = 10
             ),
-            SerialDecodePattern(
-                manufacturer = "Ruud",
-                pattern = "SUBSTRING:4-6",
-                yearCalculation = "SMART_CENTURY",
-                description = "Chars 5-6 are year",
-                priority = 10
-            ),
+            
+SerialDecodePattern(
+    manufacturer = "Carrier",
+    pattern = "^(\\d{2})(\\d{2}).*",
+    yearGroup = 1,
+    monthGroup = 2,
+    priority = 1
+)
+
             
             // ========== CARRIER / BRYANT / PAYNE ==========
             SerialDecodePattern(
