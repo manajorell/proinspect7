@@ -1,9 +1,6 @@
 package com.proinspect.app.data
 
-import android.content.Context
 import androidx.room.*
-import androidx.sqlite.db.SupportSQLiteDatabase
-import kotlinx.coroutines.flow.Flow
 
 // ── IRC Code Data ─────────────────────────────────────────────────────────────
 
@@ -125,7 +122,7 @@ object IrcCodes {
             version.contains("2012") -> codes2018[section] // Fallback to 2018
             else -> codes2021[section] // Default to 2021
         }
-  }
+    }
 }
 
 // ── Report Entity ─────────────────────────────────────────────────────────────
@@ -269,106 +266,17 @@ data class AppSettings(
     val ircState: String = "2021 IRC"
 )
 
-// ── DAOs ──────────────────────────────────────────────────────────────────────
+// ── Serial Decode Pattern Entity ──────────────────────────────────────────────
 
-@Dao
-interface ReportDao {
-    @Query("SELECT * FROM reports ORDER BY createdAt DESC")
-    fun getAllReports(): Flow<List<Report>>
-
-    @Query("SELECT * FROM reports WHERE id = :id")
-    suspend fun getReportById(id: Long): Report?
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertReport(report: Report): Long
-
-    @Update
-    suspend fun updateReport(report: Report)
-
-    @Delete
-    suspend fun deleteReport(report: Report)
-}
-
-@Dao
-interface InspectionItemDao {
-    @Query("SELECT * FROM inspection_items WHERE reportId = :reportId")
-    fun getItemsForReport(reportId: Long): Flow<List<InspectionItem>>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertItem(item: InspectionItem)
-
-    @Query("DELETE FROM inspection_items WHERE reportId = :reportId")
-    suspend fun deleteItemsForReport(reportId: Long)
-}
-
-@Dao
-interface InspectionPhotoDao {
-    @Query("SELECT * FROM inspection_photos WHERE reportId = :reportId ORDER BY timestamp")
-    fun getPhotosForReport(reportId: Long): Flow<List<InspectionPhoto>>
-
-    @Insert
-    suspend fun insertPhoto(photo: InspectionPhoto)
-
-    @Delete
-    suspend fun deletePhoto(photo: InspectionPhoto)
-
-    @Query("DELETE FROM inspection_photos WHERE reportId = :reportId")
-    suspend fun deletePhotosForReport(reportId: Long)
-}
-
-@Dao
-interface AppSettingsDao {
-    @Query("SELECT * FROM app_settings WHERE id = 1")
-    fun getSettings(): Flow<AppSettings?>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertSettings(settings: AppSettings)
-
-    @Update
-    suspend fun updateSettings(settings: AppSettings)
-}
-
-// ── Database ──────────────────────────────────────────────────────────────────
-
-@Database(
-    entities = [Report::class, InspectionItem::class, InspectionPhoto::class, AppSettings::class],
-    version = 4,
-    exportSchema = false
+@Entity(tableName = "serial_decode_patterns")
+data class SerialDecodePattern(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val manufacturer: String,
+    val pattern: String,
+    val yearGroup: Int,
+    val monthGroup: Int,
+    val priority: Int = 0
 )
-abstract class AppDatabase : RoomDatabase() {
-    abstract fun reportDao(): ReportDao
-    abstract fun itemDao(): InspectionItemDao
-    abstract fun photoDao(): InspectionPhotoDao
-    abstract fun settingsDao(): AppSettingsDao
-
-    companion object {
-        @Volatile
-        private var INSTANCE: AppDatabase? = null
-
-        fun getDatabase(context: Context): AppDatabase {
-            return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    "proinspect_database"
-                )
-                    .fallbackToDestructiveMigration()
-                    .addCallback(object : RoomDatabase.Callback() {
-                        override fun onCreate(db: SupportSQLiteDatabase) {
-                            super.onCreate(db)
-                            db.execSQL(
-                                "INSERT INTO app_settings (id, companyLogoPath, badge1Path, badge2Path, badge3Path, badge4Path, anthropicApiKey, ircState) " +
-                                        "VALUES (1, '', '', '', '', '', '', '2021 IRC')"
-                            )
-                        }
-                    })
-                    .build()
-                INSTANCE = instance
-                instance
-            }
-        }
-    }
-}
 
 // ── Checklist Data ────────────────────────────────────────────────────────────
 
