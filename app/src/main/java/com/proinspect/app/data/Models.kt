@@ -295,5 +295,78 @@ object InspectionSections {
         "insulation" to "🌿",
         "garage" to "🚗"
     )
+    // IRC Code Reference System
+data class IrcCode(
+    val section: String,
+    val code: String,
+    val description: String
+)
+
+object IrcCodes {
+    private val codes = mapOf(
+        "2021 IRC" to mapOf(
+            "roofing" to IrcCode("R905", "R905.2", "Asphalt shingles shall be installed per manufacturer specifications with proper fastening and underlayment"),
+            "exterior" to IrcCode("R703", "R703.1", "Exterior walls shall provide weather protection for the building"),
+            "structure" to IrcCode("R301", "R301.1", "Buildings shall be designed to support all applicable loads per the code"),
+            "electrical" to IrcCode("E3401", "E3401.1", "Service equipment shall be listed, labeled and installed per manufacturer instructions"),
+            "hvac" to IrcCode("M1401", "M1401.3", "Heating and cooling equipment shall be sized per approved heating and cooling calculation (Manual J)"),
+            "plumbing" to IrcCode("P2603", "P2603.2", "Water supply systems shall be sized for the demand per fixture unit calculations"),
+            "interior" to IrcCode("R302", "R302.1", "Fire-resistance-rated construction required between dwelling units and certain spaces"),
+            "insulation" to IrcCode("N1102", "N1102.1", "Insulation shall meet minimum thermal resistance (R-value) requirements for climate zone"),
+            "garage" to IrcCode("R309", "R309.1", "Garage separation from dwelling requires fire-rated construction and self-closing doors")
+        ),
+        "2018 IRC" to mapOf(
+            "roofing" to IrcCode("R905", "R905.2", "Asphalt shingles installation requirements per manufacturer specifications"),
+            "exterior" to IrcCode("R703", "R703.1", "Exterior covering shall protect walls from weather"),
+            "structure" to IrcCode("R301", "R301.1", "Design criteria - buildings shall withstand design loads"),
+            "electrical" to IrcCode("E3401", "E3401.1", "Service equipment general requirements and listing"),
+            "hvac" to IrcCode("M1401", "M1401.3", "Equipment sizing and capacity requirements"),
+            "plumbing" to IrcCode("P2603", "P2603.2", "Water supply system sizing per fixture units"),
+            "interior" to IrcCode("R302", "R302.1", "Fire-resistance rating requirements for dwelling separations"),
+            "insulation" to IrcCode("N1102", "N1102.1", "Insulation and fenestration criteria by climate zone"),
+            "garage" to IrcCode("R309", "R309.1", "Garage separation requirements from dwelling")
+        ),
+        "2015 IRC" to mapOf(
+            "roofing" to IrcCode("R905", "R905.2", "Asphalt shingles - material standards and installation"),
+            "exterior" to IrcCode("R703", "R703.1", "Exterior covering and weather protection"),
+            "structure" to IrcCode("R301", "R301.1", "Design loads and structural requirements"),
+            "electrical" to IrcCode("E3401", "E3401.1", "Service equipment installation and listing"),
+            "hvac" to IrcCode("M1401", "M1401.3", "Heating and cooling equipment requirements"),
+            "plumbing" to IrcCode("P2603", "P2603.2", "Water supply system sizing"),
+            "interior" to IrcCode("R302", "R302.1", "Fire resistance rated construction"),
+            "insulation" to IrcCode("N1102", "N1102.1", "Insulation requirements by climate zone"),
+            "garage" to IrcCode("R309", "R309.1", "Garage separation from residence")
+        ),
+        "2012 IRC" to mapOf(
+            "roofing" to IrcCode("R905", "R905.2", "Asphalt shingles requirements"),
+            "exterior" to IrcCode("R703", "R703.1", "Exterior covering"),
+            "structure" to IrcCode("R301", "R301.1", "Design loads"),
+            "electrical" to IrcCode("E3401", "E3401.1", "Service equipment"),
+            "hvac" to IrcCode("M1401", "M1401.3", "Equipment requirements"),
+            "plumbing" to IrcCode("P2603", "P2603.2", "Water supply sizing"),
+            "interior" to IrcCode("R302", "R302.1", "Fire resistance"),
+            "insulation" to IrcCode("N1102", "N1102.1", "Insulation requirements"),
+            "garage" to IrcCode("R309", "R309.1", "Garage separation")
+        )
+    )
+    
+    fun getCode(ircVersion: String, section: String): IrcCode? {
+        return codes[ircVersion]?.get(section)
+    }
+    
+    fun getAvailableVersions(): List<String> = listOf("2021 IRC", "2018 IRC", "2015 IRC", "2012 IRC")
+}
+
+// Add serial decode pattern entity
+@Entity(tableName = "serial_decode_patterns")
+data class SerialDecodePattern(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val manufacturer: String = "",
+    val pattern: String = "",
+    val yearGroup: Int = 0,
+    val monthGroup: Int = 0,
+    val priority: Int = 0
+)
+
 }
 
