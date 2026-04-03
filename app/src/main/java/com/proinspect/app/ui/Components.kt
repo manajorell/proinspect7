@@ -724,7 +724,7 @@ fun ChecklistItemCard(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    item.title, fontSize = 13.sp,
+                    Text(item.label, fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.weight(1f)
                 )
