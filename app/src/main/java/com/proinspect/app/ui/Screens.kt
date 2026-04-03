@@ -640,3 +640,4 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
         }
     }
 }
+
