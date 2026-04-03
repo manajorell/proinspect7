@@ -111,7 +111,24 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
         """)
         
         // Insert default settings row
-        database.execSQL("INSERT OR REPLACE INTO app_settings (id) VALUES (1)")
+        database.execSQL("INSERT OR REPLACE INTO app_settings (id, companyLogoPath, badge1Path, badge2Path, badge3Path, badge4Path, anthropicApiKey, ircState) VALUES (1, '', '', '', '', '', '', '')")
+    }
+}
+
+// Migration from version 8 to 9 - adds serial_decode_patterns table
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        // Create serial_decode_patterns table
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS serial_decode_patterns (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                manufacturer TEXT NOT NULL,
+                pattern TEXT NOT NULL,
+                yearGroup INTEGER NOT NULL,
+                monthGroup INTEGER NOT NULL,
+                priority INTEGER NOT NULL DEFAULT 0
+            )
+        """)
     }
 }
 
@@ -123,7 +140,7 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
         AppSettings::class,
         SerialDecodePattern::class
     ],
-    version = 9,  // Increment to 9
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(Converters::class) 
@@ -140,15 +157,15 @@ abstract class ProInspectDatabase : RoomDatabase() {
         fun getInstance(context: Context): ProInspectDatabase =
             INSTANCE ?: synchronized(this) {
                 Room.databaseBuilder(context, ProInspectDatabase::class.java, "proinspect.db")
-                    .addMigrations(MIGRATION_7_8)
+                    .addMigrations(MIGRATION_7_8, MIGRATION_8_9)  // Add both migrations
+                    .fallbackToDestructiveMigration()
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
                             // Insert default settings when database is created
-                            db.execSQL("INSERT OR REPLACE INTO app_settings (id) VALUES (1)")
+                            db.execSQL("INSERT OR REPLACE INTO app_settings (id, companyLogoPath, badge1Path, badge2Path, badge3Path, badge4Path, anthropicApiKey, ircState) VALUES (1, '', '', '', '', '', '', '')")
                         }
                     })
-                    .fallbackToDestructiveMigration()  // This will recreate DB if migration fails
                     .build().also { INSTANCE = it }
             }
     }
