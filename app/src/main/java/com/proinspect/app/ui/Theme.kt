@@ -33,10 +33,11 @@ fun ProInspectTheme(content: @Composable () -> Unit) {
     MaterialTheme(colorScheme = ColorScheme, content = content)
 }
 
-fun ratingColor(rating: com.proinspect.app.data.Rating) = when (rating) {
-    com.proinspect.app.data.Rating.SAFETY    -> RatingRed
-    com.proinspect.app.data.Rating.MAJOR     -> RatingOrange
-    com.proinspect.app.data.Rating.MONITOR   -> RatingYellow
-    com.proinspect.app.data.Rating.GOOD      -> RatingGreen
-    com.proinspect.app.data.Rating.NOT_RATED -> RatingGray
+fun ratingColor(rating: Rating) = when (rating) {
+    Rating.SAFETY -> RatingRed
+    Rating.MAJOR -> RatingOrange
+    Rating.MONITOR -> RatingYellow
+    Rating.GOOD -> RatingGreen
+    Rating.NOT_RATED -> Color.Gray
+    Rating.NOT_PRESENT -> Color.Gray  // ADD THIS LINE
 }
