@@ -851,6 +851,131 @@ fun ReceiptSummaryCard(report: Report?) {
     }
 }
 
+// ─── IRC Code Button Component ─────────────────────────────────────────────────
+
+@Composable
+fun IrcCodeButton(
+    section: String,
+    ircVersion: String,
+    modifier: Modifier = Modifier
+) {
+    var showIrcDialog by remember { mutableStateOf(false) }
+    
+    OutlinedButton(
+        onClick = { showIrcDialog = true },
+        modifier = modifier,
+        border = BorderStroke(1.5.dp, Color(0xFF059669)),
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = Color(0xFF059669)
+        ),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Text("📖", fontSize = 16.sp)
+        Spacer(Modifier.width(6.dp))
+        Text("IRC Code Reference", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+    }
+    
+    if (showIrcDialog) {
+        val ircCode = IrcCodes.getCode(ircVersion, section)
+        
+        AlertDialog(
+            onDismissRequest = { showIrcDialog = false },
+            title = { 
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("📖", fontSize = 20.sp)
+                    Spacer(Modifier.width(8.dp))
+                    Text("IRC Code Reference", fontWeight = FontWeight.Bold, color = Navy) 
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Surface(
+                        color = Color(0xFFF3F4F6),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            "Version: $ircVersion",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            color = Navy,
+                            modifier = Modifier.padding(10.dp)
+                        )
+                    }
+                    
+                    if (ircCode != null) {
+                        HorizontalDivider(color = Color(0xFFE5E7EB))
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(
+                                    "Section",
+                                    fontSize = 11.sp,
+                                    color = Color.Gray,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    ircCode.section,
+                                    fontSize = 14.sp,
+                                    color = Navy,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(
+                                    "Code",
+                                    fontSize = 11.sp,
+                                    color = Color.Gray,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    ircCode.code,
+                                    fontSize = 14.sp,
+                                    color = Gold,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                        
+                        Spacer(Modifier.height(4.dp))
+                        
+                        Surface(
+                            color = Color(0xFFFFFBF0),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                ircCode.description,
+                                fontSize = 13.sp,
+                                lineHeight = 19.sp,
+                                color = Color(0xFF374151),
+                                modifier = Modifier.padding(12.dp)
+                            )
+                        }
+                    } else {
+                        Text(
+                            "No IRC code available for this section",
+                            color = Color.Gray,
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showIrcDialog = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = Navy)
+                ) {
+                    Text("Close")
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(12.dp)
+        )
+    }
+}
 
 // ─── Main Inspection Section Screen ───────────────────────────────────────────
 @Composable
@@ -1046,7 +1171,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        // ── Overview photos card ──
+        // ── Overview photos card with IRC Code button ──
         item {
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -1066,6 +1191,14 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                         onCameraClick = { launchCamera(section, null) },
                         onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, section, null) },
                         onDeletePhoto = { photo -> viewModel.deletePhoto(photo) }
+                    )
+                    
+                    // IRC Code Reference Button
+                    Spacer(Modifier.height(12.dp))
+                    IrcCodeButton(
+                        section = section,
+                        ircVersion = settings.ircState.ifBlank { "2021 IRC" },
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
@@ -1096,24 +1229,24 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                 modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
             )
         }
-// ── Standard checklist items ──
-items(sectionItemsList) { checklistItem ->
-    val itemState = itemsMap[checklistItem.id]
-    ChecklistItemCard(
-        item = checklistItem,
-        rating = itemState?.rating ?: Rating.NOT_RATED,
-        narrative = itemState?.narrative ?: "",
-        photos = photos.filter { it.itemId == checklistItem.id },
-        onRatingChanged = { rating -> viewModel.setItemRating(checklistItem.id, section, rating) },
-        onNarrativeChanged = { text -> viewModel.setItemNarrative(checklistItem.id, section, text) },
-        onCameraClick = { launchCamera(section, checklistItem.id) },
-        onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, section, checklistItem.id) },
-        onDeletePhoto = { photo -> viewModel.deletePhoto(photo) },
-        onVoiceInput = { startVoiceInput(checklistItem.id, false) },
-        apiKey = settings.anthropicApiKey
-    )
-}
 
+        // ── Standard checklist items ──
+        items(sectionItemsList) { checklistItem ->
+            val itemState = itemsMap[checklistItem.id]
+            ChecklistItemCard(
+                item = checklistItem,
+                rating = itemState?.rating ?: Rating.NOT_RATED,
+                narrative = itemState?.narrative ?: "",
+                photos = photos.filter { it.itemId == checklistItem.id },
+                onRatingChanged = { rating -> viewModel.setItemRating(checklistItem.id, section, rating) },
+                onNarrativeChanged = { text -> viewModel.setItemNarrative(checklistItem.id, section, text) },
+                onCameraClick = { launchCamera(section, checklistItem.id) },
+                onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, section, checklistItem.id) },
+                onDeletePhoto = { photo -> viewModel.deletePhoto(photo) },
+                onVoiceInput = { startVoiceInput(checklistItem.id, false) },
+                apiKey = settings.anthropicApiKey
+            )
+        }
 
         // ── Custom checklist items ──
         items(customItems) { customItem ->
