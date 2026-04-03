@@ -204,4 +204,124 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
             reportDao.insertReport(updated)
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // NEW FUNCTIONS FOR SETTINGS SCREEN
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    fun saveCompanyLogo(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                val logoDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+                val logoFile = File(logoDir, "company_logo_${timestamp}.jpg")
+                
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    logoFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                
+                val currentSettings = appSettings.value
+                val updatedSettings = currentSettings.copy(companyLogoPath = logoFile.absolutePath)
+                settingsDao.insertSettings(updatedSettings)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun saveBadge(context: Context, uri: Uri, badgeNumber: Int) {
+        viewModelScope.launch {
+            try {
+                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                val badgeDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+                val badgeFile = File(badgeDir, "badge${badgeNumber}_${timestamp}.jpg")
+                
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    badgeFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                
+                val currentSettings = appSettings.value
+                val updatedSettings = when (badgeNumber) {
+                    1 -> currentSettings.copy(badge1Path = badgeFile.absolutePath)
+                    2 -> currentSettings.copy(badge2Path = badgeFile.absolutePath)
+                    3 -> currentSettings.copy(badge3Path = badgeFile.absolutePath)
+                    4 -> currentSettings.copy(badge4Path = badgeFile.absolutePath)
+                    else -> currentSettings
+                }
+                settingsDao.insertSettings(updatedSettings)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun clearBadge(badgeNumber: Int) {
+        viewModelScope.launch {
+            val currentSettings = appSettings.value
+            val updatedSettings = when (badgeNumber) {
+                1 -> currentSettings.copy(badge1Path = "")
+                2 -> currentSettings.copy(badge2Path = "")
+                3 -> currentSettings.copy(badge3Path = "")
+                4 -> currentSettings.copy(badge4Path = "")
+                else -> currentSettings
+            }
+            settingsDao.insertSettings(updatedSettings)
+        }
+    }
+
+    fun updateSettings(settings: AppSettings) {
+        viewModelScope.launch {
+            settingsDao.insertSettings(settings)
+        }
+    }
+
+    fun exportBackup(context: Context, onComplete: (Uri?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                val backupDir = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
+                val backupFile = File(backupDir, "proinspect_backup_${timestamp}.db")
+                
+                // Copy database file
+                val dbPath = context.getDatabasePath("proinspect.db")
+                dbPath.copyTo(backupFile, overwrite = true)
+                
+                val uri = FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    backupFile
+                )
+                onComplete(uri)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onComplete(null)
+            }
+        }
+    }
+
+    fun restoreBackup(context: Context, uri: Uri, onComplete: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val dbPath = context.getDatabasePath("proinspect.db")
+                
+                // Copy backup to database location
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    dbPath.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                
+                // Reset current report
+                _currentReportId.value = null
+                onComplete(true)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onComplete(false)
+            }
+        }
+    }
 }
