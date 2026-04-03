@@ -266,18 +266,6 @@ data class AppSettings(
     val ircState: String = "2021 IRC"
 )
 
-// ── Serial Decode Pattern Entity ──────────────────────────────────────────────
-
-@Entity(tableName = "serial_decode_patterns")
-data class SerialDecodePattern(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val manufacturer: String,
-    val pattern: String,
-    val yearGroup: Int,
-    val monthGroup: Int,
-    val priority: Int = 0
-)
-
 // ── Checklist Data ────────────────────────────────────────────────────────────
 
 data class ChecklistItem(
