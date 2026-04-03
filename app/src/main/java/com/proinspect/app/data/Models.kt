@@ -137,6 +137,7 @@ data class AppSettings(
     val badge3Path: String = "",
     val badge4Path: String = "",
     val anthropicApiKey: String = ""
+    val ircState: String = "" 
 )
 // Data class for the UI checklist items
 // Data class for the UI checklist items
