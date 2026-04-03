@@ -1,17 +1,26 @@
 // Compose imports
+package com.proinspect.app.ui
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.ui.platform.LocalContext
+import com.proinspect.app.data.InspectionSections
+import com.proinspect.app.data.Rating
 
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -70,7 +79,7 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
                             label = { Text("Inspector Name") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            placeholder = { Text(settings.inspectorName) }
+                           placeholder = { Text("Inspector name") }
                         )
                         
                         Spacer(Modifier.height(12.dp))
@@ -157,7 +166,7 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
                                     color = Navy
                                 )
                                 Text(
-                                    currentReport.ircVersion,
+                                  currentReport.weatherConditions // or just remove that card entirely
                                     fontSize = 14.sp,
                                     color = Color.Gray
                                 )
@@ -376,7 +385,7 @@ fun SummaryScreen(viewModel: InspectionViewModel) {
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Navy),
                             border = BorderStroke(1.dp, Navy)
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
+                            Icon(Send, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
                             Text("Email Report")
                         }
@@ -452,7 +461,7 @@ fun RatingSummaryRow(label: String, count: Int, color: Color) {
             Box(
                 modifier = Modifier
                     .size(12.dp)
-                    .background(color, shape = androidx.compose.foundation.shape.CircleShape)
+                   .background(color, shape = CircleShape)
             )
             Spacer(Modifier.width(12.dp))
             Text(label, fontSize = 15.sp, color = Color(0xFF374151))
