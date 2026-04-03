@@ -85,14 +85,13 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
             val reportId = _currentReportId.value ?: return@launch
             val existing = items.value[itemId]
             val item = existing?.copy(rating = rating)
-                ?: InspectionItem(
-                    id = itemId,
-                    reportId = reportId,
-                    itemId = itemId,
-                    section = section,
-                    rating = rating,
-                    narrative = ""
-                )
+    ?: InspectionItem(
+        reportId = reportId,
+        itemId = itemId,
+        section = section,
+        rating = rating,
+        narrative = ""
+    )
             itemDao.insertItem(item)
         }
     }
