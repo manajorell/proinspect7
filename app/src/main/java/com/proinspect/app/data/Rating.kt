@@ -1,10 +1,10 @@
 package com.proinspect.app.data
 
-enum class Rating {
-    SAFETY,      // Red - Safety issues
-    MAJOR,       // Orange - Major defects
-    MONITOR,     // Yellow - Monitor/minor issues
-    GOOD,        // Green - Good condition
-    NOT_RATED,   // Gray - Not yet rated
-    NOT_PRESENT  // Gray - Item not present
+enum class Rating(val short: String) {
+    SAFETY("Safety"),
+    MAJOR("Major"),
+    MONITOR("Monitor"),
+    GOOD("Good"),
+    NOT_RATED("N/R"),
+    NOT_PRESENT("N/A")
 }
