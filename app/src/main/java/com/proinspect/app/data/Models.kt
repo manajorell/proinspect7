@@ -221,23 +221,26 @@ data class Report(
 
 // ── Inspection Item Entity ────────────────────────────────────────────────────
 
+package com.proinspect.app.data
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
 @Entity(tableName = "inspection_items")
 data class InspectionItem(
-    @PrimaryKey val id: String,
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
     val reportId: Long,
-    val section: String,
     val itemId: String,
-    val rating: Rating,
-    val narrative: String
-)
-
-enum class Rating(val short: String) {
-    NOT_RATED("—"),
-    GOOD("✓"),
-    MONITOR("👁"),
-    MAJOR("⚠"),
-    SAFETY("🚨"),
-    NOT_PRESENT("N/A")
+    val section: String,
+    val rating: Rating = Rating.NOT_RATED,
+    val narrative: String = "",
+    val label: String = ""  // ← ADD THIS PROPERTY
+) {
+    // Helper function to get display label
+    fun getDisplayLabel(): String {
+        return if (label.isNotEmpty()) label else itemId
+    }
 }
 
 // ── Inspection Photo Entity ───────────────────────────────────────────────────
