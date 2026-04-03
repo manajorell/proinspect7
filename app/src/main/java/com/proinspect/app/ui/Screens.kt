@@ -1,477 +1,76 @@
-// Compose imports
 package com.proinspect.app.ui
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.proinspect.app.data.InspectionSections
-import com.proinspect.app.data.Rating
+import com.proinspect.app.data.Report
 
-
-// ══════════════════════════════════════════════════════════════════════════════
-// PROPERTY INFO SCREEN
-// ══════════════════════════════════════════════════════════════════════════════
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PropertyInfoScreen(viewModel: InspectionViewModel) {
-    val report by viewModel.currentReport.collectAsState()
-    val settings by viewModel.settings.collectAsState()
-    
-    report?.let { currentReport ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(2.dp)
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text(
-                            "Property Information",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Navy
-                        )
-                        Spacer(Modifier.height(16.dp))
-                        
-                        OutlinedTextField(
-                            value = currentReport.propertyAddress,
-                            onValueChange = { viewModel.updatePropertyAddress(it) },
-                            label = { Text("Property Address") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
-                        
-                        Spacer(Modifier.height(12.dp))
-                        
-                        OutlinedTextField(
-                            value = currentReport.clientName,
-                            onValueChange = { viewModel.updateClientName(it) },
-                            label = { Text("Client Name") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
-                        
-                        Spacer(Modifier.height(12.dp))
-                        
-                        OutlinedTextField(
-                            value = currentReport.inspectorName,
-                            onValueChange = { viewModel.updateInspectorName(it) },
-                            label = { Text("Inspector Name") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                           placeholder = { Text("Inspector name") }
-                        )
-                        
-                        Spacer(Modifier.height(12.dp))
-                        
-                        OutlinedTextField(
-                            value = currentReport.inspectionDate,
-                            onValueChange = { viewModel.updateInspectionDate(it) },
-                            label = { Text("Inspection Date") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            placeholder = { Text("MM/DD/YYYY") }
-                        )
-                    }
-                }
-            }
-            
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(2.dp)
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text(
-                            "Property Details",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Navy
-                        )
-                        Spacer(Modifier.height(16.dp))
-                        
-                        OutlinedTextField(
-                            value = currentReport.yearBuilt,
-                            onValueChange = { viewModel.updateYearBuilt(it) },
-                            label = { Text("Year Built") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
-                        
-                        Spacer(Modifier.height(12.dp))
-                        
-                        OutlinedTextField(
-                            value = currentReport.squareFootage,
-                            onValueChange = { viewModel.updateSquareFootage(it) },
-                            label = { Text("Square Footage") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
-                        
-                        Spacer(Modifier.height(12.dp))
-                        
-                        OutlinedTextField(
-                            value = currentReport.propertyType,
-                            onValueChange = { viewModel.updatePropertyType(it) },
-                            label = { Text("Property Type") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            placeholder = { Text("Single Family, Condo, etc.") }
-                        )
-                    }
-                }
-            }
-            
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Gold.copy(alpha = 0.1f)),
-                    elevation = CardDefaults.cardElevation(2.dp)
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Default.Info,
-                                contentDescription = null,
-                                tint = Gold,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    "IRC Code Version",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Navy
-                                )
-                       Text(
-    currentReport.weatherConditions,
-    fontSize = 14.sp,
-    color = Color.Gray
-)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+fun ReportScreen(
+    report: Report?,
+    currentTab: Int,
+    onTabChange: (Int) -> Unit,
+    onBack: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val tabSections = listOf("info") + InspectionSections.sections + listOf("summary")
+    val tabLabels = listOf("Info") +
+        InspectionSections.sections.map {
+            InspectionSections.sectionNames[it] ?: it
+        } + listOf("Summary")
 
-// ══════════════════════════════════════════════════════════════════════════════
-// INSPECTION SECTION SCREEN
-// ══════════════════════════════════════════════════════════════════════════════
-
-@Composable
-fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
-    val report by viewModel.currentReport.collectAsState()
-    val items by viewModel.currentItems.collectAsState()
-    val photos by viewModel.currentPhotos.collectAsState()
-    val currentItemId by viewModel.currentItemId.collectAsState()
-    
-    report?.let { currentReport ->
-     val checklist = InspectionSections.items[section] ?: emptyList()
-        
-        if (currentItemId != null) {
-            // Camera screen
-            CameraScreen(
-                onPhotoCaptured = { uri ->
-                    viewModel.addPhoto(currentItemId!!, uri)
-                    viewModel.clearCurrentItem()
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        report?.propertyAddress?.ifBlank { "New Inspection" } ?: "Inspection",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = Color.White
+                    )
                 },
-                onCancel = { viewModel.clearCurrentItem() }
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Navy)
             )
-        } else {
-            // Section inspection screen
-            GenericSectionScreen(
-                section = section,
-                checklist = checklist,
-                items = items,
-                photos = photos,
-                ircVersion = currentReport.ircVersion,
-                onRatingChange = { itemId, rating ->
-                    viewModel.updateRating(itemId, rating)
-                },
-                onNarrativeChange = { itemId, narrative ->
-                    viewModel.updateNarrative(itemId, narrative)
-                },
-                onCameraClick = { itemId ->
-                    viewModel.setCurrentItem(itemId)
-                },
-                onGalleryPick = { itemId, uri ->
-                    viewModel.addPhoto(itemId, uri)
-                },
-                onDeletePhoto = { photo ->
-                    viewModel.deletePhoto(photo)
-                }
-            )
-        }
-    }
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// SUMMARY SCREEN
-// ══════════════════════════════════════════════════════════════════════════════
-
-@Composable
-fun SummaryScreen(viewModel: InspectionViewModel) {
-    val report by viewModel.currentReport.collectAsState()
-    val items by viewModel.currentItems.collectAsState()
-    val photos by viewModel.currentPhotos.collectAsState()
-    val context = LocalContext.current
-    var isGeneratingPdf by remember { mutableStateOf(false) }
-    var showEmailDialog by remember { mutableStateOf(false) }
-    
-    report?.let { currentReport ->
-        val itemsByRating = items.values.groupBy { it.rating }
-        val safetyCount = itemsByRating[Rating.SAFETY]?.size ?: 0
-        val majorCount = itemsByRating[Rating.MAJOR]?.size ?: 0
-        val monitorCount = itemsByRating[Rating.MONITOR]?.size ?: 0
-        val goodCount = itemsByRating[Rating.GOOD]?.size ?: 0
-        val totalInspected = items.values.count { it.rating != Rating.NOT_RATED }
-        
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Summary Card
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(2.dp)
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text(
-                            "Inspection Summary",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Navy
-                        )
-                        Spacer(Modifier.height(16.dp))
-                        
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            SummaryStatItem("Total Items", totalInspected.toString(), Navy)
-                            SummaryStatItem("Photos", photos.size.toString(), Navy)
-                        }
-                    }
-                }
-            }
-            
-            // Ratings Breakdown
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(2.dp)
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text(
-                            "Findings Breakdown",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Navy
-                        )
-                        Spacer(Modifier.height(16.dp))
-                        
-                        if (safetyCount > 0) {
-                            RatingSummaryRow("Safety Issues", safetyCount, RatingRed)
-                            Spacer(Modifier.height(8.dp))
-                        }
-                        if (majorCount > 0) {
-                            RatingSummaryRow("Major Issues", majorCount, RatingOrange)
-                            Spacer(Modifier.height(8.dp))
-                        }
-                        if (monitorCount > 0) {
-                            RatingSummaryRow("Monitor Items", monitorCount, RatingYellow)
-                            Spacer(Modifier.height(8.dp))
-                        }
-                        if (goodCount > 0) {
-                            RatingSummaryRow("Good Condition", goodCount, RatingGreen)
-                        }
-                        
-                        if (totalInspected == 0) {
+        },
+        bottomBar = {
+            ScrollableTabRow(
+                selectedTabIndex = currentTab,
+                containerColor = Navy,
+                contentColor = Gold,
+                edgePadding = 0.dp
+            ) {
+                tabLabels.forEachIndexed { index, label ->
+                    Tab(
+                        selected = currentTab == index,
+                        onClick = { onTabChange(index) },
+                        text = {
                             Text(
-                                "No items inspected yet",
-                                fontSize = 14.sp,
-                                color = Color.Gray,
-                                modifier = Modifier.fillMaxWidth(),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                label,
+                                fontSize = 11.sp,
+                                color = if (currentTab == index) Gold else Color.White.copy(alpha = 0.7f)
                             )
                         }
-                    }
-                }
-            }
-            
-            // Actions
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(2.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            "Actions",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Navy
-                        )
-                        
-                        Button(
-                            onClick = {
-                                isGeneratingPdf = true
-                                viewModel.generatePdf(context) { success ->
-                                    isGeneratingPdf = false
-                                    if (success) {
-                                        android.widget.Toast.makeText(
-                                            context,
-                                            "PDF generated successfully",
-                                            android.widget.Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Navy),
-                            enabled = !isGeneratingPdf
-                        ) {
-                            if (isGeneratingPdf) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    color = Color.White,
-                                    strokeWidth = 2.dp
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text("Generating PDF...")
-                            } else {
-                                Icon(Icons.Default.PictureAsPdf, contentDescription = null)
-                                Spacer(Modifier.width(8.dp))
-                                Text("Generate PDF Report")
-                            }
-                        }
-                        
-                        OutlinedButton(
-                            onClick = { showEmailDialog = true },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Navy),
-                            border = BorderStroke(1.dp, Navy)
-                        ) {
-                            Icon(Send, contentDescription = null)
-                            Spacer(Modifier.width(8.dp))
-                            Text("Email Report")
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    if (showEmailDialog) {
-        var emailAddress by remember { mutableStateOf("") }
-        AlertDialog(
-            onDismissRequest = { showEmailDialog = false },
-            title = { Text("Email Report") },
-            text = {
-                Column {
-                    Text("Enter recipient email address:")
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = emailAddress,
-                        onValueChange = { emailAddress = it },
-                        label = { Text("Email") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
                     )
                 }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.emailReport(context, emailAddress)
-                        showEmailDialog = false
-                    },
-                    enabled = emailAddress.isNotBlank()
-                ) {
-                    Text("Send")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showEmailDialog = false }) {
-                    Text("Cancel")
-                }
             }
-        )
-    }
-}
-
-@Composable
-fun SummaryStatItem(label: String, value: String, color: Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            value,
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            label,
-            fontSize = 14.sp,
-            color = Color.Gray
-        )
-    }
-}
-
-@Composable
-fun RatingSummaryRow(label: String, count: Int, color: Color) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(12.dp)
-                   .background(color, shape = CircleShape)
-            )
-            Spacer(Modifier.width(12.dp))
-            Text(label, fontSize = 15.sp, color = Color(0xFF374151))
         }
-        Text(
-            count.toString(),
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
+    ) { padding ->
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            content()
+        }
     }
 }
