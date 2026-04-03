@@ -775,13 +775,13 @@ Text(
                     )
                     Spacer(Modifier.height(10.dp))
                 }
-                PhotoStrip(
-                    photos = photos,
-                    onCameraClick = onCameraClick,
-                    onGalleryPick = onGalleryPick,
-                    onDeletePhoto = onDeletePhoto,
-                    compact = true
-                )
+             PhotoStrip(
+    photos = photos,
+    onCameraClick = onCameraClick,
+    onGalleryPick = onGalleryPick,
+    onDeletePhoto = onDeletePhoto,
+    compact = true
+)
                 Spacer(Modifier.height(8.dp))
                 NarrativeBox(
                     value = narrative,
