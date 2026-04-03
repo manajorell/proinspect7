@@ -667,6 +667,39 @@ fun ChecklistItemCard(
                 }
                 Spacer(Modifier.height(8.dp))
 
+                // ── Photos display ──
+                if (photos.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        photos.forEach { photo ->
+                            Box(modifier = Modifier.size(72.dp)) {
+                                AsyncImage(
+                                    model = File(photo.photoPath),
+                                    contentDescription = "Photo",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp))
+                                )
+                                IconButton(
+                                    onClick = { onDeletePhoto(photo) },
+                                    modifier = Modifier.align(Alignment.TopEnd).size(24.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Cancel, contentDescription = "Delete",
+                                        tint = Color.White,
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .background(RatingRed.copy(alpha = 0.85f), RoundedCornerShape(50))
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+
+                // ── Quick Defect ──
                 if (hasDefects) {
                     DefectDropdown(
                         itemId = item.id,
@@ -681,14 +714,7 @@ fun ChecklistItemCard(
                     Spacer(Modifier.height(10.dp))
                 }
 
-                PhotoStrip(
-                    photos = photos,
-                    onCameraClick = onCameraClick,
-                    onGalleryPick = onGalleryPick,
-                    onDeletePhoto = onDeletePhoto,
-                    compact = true
-                )
-                Spacer(Modifier.height(8.dp))
+                // ── Narrative ──
                 NarrativeBox(
                     value = narrative,
                     onValueChange = onNarrativeChanged,
@@ -697,6 +723,7 @@ fun ChecklistItemCard(
                     onVoiceInput = onVoiceInput
                 )
 
+                // ── Serial Decoder (HVAC/Plumbing/Electrical) ──
                 if (item.id in listOf("pl3", "hv1", "hv2", "el2")) {
                     val equipmentName = when (item.id) {
                         "pl3" -> "Water Heater"
