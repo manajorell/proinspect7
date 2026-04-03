@@ -302,27 +302,23 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
         }
     }
 
-    fun restoreBackup(context: Context, uri: Uri, onComplete: (Boolean) -> Unit) {
-        viewModelScope.launch {
-            try {
-                val dbPath = context.getDatabasePath("proinspect.db")
-                
-                // Copy backup to database location
-                context.contentResolver.openInputStream(uri)?.use { input ->
-                    dbPath.outputStream().use { output ->
-                        input.copyTo(output)
-                    }
+  fun restoreBackup(context: android.content.Context, uri: Uri, onComplete: (Int) -> Unit) {
+    viewModelScope.launch {
+        try {
+            val dbPath = context.getDatabasePath("proinspect.db")
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                dbPath.outputStream().use { output ->
+                    input.copyTo(output)
                 }
-                
-                // Reset current report
-                _currentReportId.value = null
-                onComplete(true)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                onComplete(false)
             }
+            _currentReportId.value = null
+            onComplete(1)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            onComplete(-1)
         }
     }
+}
     // Add these methods to InspectionViewModel class
 
 fun getCodeForItem(itemId: String): String {
