@@ -165,10 +165,11 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
                                     fontWeight = FontWeight.SemiBold,
                                     color = Navy
                                 )
-                                Text(
-                                  currentReport.weatherConditions // or just remove that card entirely
-                                    fontSize = 14.sp,
-                                    color = Color.Gray
+                       Text(
+    currentReport.weatherConditions,
+    fontSize = 14.sp,
+    color = Color.Gray
+)
                                 )
                             }
                         }
