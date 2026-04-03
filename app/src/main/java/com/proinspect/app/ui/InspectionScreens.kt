@@ -851,6 +851,7 @@ fun ReceiptSummaryCard(report: Report?) {
     }
 }
 
+
 // ─── Main Inspection Section Screen ───────────────────────────────────────────
 @Composable
 fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
