@@ -655,7 +655,7 @@ fun SettingsScreen(viewModel: InspectionViewModel) {
                     }
                 }
 
-                if (showRestoreConfirm) {
+                               if (showRestoreConfirm) {
                     AlertDialog(
                         onDismissRequest = { showRestoreConfirm = false },
                         title = { Text("Restore Complete") },
@@ -672,4 +672,4 @@ fun SettingsScreen(viewModel: InspectionViewModel) {
             item { Spacer(Modifier.height(20.dp)) }
         }
     }
-}
+}  // ← This closes the SettingsScreen function
