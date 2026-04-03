@@ -489,18 +489,18 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                 var restoreMessage by remember { mutableStateOf("") }
 
                 val restoreLauncher = rememberLauncherForActivityResult(
-                    ActivityResultContracts.GetContent()
-                ) { uri ->
-                    uri?.let {
-                        viewModel.restoreBackup(context, it) { count ->
-                            restoreMessage = if (count >= 0)
-                                "✅ Restored $count report(s) successfully"
-                            else
-                                "❌ Restore failed — invalid backup file"
-                            showRestoreConfirm = true
-                        }
-                    }
-                }
+    ActivityResultContracts.GetContent()
+) { uri ->
+    uri?.let {
+        viewModel.restoreBackup(context, it) { success ->  // Changed from 'count' to 'success'
+            restoreMessage = if (success)  // Changed from 'count >= 0' to just 'success'
+                "✅ Backup restored successfully"
+            else
+                "❌ Restore failed — invalid backup file"
+            showRestoreConfirm = true
+        }
+    }
+}
 
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
