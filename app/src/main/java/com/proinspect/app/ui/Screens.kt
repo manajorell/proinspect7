@@ -306,7 +306,7 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                                     modifier = Modifier.weight(1f)
                                 ) { Text("Replace") }
                                 OutlinedButton(
-                                    onClick = { viewModel.saveSettings(settings.copy(companyLogoPath = "")) },
+                                    onClick = { viewModel.updateSettings(settings.copy(companyLogoPath = "")) },
                                     modifier = Modifier.weight(1f),
                                     border = BorderStroke(1.dp, Color.Red)
                                 ) { Text("Remove", color = Color.Red) }
@@ -391,122 +391,6 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                 }
             }
 
-            // ── IRC Building Code State ──────────────────────────────────────
-            item {
-                var showStateMenu by remember { mutableStateOf(false) }
-                val states = remember { IrcReferences.getStates() }
-
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(2.dp)
-                ) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("🏛️ IRC Building Code", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-                        Text(
-                            "Select your state to access relevant IRC building code sections during inspections",
-                            fontSize = 12.sp,
-                            color = Color(0xFF6B7280)
-                        )
-
-                        Column {
-                            Text(
-                                "State",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Navy
-                            )
-                            Spacer(Modifier.height(4.dp))
-                            Box {
-                                OutlinedButton(
-                                    onClick = { showStateMenu = true },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    border = BorderStroke(1.dp, Color(0xFFD1D5DB)),
-                                    shape = RoundedCornerShape(8.dp),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        containerColor = Color.White
-                                    )
-                                ) {
-                                    Text(
-                                        settings.ircState.ifBlank { "Select State" },
-                                        fontSize = 13.sp,
-                                        color = Color(0xFF374151),
-                                        modifier = Modifier.weight(1f),
-                                        textAlign = androidx.compose.ui.text.style.TextAlign.Start
-                                    )
-                                    Icon(
-                                        Icons.Default.ArrowDropDown,
-                                        contentDescription = null,
-                                        tint = Gold
-                                    )
-                                }
-                                DropdownMenu(
-                                    expanded = showStateMenu,
-                                    onDismissRequest = { showStateMenu = false },
-                                    modifier = Modifier.heightIn(max = 400.dp)
-                                ) {
-                                    states.forEach { state ->
-                                        DropdownMenuItem(
-                                            text = {
-                                                Column {
-                                                    Text(state, fontSize = 13.sp)
-                                                    IrcReferences.getStateCodeInfo(state)?.let { info ->
-                                                        Text(
-                                                            info.codeName,
-                                                            fontSize = 10.sp,
-                                                            color = Color(0xFF6B7280)
-                                                        )
-                                                    }
-                                                }
-                                            },
-                                            onClick = {
-                                                viewModel.updateSettings(settings.copy(ircState = state))
-                                                showStateMenu = false
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        // Show selected state's code info
-                        if (settings.ircState.isNotBlank()) {
-                            IrcReferences.getStateCodeInfo(settings.ircState)?.let { info ->
-                                Surface(
-                                    color = Navy.copy(alpha = 0.05f),
-                                    shape = RoundedCornerShape(8.dp)
-                                ) {
-                                    Row(
-                                        Modifier.padding(12.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            Icons.Default.CheckCircle,
-                                            contentDescription = null,
-                                            tint = RatingGreen,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(Modifier.width(8.dp))
-                                        Column {
-                                            Text(
-                                                "Using ${info.codeName}",
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = Navy
-                                            )
-                                            Text(
-                                                "IRC references will be available in Quick Defect menu",
-                                                fontSize = 10.sp,
-                                                color = Color(0xFF6B7280)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
             // ── API Key ───────────────────────────────────────────────────────
             item {
                 Card(
@@ -530,7 +414,7 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                             )
                         )
                         Button(
-                            onClick = { viewModel.saveSettings(settings.copy(anthropicApiKey = apiKeyInput)) },
+                            onClick = { viewModel.updateSettings(settings.copy(anthropicApiKey = apiKeyInput)) },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = Navy)
                         ) {
@@ -640,4 +524,3 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
         }
     }
 }
-
