@@ -51,11 +51,12 @@ interface InspectionPhotoDao {
 @Dao
 interface AppSettingsDao {
     @Query("SELECT * FROM app_settings WHERE id = 1")
-    fun getSettings(): Flow<AppSettings?>
-
+    fun getSettings(): Flow<AppSettings?>  // ← Make sure this matches
+    
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun saveSettings(settings: AppSettings)
+    suspend fun insertSettings(settings: AppSettings)
 }
+
 
 @Dao
 interface SerialDecodePatternDao {
