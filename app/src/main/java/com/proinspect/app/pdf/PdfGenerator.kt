@@ -464,3 +464,474 @@ object PdfGenerator {
         try {
             doc.add(Paragraph("\n"))
             addThinLine(doc)
+            doc.add(Paragraph("\n"))
+
+            val agreementHdr = PdfPTable(1).apply { widthPercentage = 100f; spacingAfter = 12f }
+            val hdrCell = PdfPCell()
+            hdrCell.backgroundColor = cNavy; hdrCell.border = Rectangle.NO_BORDER
+            hdrCell.paddingTop = 10f; hdrCell.paddingBottom = 10f
+            hdrCell.paddingLeft = 14f; hdrCell.paddingRight = 14f
+            hdrCell.addElement(Paragraph("Signed Inspection Agreement",
+                Font(Font.FontFamily.HELVETICA, 11f, Font.BOLD, BaseColor.WHITE)))
+            agreementHdr.addCell(hdrCell)
+            doc.add(agreementHdr)
+
+            val bmp = if (report.signedAgreementPath.startsWith("content://")) {
+                val uri = android.net.Uri.parse(report.signedAgreementPath)
+                val inputStream = context.contentResolver.openInputStream(uri)
+                BitmapFactory.decodeStream(inputStream)
+            } else {
+                val filePath = if (report.signedAgreementPath.startsWith("file://"))
+                    report.signedAgreementPath.removePrefix("file://")
+                else report.signedAgreementPath
+                BitmapFactory.decodeFile(filePath)
+            }
+
+            if (bmp != null) {
+                val stream = java.io.ByteArrayOutputStream()
+                bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, stream)
+                val img = Image.getInstance(stream.toByteArray())
+                img.scaleToFit(500f, 650f)
+                img.alignment = Element.ALIGN_CENTER
+                val imgTable = PdfPTable(1).apply { widthPercentage = 100f; spacingAfter = 12f }
+                val imgCell = PdfPCell()
+                imgCell.border = Rectangle.BOX; imgCell.borderColor = cBorder; imgCell.borderWidth = 1f
+                imgCell.paddingTop = 10f; imgCell.paddingBottom = 10f
+                imgCell.paddingLeft = 10f; imgCell.paddingRight = 10f
+                imgCell.horizontalAlignment = Element.ALIGN_CENTER
+                imgCell.addElement(img)
+                imgTable.addCell(imgCell)
+                doc.add(imgTable)
+                val caption = Paragraph(
+                    "Inspection agreement signed by client on ${report.inspectionDate}",
+                    Font(Font.FontFamily.HELVETICA, 8f, Font.ITALIC, cGray)
+                )
+                caption.alignment = Element.ALIGN_CENTER
+                caption.spacingAfter = 10f
+                doc.add(caption)
+            }
+        } catch (_: Exception) {
+            val errorNote = PdfPTable(1).apply { widthPercentage = 100f; spacingAfter = 12f }
+            val noteCell = PdfPCell()
+            noteCell.backgroundColor = BaseColor(254, 243, 199)
+            noteCell.border = Rectangle.BOX; noteCell.borderColor = cOrange
+            noteCell.paddingTop = 12f; noteCell.paddingBottom = 12f
+            noteCell.paddingLeft = 12f; noteCell.paddingRight = 12f
+            noteCell.addElement(Paragraph("Signed inspection agreement on file",
+                Font(Font.FontFamily.HELVETICA, 10f, Font.NORMAL, BaseColor(120, 53, 15))))
+            errorNote.addCell(noteCell)
+            doc.add(errorNote)
+        }
+    }
+
+    private fun pageFullDetails(
+        doc: Document, report: Report,
+        items: List<InspectionItem>, photos: List<InspectionPhoto>
+    ) {
+        addSectionHeader(doc, "🔍", "Full Inspection Details",
+            "Complete findings for all inspected systems and components")
+
+        val sectionNarratives = mapOf(
+            "roofing"    to report.roofingNarrative,
+            "exterior"   to report.exteriorNarrative,
+            "structure"  to report.structureNarrative,
+            "electrical" to report.electricalNarrative,
+            "hvac"       to report.hvacNarrative,
+            "plumbing"   to report.plumbingNarrative,
+            "interior"   to report.interiorNarrative,
+            "insulation" to report.insulationNarrative,
+            "garage"     to report.garageNarrative
+        )
+
+        InspectionSections.sections.forEach { section ->
+            val sectionItemsList = InspectionSections.items[section] ?: return@forEach
+            val sectionName = InspectionSections.sectionNames[section] ?: section
+            val icon = InspectionSections.sectionIcons[section] ?: ""
+            val sectionItems = sectionItemsList.map { ci ->
+                ci to (items.find { it.itemId == ci.id })
+            }
+
+            val sHdr = PdfPTable(1).apply { widthPercentage = 100f; spacingBefore = 16f; spacingAfter = 0f }
+            val sh = PdfPCell()
+            sh.backgroundColor = cNavy; sh.border = Rectangle.NO_BORDER
+            sh.paddingTop = 10f; sh.paddingBottom = 10f; sh.paddingLeft = 16f; sh.paddingRight = 16f
+            sh.addElement(Paragraph("$icon  ${sectionName.uppercase()}", fH3White))
+            sHdr.addCell(sh)
+            doc.add(sHdr)
+            doc.add(Chunk(LineSeparator(2f, 100f, cGold, Element.ALIGN_CENTER, 0f)))
+            doc.add(Paragraph(" "))
+
+            addSectionStatsBar(doc, sectionItems.map { it.second })
+            addSectionSpecificFields(doc, section, report)
+
+            val tbl = PdfPTable(3).apply {
+                widthPercentage = 100f; spacingAfter = 4f
+                setWidths(floatArrayOf(3.5f, 1f, 3f))
+            }
+            fun thdr(t: String): PdfPCell {
+                val c = PdfPCell(Phrase(t, fSmallB))
+                c.backgroundColor = cLightBg; c.border = Rectangle.BOTTOM; c.borderColorBottom = cBorder
+                c.paddingTop = 6f; c.paddingBottom = 6f; c.paddingLeft = 6f; c.paddingRight = 6f
+                return c
+            }
+            tbl.addCell(thdr("COMPONENT / SYSTEM"))
+            tbl.addCell(thdr("RATING"))
+            tbl.addCell(thdr("FINDINGS"))
+
+            sectionItemsList.forEach { ci ->
+                val found  = items.find { it.itemId == ci.id }
+                val rating = found?.rating ?: Rating.NOT_RATED
+                val color  = rColor(rating)
+
+                val nameCell = PdfPCell(Phrase(ci.label, fBody))
+                nameCell.border = Rectangle.BOTTOM; nameCell.borderColorBottom = cBorder
+                nameCell.paddingTop = 7f; nameCell.paddingBottom = 7f
+                nameCell.paddingLeft = 7f; nameCell.paddingRight = 7f
+                tbl.addCell(nameCell)
+
+                val rCell = PdfPCell()
+                rCell.border = Rectangle.BOTTOM; rCell.borderColorBottom = cBorder
+                rCell.paddingTop = 7f; rCell.paddingBottom = 7f
+                rCell.paddingLeft = 7f; rCell.paddingRight = 7f
+                rCell.horizontalAlignment = Element.ALIGN_CENTER
+                rCell.backgroundColor = if (rating != Rating.NOT_RATED)
+                    BaseColor(color.red, color.green, color.blue, 25) else cWhite
+                rCell.addElement(Paragraph(rating.short,
+                    Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, color)).apply {
+                    alignment = Element.ALIGN_CENTER
+                })
+                tbl.addCell(rCell)
+
+                val narrative = found?.narrative?.ifBlank { null }
+                val nCell = PdfPCell(Phrase(narrative ?: "—",
+                    if (narrative != null) fBody else fSmall))
+                nCell.border = Rectangle.BOTTOM; nCell.borderColorBottom = cBorder
+                nCell.paddingTop = 7f; nCell.paddingBottom = 7f
+                nCell.paddingLeft = 7f; nCell.paddingRight = 7f
+                tbl.addCell(nCell)
+            }
+            doc.add(tbl)
+
+            addFlaggedItemPhotos(doc, section, sectionItemsList, items, photos)
+
+            val goodItems = sectionItems.filter { (_, item) -> item?.rating == Rating.GOOD }
+            if (goodItems.isNotEmpty()) {
+                doc.add(Paragraph(" "))
+                val gHdr = PdfPTable(1).apply { widthPercentage = 100f; spacingAfter = 4f }
+                val gh = PdfPCell(Phrase("✓  Items Inspected — No Deficiencies",
+                    Font(Font.FontFamily.HELVETICA, 8f, Font.BOLD, cGreen)))
+                gh.backgroundColor = cGreenLight; gh.border = Rectangle.NO_BORDER
+                gh.paddingTop = 5f; gh.paddingBottom = 5f; gh.paddingLeft = 8f; gh.paddingRight = 8f
+                gHdr.addCell(gh)
+                doc.add(gHdr)
+                val goodTbl = PdfPTable(3).apply { widthPercentage = 100f; spacingAfter = 8f }
+                goodItems.forEach { (ci, _) ->
+                    val gc = PdfPCell(Phrase("✓  ${ci.label}",
+                        Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, cGreen)))
+                    gc.border = Rectangle.NO_BORDER
+                    gc.paddingTop = 2f; gc.paddingBottom = 2f; gc.paddingLeft = 3f; gc.paddingRight = 3f
+                    goodTbl.addCell(gc)
+                }
+                repeat((3 - goodItems.size % 3) % 3) {
+                    goodTbl.addCell(PdfPCell().apply { border = Rectangle.NO_BORDER })
+                }
+                doc.add(goodTbl)
+            }
+
+            val narrative = sectionNarratives[section]
+            if (!narrative.isNullOrBlank()) {
+                val nBox = PdfPTable(1).apply { widthPercentage = 100f; spacingAfter = 10f }
+                val nCell = PdfPCell()
+                nCell.border = Rectangle.BOX; nCell.borderColor = cGold; nCell.borderWidth = 2f
+                nCell.backgroundColor = BaseColor(253, 249, 242)
+                nCell.paddingTop = 12f; nCell.paddingBottom = 12f
+                nCell.paddingLeft = 12f; nCell.paddingRight = 12f
+                nCell.addElement(Paragraph("📝  Inspector Narrative", fGold).apply { spacingAfter = 4f })
+                nCell.addElement(Paragraph(narrative, fBody))
+                nBox.addCell(nCell)
+                doc.add(nBox)
+            }
+
+            val sectionPhotos = photos.filter { it.section == section && it.itemId == null }.take(4)
+            if (sectionPhotos.isNotEmpty()) {
+                doc.add(Paragraph(" "))
+                val photoLabel = Paragraph("Section Overview Photos",
+                    Font(Font.FontFamily.HELVETICA, 8f, Font.BOLD, cGray))
+                photoLabel.spacingAfter = 4f
+                doc.add(photoLabel)
+                val cols = minOf(sectionPhotos.size, 4)
+                val photoTbl = PdfPTable(cols).apply { widthPercentage = 100f; spacingAfter = 12f }
+                sectionPhotos.forEach { photo ->
+                    try {
+                        val bmp = BitmapFactory.decodeFile(photo.photoPath)
+                        if (bmp != null) {
+                            val stream = java.io.ByteArrayOutputStream()
+                            bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 75, stream)
+                            val img = Image.getInstance(stream.toByteArray())
+                            img.scaleToFit(120f, 95f)
+                            val pc = PdfPCell(img)
+                            pc.border = Rectangle.BOX; pc.borderColor = cBorder
+                            pc.paddingTop = 3f; pc.paddingBottom = 3f
+                            pc.paddingLeft = 3f; pc.paddingRight = 3f
+                            pc.horizontalAlignment = Element.ALIGN_CENTER
+                            photoTbl.addCell(pc)
+                        }
+                    } catch (_: Exception) {}
+                }
+                repeat(cols - sectionPhotos.size) {
+                    photoTbl.addCell(PdfPCell().apply { border = Rectangle.NO_BORDER })
+                }
+                doc.add(photoTbl)
+            }
+
+            doc.add(Chunk(LineSeparator(0.5f, 100f, cBorder, Element.ALIGN_CENTER, -2f)))
+        }
+    }
+
+    private fun addSectionStatsBar(doc: Document, sectionItems: List<InspectionItem?>) {
+        val safety  = sectionItems.count { it?.rating == Rating.SAFETY }
+        val major   = sectionItems.count { it?.rating == Rating.MAJOR }
+        val monitor = sectionItems.count { it?.rating == Rating.MONITOR }
+        val good    = sectionItems.count { it?.rating == Rating.GOOD }
+        val total   = sectionItems.size
+
+        val statsTbl = PdfPTable(5).apply { widthPercentage = 100f; spacingAfter = 10f }
+
+        data class Stat(val label: String, val count: Int, val color: BaseColor, val bg: BaseColor)
+        listOf(
+            Stat("Safety",  safety,  cRed,    cRedLight),
+            Stat("Major",   major,   cOrange, cOrangeLight),
+            Stat("Monitor", monitor, cBlue,   cBlueLight),
+            Stat("Good",    good,    cGreen,  cGreenLight),
+            Stat("Total",   total,   cNavy,   cLightBg)
+        ).forEach { stat ->
+            val cell = PdfPCell()
+            cell.border = Rectangle.BOX
+            cell.borderColor = stat.color
+            cell.borderWidth = 1f
+            cell.backgroundColor = stat.bg
+            cell.horizontalAlignment = Element.ALIGN_CENTER
+            cell.paddingTop = 6f; cell.paddingBottom = 6f
+
+            val countPara = Paragraph(stat.count.toString(),
+                Font(Font.FontFamily.HELVETICA, 16f, Font.BOLD, stat.color))
+            countPara.alignment = Element.ALIGN_CENTER
+            cell.addElement(countPara)
+
+            val labelPara = Paragraph(stat.label,
+                Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, stat.color))
+            labelPara.alignment = Element.ALIGN_CENTER
+            cell.addElement(labelPara)
+
+            statsTbl.addCell(cell)
+        }
+        doc.add(statsTbl)
+    }
+
+    private fun addSectionSpecificFields(doc: Document, section: String, report: Report) {
+        val fields: List<Pair<String, String>> = when (section) {
+            "roofing"    -> listOf("Roof Type" to report.roofType, "Roof Age" to report.roofAge, "Roof Method" to report.roofMethod)
+            "exterior"   -> listOf("Siding Type" to report.sidingType, "Driveway" to report.drivewayType)
+            "structure"  -> listOf("Foundation" to report.foundationType, "Framing" to report.framingType)
+            "electrical" -> listOf("Panel Brand" to report.panelBrand, "Panel Amps" to report.panelAmps, "Panel Type" to report.panelType, "Wiring Type" to report.wiringType, "Service" to report.serviceEntrance)
+            "hvac"       -> listOf("Heat Type" to report.heatType, "Heat Brand" to report.heatBrand, "Heat Age" to report.heatAge, "AC Type" to report.acType, "AC Brand" to report.acBrand, "AC Age" to report.acAge, "Fuel Type" to report.fuelType, "Filter Date" to report.filterDate)
+            "plumbing"   -> listOf("Supply" to report.supplyMaterial, "Drain" to report.drainMaterial, "Water Heater" to report.whType, "WH Age" to report.whAge, "WH Capacity" to report.whCapacity)
+            "interior"   -> listOf("Property Type" to report.propertyType)
+            "insulation" -> listOf("Attic Insulation" to report.atticInsulation, "Attic R-Value" to report.atticRValue, "Crawl Insulation" to report.crawlInsulation)
+            "garage"     -> listOf("Garage Type" to report.garageType, "Garage Size" to report.garageCars)
+            else -> emptyList()
+        }.filter { it.second.isNotBlank() }
+
+        if (fields.isEmpty()) return
+
+        val cols = minOf(fields.size, 4)
+        val fieldTbl = PdfPTable(cols * 2).apply {
+            widthPercentage = 100f; spacingAfter = 10f
+            val widths = FloatArray(cols * 2) { if (it % 2 == 0) 0.8f else 1.2f }
+            setWidths(widths)
+        }
+
+        fields.take(cols * 2).forEach { (label, value) ->
+            val lc = PdfPCell(Phrase(label, fSmallB))
+            lc.border = Rectangle.NO_BORDER
+            lc.backgroundColor = cLightBg
+            lc.paddingTop = 5f; lc.paddingBottom = 5f; lc.paddingLeft = 6f; lc.paddingRight = 4f
+            fieldTbl.addCell(lc)
+
+            val vc = PdfPCell(Phrase(value, fBodySm))
+            vc.border = Rectangle.BOTTOM; vc.borderColorBottom = cBorder
+            vc.paddingTop = 5f; vc.paddingBottom = 5f; vc.paddingLeft = 4f; vc.paddingRight = 6f
+            fieldTbl.addCell(vc)
+        }
+
+        val remainder = (cols * 2) - (fields.size * 2) % (cols * 2)
+        if (remainder != cols * 2) {
+            repeat(remainder) {
+                fieldTbl.addCell(PdfPCell().apply { border = Rectangle.NO_BORDER })
+            }
+        }
+        doc.add(fieldTbl)
+    }
+
+    private fun addFlaggedItemPhotos(
+        doc: Document,
+        section: String,
+        sectionItemsList: List<ChecklistItem>,
+        items: List<InspectionItem>,
+        photos: List<InspectionPhoto>
+    ) {
+        val flaggedItems = sectionItemsList.mapNotNull { ci ->
+            val item = items.find { it.itemId == ci.id } ?: return@mapNotNull null
+            if (item.rating == Rating.NOT_RATED || item.rating == Rating.GOOD) return@mapNotNull null
+            val itemPhotos = photos.filter { it.itemId == ci.id }
+            if (itemPhotos.isEmpty() && item.narrative.isBlank()) return@mapNotNull null
+            Triple(ci, item, itemPhotos)
+        }
+
+        if (flaggedItems.isEmpty()) return
+
+        doc.add(Paragraph(" "))
+        val findingsLabel = Paragraph("Detailed Findings with Photos",
+            Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, cNavy))
+        findingsLabel.spacingAfter = 6f
+        doc.add(findingsLabel)
+
+        flaggedItems.forEach { (ci, item, itemPhotos) ->
+            val color = rColor(item.rating)
+            val bg    = rLightBg(item.rating)
+
+            val itemTbl = PdfPTable(1).apply { widthPercentage = 100f; spacingAfter = 8f }
+            val itemCell = PdfPCell()
+            itemCell.border = Rectangle.LEFT
+            itemCell.borderColorLeft = color
+            itemCell.borderWidthLeft = 4f
+            itemCell.backgroundColor = bg
+            itemCell.paddingTop = 8f; itemCell.paddingBottom = 8f
+            itemCell.paddingLeft = 10f; itemCell.paddingRight = 10f
+
+            val titlePara = Paragraph()
+            titlePara.add(Chunk(item.rating.short + "  ",
+                Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, color)))
+            titlePara.add(Chunk(ci.label,
+                Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cNavy)))
+            itemCell.addElement(titlePara)
+
+            if (item.narrative.isNotBlank()) {
+                itemCell.addElement(Paragraph(item.narrative, fBody).apply { spacingBefore = 4f })
+            }
+
+            if (itemPhotos.isNotEmpty()) {
+                val photoCols = minOf(itemPhotos.size, 3)
+                val photoRow = PdfPTable(photoCols).apply {
+                    widthPercentage = 100f; spacingBefore = 6f
+                }
+                itemPhotos.take(3).forEach { photo ->
+                    try {
+                        val bmp = BitmapFactory.decodeFile(photo.photoPath)
+                        if (bmp != null) {
+                            val stream = java.io.ByteArrayOutputStream()
+                            bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 80, stream)
+                            val img = Image.getInstance(stream.toByteArray())
+                            img.scaleToFit(140f, 105f)
+                            val pc = PdfPCell()
+                            pc.border = Rectangle.BOX; pc.borderColor = cBorder
+                            pc.paddingTop = 3f; pc.paddingBottom = 3f
+                            pc.paddingLeft = 3f; pc.paddingRight = 3f
+                            pc.horizontalAlignment = Element.ALIGN_CENTER
+                            pc.addElement(img)
+                            photoRow.addCell(pc)
+                        }
+                    } catch (_: Exception) {}
+                }
+                repeat(photoCols - itemPhotos.size) {
+                    photoRow.addCell(PdfPCell().apply { border = Rectangle.NO_BORDER })
+                }
+                itemCell.addElement(photoRow)
+            }
+
+            itemTbl.addCell(itemCell)
+            doc.add(itemTbl)
+        }
+    }
+
+    private fun pageCertifications(doc: Document, report: Report, settings: AppSettings) {
+        doc.newPage()
+        addSectionHeader(doc, "📜", "Scope & Limitations")
+
+        val text = buildString {
+            if (report.limitations.isNotBlank()) { append(report.limitations); append("\n\n") }
+            append("This inspection report was prepared in accordance with the InterNACHI Standards of Practice. ")
+            append("The inspection is a visual examination of the readily accessible installed systems and components of a home. ")
+            append("It is not technically exhaustive.\n\n")
+            append("Recommend evaluation and repair by appropriately licensed contractors for all items rated Safety Issue or Major Concern prior to closing.\n\n")
+            append("Inspector: ${report.inspectorName}   |   Cert #: ${report.inspectorCert}   |   Date: ${report.inspectionDate}\n")
+            append("Company: ${report.inspectorCompany}   |   Phone: ${report.inspectorPhone}")
+        }
+        doc.add(Paragraph(text, fBody).apply { spacingAfter = 20f })
+        doc.add(Chunk(LineSeparator(1f, 100f, cGold, Element.ALIGN_CENTER, -2f)))
+        doc.add(Paragraph(
+            "\nInspection performed in accordance with InterNACHI Standards of Practice  |  www.nachi.org",
+            Font(Font.FontFamily.HELVETICA, 8f, Font.ITALIC, cGray)
+        ).apply { alignment = Element.ALIGN_CENTER })
+    }
+
+    private fun pageScopeAndPurpose(doc: Document) {
+        doc.newPage()
+        addSectionHeader(doc, "📋", "Scope and Purpose of a Home Inspection")
+
+        data class Section(val title: String, val body: String)
+
+        val sections = listOf(
+            Section("Purchasing Property Involves Risk", "The purpose of a home inspection is to help reduce the risk associated with the purchase of a structure by providing a professional opinion about the overall condition of the structure. A home inspection is a limited visual inspection and it cannot eliminate this risk. Some homes present more risks than others. We cannot control this, but we try to help educate you about what we don't know during the inspection process. This is more difficult to convey in a report and one of many reasons why we recommend that you attend the inspection."),
+            Section("A Home Inspection is Not an Insurance Policy", "This report does not substitute for or serve as a warranty or guarantee of any kind. Home warranties can be purchased separately from insuring firms that provide this service."),
+            Section("A Home Inspection is Visual and Not Destructive", "The descriptions and observations in this report are based on a visual inspection of the structure. We inspect the aspects of the structure that can be viewed without dismantling, damaging or disfiguring the structure and without moving furniture and interior furnishings. Areas that are concealed, hidden or inaccessible to view are not covered by this inspection. Some systems cannot be tested during this inspection as testing risks damaging the building. For example, overflow drains on bathtubs are generally not tested because if they were found to be leaking they could damage the finishes below. Our procedures involve non-invasive investigation and non-destructive testing which will limit the scope of the inspection."),
+            Section("This is Not an Inspection for Code Compliance", "This inspection and report are not intended for city or local code compliance. During the construction process structures are inspected for code compliance by municipal inspectors. Framing is open at this time and conditions can be fully viewed. Framing is not open during inspections of finished homes, and this limits the inspection. All houses fall out of code compliance shortly after they are built, as the codes continually change. National codes are augmented at least every three years for all of the varying disciplines. Municipalities can choose to adopt and phase in sections of the codes on their own timetables. There are generally no requirements to bring older homes into compliance unless substantial renovation is being done."),
+            Section("This is Just Our Opinion", "Construction techniques and standards vary. There is no one way to build a house or install a system in a house. The observations in this report are the opinions of the home inspector. Other inspectors and contractors are likely to have some differing opinions. You are welcome to seek opinions from other professionals."),
+            Section("The Scope of This Inspection", "This inspection includes the following systems: exterior, roof, structure, drainage, foundation, attic, interior, plumbing, electrical and heating. The evaluation is based on limited observations that are primarily visual and non-invasive. This inspection and report are not intended to be technically exhaustive."),
+            Section("Your Expectations", "The overall goal of a home inspection is to help ensure that your expectations are appropriate with the house you are proposing to buy. To this end we assist with discovery by showing and documenting observations during the home inspection. This should not be mistaken for a technically exhaustive inspection designed to uncover every defect with a building. Such inspections are available but they are generally cost-prohibitive to most homebuyers."),
+            Section("Your Participation is Requested", "Your presence is requested during this inspection. A written report will not substitute for all the possible information that can be conveyed verbally by a shared visual observation of the conditions of the property.")
+        )
+
+        sections.forEach { section ->
+            val titleTbl = PdfPTable(1).apply { widthPercentage = 100f; spacingBefore = 12f; spacingAfter = 0f }
+            val titleCell = PdfPCell()
+            titleCell.backgroundColor = BaseColor(240, 244, 255)
+            titleCell.border = Rectangle.LEFT
+            titleCell.borderColorLeft = cNavy
+            titleCell.borderWidthLeft = 4f
+            titleCell.paddingTop = 8f; titleCell.paddingBottom = 8f
+            titleCell.paddingLeft = 12f; titleCell.paddingRight = 12f
+            titleCell.addElement(Paragraph(section.title,
+                Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cNavy)))
+            titleTbl.addCell(titleCell)
+            doc.add(titleTbl)
+
+            val bodyPara = Paragraph(section.body, fBody)
+            bodyPara.spacingBefore = 4f; bodyPara.spacingAfter = 4f
+            bodyPara.indentationLeft = 16f; bodyPara.indentationRight = 16f
+            doc.add(bodyPara)
+        }
+
+        doc.add(Paragraph(" "))
+        addThinLine(doc)
+        doc.add(Paragraph(
+            "This report was prepared in accordance with the InterNACHI Standards of Practice  |  www.nachi.org",
+            Font(Font.FontFamily.HELVETICA, 8f, Font.ITALIC, cGray)
+        ).apply { alignment = Element.ALIGN_CENTER; spacingBefore = 8f })
+    }
+}
+
+private class HeaderFooterEvent(private val report: Report) : PdfPageEventHelper() {
+    override fun onEndPage(writer: PdfWriter, document: Document) {
+        val cb = writer.directContent
+        val footer = Phrase(
+            "ProInspect  |  ${report.propertyAddress}  |  Page ${writer.pageNumber}",
+            Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, BaseColor(100, 110, 120))
+        )
+        ColumnText.showTextAligned(
+            cb, Element.ALIGN_CENTER, footer,
+            (document.left() + document.right()) / 2,
+            document.bottom() - 15f, 0f
+        )
+    }
+}
