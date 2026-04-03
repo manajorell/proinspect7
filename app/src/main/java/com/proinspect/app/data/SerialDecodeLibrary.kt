@@ -1,206 +1,235 @@
 package com.proinspect.app.data
 
 object SerialDecodeLibrary {
-    fun getDefaultPatterns(): List<SerialDecodePattern> {
-        return listOf(
-            // ========== RHEEM / RUUD ==========
-            SerialDecodePattern(
-                manufacturer = "Rheem",
-                pattern = "SUBSTRING:4-6",
-                yearCalculation = "SMART_CENTURY",
-                description = "Chars 5-6 are year",
-                priority = 10
-            ),
-            
-SerialDecodePattern(
-    manufacturer = "Carrier",
-    pattern = "^(\\d{2})(\\d{2}).*",
-    yearGroup = 1,
-    monthGroup = 2,
-    priority = 1
-)
-
-            
-            // ========== CARRIER / BRYANT / PAYNE ==========
-            SerialDecodePattern(
-                manufacturer = "Carrier",
-                pattern = "POSITION:3",
-                yearCalculation = "2010+DIGIT_CYCLE",
-                description = "4th char is year",
-                priority = 10
-            ),
-            SerialDecodePattern(
-                manufacturer = "Bryant",
-                pattern = "POSITION:3",
-                yearCalculation = "2010+DIGIT_CYCLE",
-                description = "4th char is year",
-                priority = 10
-            ),
-            SerialDecodePattern(
-                manufacturer = "Payne",
-                pattern = "POSITION:3",
-                yearCalculation = "2010+DIGIT_CYCLE",
-                description = "4th char is year",
-                priority = 10
-            ),
-            
-            // ========== TRANE / AMERICAN STANDARD ==========
-            SerialDecodePattern(
-                manufacturer = "Trane",
-                pattern = "SUBSTRING:2-4",
-                yearCalculation = "SMART_CENTURY",
-                description = "Chars 3-4 are year",
-                priority = 10
-            ),
-            SerialDecodePattern(
-                manufacturer = "American Standard",
-                pattern = "SUBSTRING:2-4",
-                yearCalculation = "SMART_CENTURY",
-                description = "Chars 3-4 are year",
-                priority = 10
-            ),
-            
-            // ========== LENNOX ==========
-            SerialDecodePattern(
-                manufacturer = "Lennox",
-                pattern = "SUBSTRING:1-3",
-                yearCalculation = "SMART_CENTURY",
-                description = "Chars 2-3 are year",
-                priority = 10
-            ),
-            
-            // ========== GOODMAN / AMANA ==========
-            SerialDecodePattern(
-                manufacturer = "Goodman",
-                pattern = "SUBSTRING:2-4",
-                yearCalculation = "SMART_CENTURY",
-                description = "Chars 3-4 are year",
-                priority = 10
-            ),
-            SerialDecodePattern(
-                manufacturer = "Amana",
-                pattern = "SUBSTRING:2-4",
-                yearCalculation = "SMART_CENTURY",
-                description = "Chars 3-4 are year",
-                priority = 10
-            ),
-            
-            // ========== YORK ==========
-            SerialDecodePattern(
-                manufacturer = "York",
-                pattern = "POSITION:0",
-                yearCalculation = "2004+LETTER",
-                description = "1st letter (A=2004, B=2005...)",
-                priority = 10
-            ),
-            
-            // ========== COLEMAN / HEIL ==========
-            SerialDecodePattern(
-                manufacturer = "Coleman",
-                pattern = "SUBSTRING:2-4",
-                yearCalculation = "SMART_CENTURY",
-                description = "Chars 3-4 are year",
-                priority = 10
-            ),
-            SerialDecodePattern(
-                manufacturer = "Heil",
-                pattern = "SUBSTRING:2-4",
-                yearCalculation = "SMART_CENTURY",
-                description = "Chars 3-4 are year",
-                priority = 10
-            ),
-            
-            // ========== WATER HEATERS ==========
-            SerialDecodePattern(
-                manufacturer = "Bradford White",
-                pattern = "REGEX:(19|20)\\d{2}",
-                yearCalculation = "DIRECT",
-                description = "4-digit year in serial",
-                priority = 10
-            ),
-            SerialDecodePattern(
-                manufacturer = "A.O. Smith",
-                pattern = "REGEX:(19|20)\\d{2}",
-                yearCalculation = "DIRECT",
-                description = "4-digit year in serial",
-                priority = 10
-            ),
-            SerialDecodePattern(
-                manufacturer = "State",
-                pattern = "REGEX:(19|20)\\d{2}",
-                yearCalculation = "DIRECT",
-                description = "4-digit year in serial",
-                priority = 10
-            ),
-            SerialDecodePattern(
-                manufacturer = "Whirlpool",
-                pattern = "REGEX:(19|20)\\d{2}",
-                yearCalculation = "DIRECT",
-                description = "4-digit year in serial",
-                priority = 10
-            ),
-            
-            // ========== ASIAN MANUFACTURERS ==========
-            SerialDecodePattern(
-                manufacturer = "Mitsubishi",
-                pattern = "SUBSTRING:4-6",
-                yearCalculation = "SMART_CENTURY",
-                description = "Chars 5-6 are year",
-                priority = 10
-            ),
-            SerialDecodePattern(
-                manufacturer = "Daikin",
-                pattern = "SUBSTRING:0-2",
-                yearCalculation = "SMART_CENTURY",
-                description = "First 2 chars are year",
-                priority = 10
-            ),
-            SerialDecodePattern(
-                manufacturer = "Fujitsu",
-                pattern = "SUBSTRING:0-2",
-                yearCalculation = "SMART_CENTURY",
-                description = "First 2 chars are year",
-                priority = 10
-            ),
-            SerialDecodePattern(
-                manufacturer = "LG",
-                pattern = "POSITION:0",
-                yearCalculation = "2010+DIGIT",
-                description = "1st digit (0=2010, 1=2011...)",
-                priority = 10
-            ),
-            SerialDecodePattern(
-                manufacturer = "Samsung",
-                pattern = "POSITION:0",
-                yearCalculation = "2010+DIGIT",
-                description = "1st digit (0=2010, 1=2011...)",
-                priority = 10
-            ),
-            
-            // ========== OTHER BRANDS ==========
-            SerialDecodePattern(
-                manufacturer = "GE",
-                pattern = "SUBSTRING:2-4",
-                yearCalculation = "SMART_CENTURY",
-                description = "Chars 3-4 are year",
-                priority = 10
-            ),
-            SerialDecodePattern(
-                manufacturer = "Frigidaire",
-                pattern = "SUBSTRING:0-2",
-                yearCalculation = "SMART_CENTURY",
-                description = "First 2 chars are year",
-                priority = 10
-            ),
-            
-            // ========== GENERIC FALLBACK ==========
-            SerialDecodePattern(
-                manufacturer = "GENERIC",
-                pattern = "REGEX:(19|20)\\d{2}",
-                yearCalculation = "DIRECT",
-                description = "Generic: find 4-digit year",
-                priority = 1
-            )
+    
+    fun getPatterns(): List<SerialDecodePattern> = listOf(
+        // Rheem / Ruud - Positions 5-6 are year (YY format)
+        SerialDecodePattern(
+            manufacturer = "Rheem",
+            pattern = "^.{4}(\\d{2})(\\d{2}).*",
+            yearGroup = 1,
+            monthGroup = 2,
+            priority = 10
+        ),
+        SerialDecodePattern(
+            manufacturer = "Ruud",
+            pattern = "^.{4}(\\d{2})(\\d{2}).*",
+            yearGroup = 1,
+            monthGroup = 2,
+            priority = 10
+        ),
+        
+        // Carrier - 4th character is year digit (0-9 for 2010-2019, then repeats)
+        SerialDecodePattern(
+            manufacturer = "Carrier",
+            pattern = "^.{3}(\\d).*",
+            yearGroup = 1,
+            monthGroup = 0,
+            priority = 9
+        ),
+        SerialDecodePattern(
+            manufacturer = "Bryant",
+            pattern = "^.{3}(\\d).*",
+            yearGroup = 1,
+            monthGroup = 0,
+            priority = 9
+        ),
+        SerialDecodePattern(
+            manufacturer = "Payne",
+            pattern = "^.{3}(\\d).*",
+            yearGroup = 1,
+            monthGroup = 0,
+            priority = 9
+        ),
+        
+        // Trane / American Standard - Positions 3-4 are year
+        SerialDecodePattern(
+            manufacturer = "Trane",
+            pattern = "^.{2}(\\d{2}).*",
+            yearGroup = 1,
+            monthGroup = 0,
+            priority = 9
+        ),
+        SerialDecodePattern(
+            manufacturer = "American Standard",
+            pattern = "^.{2}(\\d{2}).*",
+            yearGroup = 1,
+            monthGroup = 0,
+            priority = 9
+        ),
+        
+        // Lennox - Position 2-3 are year
+        SerialDecodePattern(
+            manufacturer = "Lennox",
+            pattern = "^.(\\d{2}).*",
+            yearGroup = 1,
+            monthGroup = 0,
+            priority = 9
+        ),
+        
+        // Goodman / Amana - Positions 3-4 are year
+        SerialDecodePattern(
+            manufacturer = "Goodman",
+            pattern = "^.{2}(\\d{2}).*",
+            yearGroup = 1,
+            monthGroup = 0,
+            priority = 9
+        ),
+        SerialDecodePattern(
+            manufacturer = "Amana",
+            pattern = "^.{2}(\\d{2}).*",
+            yearGroup = 1,
+            monthGroup = 0,
+            priority = 9
+        ),
+        
+        // York - First letter indicates year (A=2004, B=2005, etc.)
+        SerialDecodePattern(
+            manufacturer = "York",
+            pattern = "^([A-Z]).*",
+            yearGroup = 1,
+            monthGroup = 0,
+            priority = 8
+        ),
+        
+        // Bradford White - Year in serial (YYWW format at various positions)
+        SerialDecodePattern(
+            manufacturer = "Bradford White",
+            pattern = ".*(\\d{2})(\\d{2}).*",
+            yearGroup = 1,
+            monthGroup = 2,
+            priority = 7
+        ),
+        
+        // A.O. Smith - Year often embedded in serial
+        SerialDecodePattern(
+            manufacturer = "A.O. Smith",
+            pattern = ".*(\\d{4}).*",
+            yearGroup = 1,
+            monthGroup = 0,
+            priority = 7
+        ),
+        SerialDecodePattern(
+            manufacturer = "AO Smith",
+            pattern = ".*(\\d{4}).*",
+            yearGroup = 1,
+            monthGroup = 0,
+            priority = 7
+        ),
+        
+        // State Water Heaters
+        SerialDecodePattern(
+            manufacturer = "State",
+            pattern = ".*(\\d{4}).*",
+            yearGroup = 1,
+            monthGroup = 0,
+            priority = 7
+        ),
+        
+        // Coleman
+        SerialDecodePattern(
+            manufacturer = "Coleman",
+            pattern = "^.{2}(\\d{2}).*",
+            yearGroup = 1,
+            monthGroup = 0,
+            priority = 8
+        ),
+        
+        // Heil
+        SerialDecodePattern(
+            manufacturer = "Heil",
+            pattern = "^.{2}(\\d{2}).*",
+            yearGroup = 1,
+            monthGroup = 0,
+            priority = 8
+        ),
+        
+        // Mitsubishi
+        SerialDecodePattern(
+            manufacturer = "Mitsubishi",
+            pattern = "^.{2}(\\d{2}).*",
+            yearGroup = 1,
+            monthGroup = 0,
+            priority = 8
+        ),
+        
+        // Daikin
+        SerialDecodePattern(
+            manufacturer = "Daikin",
+            pattern = "^.{2}(\\d{2}).*",
+            yearGroup = 1,
+            monthGroup = 0,
+            priority = 8
+        ),
+        
+        // Fujitsu
+        SerialDecodePattern(
+            manufacturer = "Fujitsu",
+            pattern = "^.{2}(\\d{2}).*",
+            yearGroup = 1,
+            monthGroup = 0,
+            priority = 8
+        ),
+        
+        // Generic fallback - look for 4-digit year anywhere
+        SerialDecodePattern(
+            manufacturer = "Generic",
+            pattern = ".*(19|20)(\\d{2}).*",
+            yearGroup = 1,
+            monthGroup = 0,
+            priority = 1
         )
+    )
+    
+    /**
+     * Decode a serial number using manufacturer-specific patterns
+     */
+    fun decodeSerial(serial: String, manufacturer: String): String? {
+        val cleanSerial = serial.replace(Regex("[\\s-]"), "").uppercase()
+        val patterns = getPatterns()
+            .filter { it.manufacturer.equals(manufacturer, ignoreCase = true) || it.manufacturer == "Generic" }
+            .sortedByDescending { it.priority }
+        
+        for (pattern in patterns) {
+            val regex = Regex(pattern.pattern)
+            val match = regex.find(cleanSerial) ?: continue
+            
+            if (match.groupValues.size <= pattern.yearGroup) continue
+            
+            val yearStr = match.groupValues[pattern.yearGroup]
+            val year = when {
+                // York uses letters (A=2004, B=2005, etc.)
+                manufacturer.equals("York", ignoreCase = true) && yearStr.length == 1 && yearStr[0].isLetter() -> {
+                    2004 + (yearStr[0] - 'A')
+                }
+                // 4-digit year
+                yearStr.length == 4 -> yearStr.toIntOrNull()
+                // 2-digit year
+                yearStr.length == 2 -> {
+                    val twoDigit = yearStr.toIntOrNull() ?: continue
+                    if (twoDigit <= 50) 2000 + twoDigit else 1900 + twoDigit
+                }
+                // Single digit year (Carrier style - decade indicator)
+                yearStr.length == 1 -> {
+                    val digit = yearStr.toIntOrNull() ?: continue
+                    2010 + digit // Assumes 2010s, adjust as needed
+                }
+                else -> null
+            }
+            
+            if (year != null && year in 1980..2030) {
+                val monthStr = if (pattern.monthGroup > 0 && match.groupValues.size > pattern.monthGroup) {
+                    match.groupValues[pattern.monthGroup]
+                } else null
+                
+                return if (monthStr != null) {
+                    "Year: $year, Month/Week: $monthStr"
+                } else {
+                    "Year: $year"
+                }
+            }
+        }
+        
+        return null
     }
 }
