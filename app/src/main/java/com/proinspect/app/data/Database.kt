@@ -123,7 +123,7 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
         AppSettings::class,
         SerialDecodePattern::class
     ],
-    version = 8,
+    version = 9,  // Increment to 9
     exportSchema = false
 )
 @TypeConverters(Converters::class) 
@@ -148,7 +148,7 @@ abstract class ProInspectDatabase : RoomDatabase() {
                             db.execSQL("INSERT OR REPLACE INTO app_settings (id) VALUES (1)")
                         }
                     })
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration()  // This will recreate DB if migration fails
                     .build().also { INSTANCE = it }
             }
     }
