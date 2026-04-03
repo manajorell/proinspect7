@@ -26,8 +26,6 @@ import coil.request.ImageRequest
 import com.proinspect.app.data.*
 import java.io.File
 
-// ── Reports List ──────────────────────────────────────────────────────────────
-
 @Composable
 fun ReportsListScreen(
     reports: List<Report>,
@@ -115,16 +113,8 @@ fun ReportsListScreen(
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
-                                Text(
-                                    report.clientName.ifBlank { "No client" },
-                                    fontSize = 13.sp,
-                                    color = Color.Gray
-                                )
-                                Text(
-                                    report.inspectionDate,
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF9CA3AF)
-                                )
+                                Text(report.clientName.ifBlank { "No client" }, fontSize = 13.sp, color = Color.Gray)
+                                Text(report.inspectionDate, fontSize = 12.sp, color = Color(0xFF9CA3AF))
                             }
                             IconButton(onClick = { showDelete = true }) {
                                 Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFEF4444))
@@ -151,8 +141,6 @@ fun ReportsListScreen(
         }
     }
 }
-
-// ── Report Screen (tabs) ──────────────────────────────────────────────────────
 
 @Composable
 fun ReportScreen(
@@ -227,8 +215,6 @@ fun ReportScreen(
     }
 }
 
-// ── Settings Screen ───────────────────────────────────────────────────────────
-
 @Composable
 fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
@@ -276,6 +262,7 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // ── Company Logo ──────────────────────────────────────────────────
             item {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -330,6 +317,7 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                 }
             }
 
+            // ── Certification Badges ──────────────────────────────────────────
             item {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -394,47 +382,75 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
                             }
                             if (index < 3) HorizontalDivider(color = Color(0xFFEEEEEE))
                         }
-  }
-        }
-    }
-}
-item {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(2.dp)
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("📋 IRC Code Version", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-            Text("Select the IRC version used in your jurisdiction", fontSize = 13.sp, color = Color.Gray)
-            val ircVersions = listOf("2021 IRC", "2018 IRC", "2015 IRC", "2012 IRC")
-            ircVersions.forEach { version ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { viewModel.updateSettings(settings.copy(ircState = version)) }
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = settings.ircState == version,
-                        onClick = { viewModel.updateSettings(settings.copy(ircState = version)) },
-                        colors = RadioButtonDefaults.colors(selectedColor = Gold)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(version, fontSize = 15.sp, color = Navy)
+                    }
                 }
             }
-        }
-    }
-}
-item {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(2.dp)
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("🔑 Anthropic API Key",
 
+            // ── IRC Code Version ──────────────────────────────────────────────
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("📋 IRC Code Version", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
+                        Text("Select the IRC version used in your jurisdiction", fontSize = 13.sp, color = Color.Gray)
+                        val ircVersions = listOf("2021 IRC", "2018 IRC", "2015 IRC", "2012 IRC")
+                        ircVersions.forEach { version ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { viewModel.updateSettings(settings.copy(ircState = version)) }
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = settings.ircState == version,
+                                    onClick = { viewModel.updateSettings(settings.copy(ircState = version)) },
+                                    colors = RadioButtonDefaults.colors(selectedColor = Gold)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(version, fontSize = 15.sp, color = Navy)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── API Key ───────────────────────────────────────────────────────
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("🔑 Anthropic API Key", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
+                        Text("Required for AI serial number decoder", fontSize = 13.sp, color = Color.Gray)
+                        var apiKeyInput by remember { mutableStateOf(settings.anthropicApiKey) }
+                        OutlinedTextField(
+                            value = apiKeyInput,
+                            onValueChange = { apiKeyInput = it },
+                            placeholder = { Text("sk-ant-api03-...", fontSize = 12.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            visualTransformation = PasswordVisualTransformation(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Gold,
+                                unfocusedBorderColor = Color(0xFFD1D5DB)
+                            )
+                        )
+                        Button(
+                            onClick = { viewModel.updateSettings(settings.copy(anthropicApiKey = apiKeyInput)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = Navy)
+                        ) {
+                            Text("Save API Key")
+                        }
+                    }
+                }
+            }
+
+            // ── Backup & Restore ──────────────────────────────────────────────
             item {
                 var isExporting by remember { mutableStateOf(false) }
                 var showRestoreConfirm by remember { mutableStateOf(false) }
@@ -516,7 +532,7 @@ item {
                     }
                 }
 
-               if (showRestoreConfirm) {
+                if (showRestoreConfirm) {
                     AlertDialog(
                         onDismissRequest = { showRestoreConfirm = false },
                         title = { Text("Restore Complete") },
@@ -529,35 +545,7 @@ item {
                     )
                 }
             }
-            item {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(2.dp)
-                ) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("📋 IRC Code Version", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-                        Text("Select the IRC version used in your jurisdiction", fontSize = 13.sp, color = Color.Gray)
-                        val ircVersions = listOf("2021 IRC", "2018 IRC", "2015 IRC", "2012 IRC")
-                        ircVersions.forEach { version ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { viewModel.updateSettings(settings.copy(ircState = version)) }
-                                    .padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                RadioButton(
-                                    selected = settings.ircState == version,
-                                    onClick = { viewModel.updateSettings(settings.copy(ircState = version)) },
-                                    colors = RadioButtonDefaults.colors(selectedColor = Gold)
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text(version, fontSize = 15.sp, color = Navy)
-                            }
-                        }
-                    }
-                }
-            }
+
             item { Spacer(Modifier.height(20.dp)) }
         }
     }
