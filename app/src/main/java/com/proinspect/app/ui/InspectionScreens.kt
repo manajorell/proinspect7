@@ -1096,8 +1096,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
                 modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
             )
         }
-
- // ── Standard checklist items ──
+// ── Standard checklist items ──
 items(sectionItemsList) { checklistItem ->
     val itemState = itemsMap[checklistItem.id]
     ChecklistItemCard(
@@ -1111,8 +1110,7 @@ items(sectionItemsList) { checklistItem ->
         onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, section, checklistItem.id) },
         onDeletePhoto = { photo -> viewModel.deletePhoto(photo) },
         onVoiceInput = { startVoiceInput(checklistItem.id, false) },
-        apiKey = settings.anthropicApiKey,
-        settings = settings  // ← ADD THIS LINE
+        apiKey = settings.anthropicApiKey
     )
 }
 
