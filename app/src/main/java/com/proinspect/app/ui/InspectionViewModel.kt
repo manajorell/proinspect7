@@ -1,535 +1,588 @@
 package com.proinspect.app.ui
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
+import android.content.Context
+import android.net.Uri
+import android.os.Environment
+import androidx.core.content.FileProvider
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.proinspect.app.data.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 
-// ── Reports List ──────────────────────────────────────────────────────────────
+class InspectionViewModel(application: android.app.Application) : AndroidViewModel(application) {
 
-@Composable
-fun ReportsListScreen(
-    reports: List<Report>,
-    onNewReport: () -> Unit,
-    onOpenReport: (Long) -> Unit,
-    onDeleteReport: (Report) -> Unit,
-    onSettings: () -> Unit
-) {
-    Scaffold(
-        topBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Navy)
-                    .padding(horizontal = 16.dp, vertical = 14.dp)
-            ) {
-                Text(
-                    "ProInspect",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp,
-                    color = GoldLight,
-                    modifier = Modifier.align(Alignment.CenterStart)
+    private val db = ProInspectDatabase.getInstance(application)
+    private val reportDao = db.reportDao()
+    private val itemDao = db.inspectionItemDao()
+    private val photoDao = db.inspectionPhotoDao()
+    private val settingsDao = db.appSettingsDao()
+
+    val allReports: StateFlow<List<Report>> = reportDao.getAllReports()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val appSettings: StateFlow<AppSettings> = settingsDao.getSettings()
+        .map { it ?: AppSettings(id = 1) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AppSettings(id = 1))
+
+    private val _currentReportId = MutableStateFlow<Long?>(null)
+
+    val currentReport: StateFlow<Report?> = _currentReportId.flatMapLatest { id ->
+        if (id == null) flowOf(null)
+        else reportDao.getAllReports().map { list -> list.find { it.id == id } }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val items: StateFlow<Map<String, InspectionItem>> = _currentReportId.flatMapLatest { id ->
+        if (id == null) flowOf(emptyList())
+        else itemDao.getItemsForReport(id)
+    }.map { list -> list.associateBy { it.itemId } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    val photos: StateFlow<List<InspectionPhoto>> = _currentReportId.flatMapLatest { id ->
+        if (id == null) flowOf(emptyList())
+        else photoDao.getPhotosForReport(id)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val _navigateToReport = MutableSharedFlow<Unit>()
+    val navigateToReport: SharedFlow<Unit> = _navigateToReport
+
+    private var pendingPhotoPath: String? = null
+    private var pendingSection: String = ""
+    private var pendingItemId: String? = null
+
+    fun createNewReport() {
+        viewModelScope.launch {
+            val report = Report(
+                inspectionDate = SimpleDateFormat("MM/dd/yyyy", Locale.US).format(Date())
+            )
+            val id = reportDao.insertReport(report)
+            _currentReportId.value = id
+            _navigateToReport.emit(Unit)
+        }
+    }
+
+    fun loadReport(id: Long) {
+        _currentReportId.value = id
+    }
+
+    fun saveReport(report: Report) {
+        viewModelScope.launch { reportDao.insertReport(report) }
+    }
+
+    fun deleteReport(report: Report) {
+        viewModelScope.launch {
+            itemDao.deleteItemsForReport(report.id)
+            photoDao.deletePhotosForReport(report.id)
+            reportDao.deleteReport(report)
+        }
+    }
+
+    fun setItemRating(itemId: String, section: String, rating: Rating) {
+        viewModelScope.launch {
+            val reportId = _currentReportId.value ?: return@launch
+            val existing = items.value[itemId]
+            val item = existing?.copy(ratingName = rating.name)
+                ?: InspectionItem(reportId = reportId, itemId = itemId, section = section, ratingName = rating.name)
+            itemDao.insertItem(item)
+        }
+    }
+
+    fun setItemNarrative(itemId: String, section: String, narrative: String) {
+        viewModelScope.launch {
+            val reportId = _currentReportId.value ?: return@launch
+            val existingItem = items.value[itemId]
+            val item = existingItem?.copy(narrative = narrative)
+                ?: InspectionItem(reportId = reportId, itemId = itemId, section = section, ratingName = Rating.NOT_RATED.name, narrative = narrative)
+            itemDao.insertItem(item)
+        }
+    }
+
+    fun prepareCameraUri(context: Context, section: String, itemId: String?): Uri {
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+        
+        val photoDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        val photoFile = File(photoDir, "photo_${timestamp}.jpg")
+        
+        pendingPhotoPath = photoFile.absolutePath
+        pendingSection = section
+        pendingItemId = itemId
+        
+        return FileProvider.getUriForFile(
+            context, 
+            "${context.packageName}.fileprovider", 
+            photoFile
+        )
+    }
+
+    fun onPhotoCaptured(success: Boolean) {
+        if (!success) return
+        viewModelScope.launch {
+            val reportId = _currentReportId.value ?: return@launch
+            val path = pendingPhotoPath ?: return@launch
+            photoDao.insertPhoto(
+                InspectionPhoto(
+                    reportId = reportId,
+                    filePath = path,
+                    section = pendingSection,
+                    itemId = pendingItemId
                 )
-                IconButton(
-                    onClick = onSettings,
-                    modifier = Modifier.align(Alignment.CenterEnd)
-                ) {
-                    Icon(Icons.Default.Settings, contentDescription = "Settings", tint = GoldLight)
-                }
-            }
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onNewReport,
-                containerColor = Gold,
-                contentColor = Navy
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "New Report")
-            }
-        }
-    ) { padding ->
-        if (reports.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("🏠", fontSize = 48.sp)
-                    Spacer(Modifier.height(12.dp))
-                    Text("No inspections yet", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Navy)
-                    Text("Tap + to start a new report", color = Color.Gray, fontSize = 14.sp)
-                }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(reports) { report ->
-                    var showDelete by remember { mutableStateOf(false) }
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        elevation = CardDefaults.cardElevation(3.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        onClick = { onOpenReport(report.id) }
-                    ) {
-                        Row(
-                            Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .background(Navy, RoundedCornerShape(10.dp)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text("🏠", fontSize = 22.sp)
-                            }
-                            Spacer(Modifier.width(14.dp))
-                            Column(Modifier.weight(1f)) {
-                                Text(
-                                    report.propertyAddress.ifBlank { "New Inspection" },
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp,
-                                    color = Navy,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Text(
-                                    report.clientName.ifBlank { "No client" },
-                                    fontSize = 13.sp,
-                                    color = Color.Gray
-                                )
-                                Text(
-                                    report.inspectionDate,
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF9CA3AF)
-                                )
-                            }
-                            IconButton(onClick = { showDelete = true }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFEF4444))
-                            }
-                        }
-                    }
-                    if (showDelete) {
-                        AlertDialog(
-                            onDismissRequest = { showDelete = false },
-                            title = { Text("Delete Inspection?") },
-                            text = { Text("This will permanently delete the report and all photos.") },
-                            confirmButton = {
-                                TextButton(onClick = { onDeleteReport(report); showDelete = false }) {
-                                    Text("Delete", color = Color.Red)
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = { showDelete = false }) { Text("Cancel") }
-                            }
-                        )
-                    }
-                }
-            }
+            )
         }
     }
-}
 
-// ── Report Screen (tabs) ──────────────────────────────────────────────────────
-
-@Composable
-fun ReportScreen(
-    report: Report?,
-    currentTab: Int,
-    onTabChange: (Int) -> Unit,
-    onBack: () -> Unit,
-    content: @Composable () -> Unit
-) {
-    val tabs = listOf("Info","Roof","Exterior","Structure","Electrical","HVAC","Plumbing","Interior","Insulation","Garage","Summary")
-    val tabIcons = listOf("📋","🏠","🏡","🏗","⚡","🌡","🚿","🛋","🌿","🚗","📊")
-
-    Scaffold(
-        topBar = {
-            Column {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Navy)
-                        .padding(horizontal = 8.dp, vertical = 10.dp)
-                ) {
-                    IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = GoldLight)
-                    }
-                    Column(modifier = Modifier.align(Alignment.Center)) {
-                        Text(
-                            report?.propertyAddress?.ifBlank { "New Inspection" } ?: "New Inspection",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            color = Color.White,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            report?.inspectionDate ?: "",
-                            fontSize = 11.sp,
-                            color = Color.White.copy(alpha = 0.6f)
-                        )
-                    }
-                }
-                ScrollableTabRow(
-                    selectedTabIndex = currentTab,
-                    containerColor = Color(0xFF1A2744),
-                    contentColor = GoldLight,
-                    edgePadding = 4.dp
-                ) {
-                    tabs.forEachIndexed { i, tab ->
-                        Tab(
-                            selected = currentTab == i,
-                            onClick = { onTabChange(i) },
-                            selectedContentColor = GoldLight,
-                            unselectedContentColor = Color.White.copy(alpha = 0.5f)
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-                            ) {
-                                Text(tabIcons[i], fontSize = 16.sp)
-                                Text(
-                                    tab,
-                                    fontSize = 10.sp,
-                                    fontWeight = if (currentTab == i) FontWeight.Bold else FontWeight.Normal
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) { content() }
-    }
-}
-
-// ── Settings Screen ───────────────────────────────────────────────────────────
-
-@Composable
-fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
-    val context = LocalContext.current
-    val settings by viewModel.appSettings.collectAsState()
-
-    val logoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { viewModel.saveCompanyLogo(context, it) }
-    }
-    val badge1Launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { viewModel.saveBadge(context, it, 1) }
-    }
-    val badge2Launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { viewModel.saveBadge(context, it, 2) }
-    }
-    val badge3Launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { viewModel.saveBadge(context, it, 3) }
-    }
-    val badge4Launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { viewModel.saveBadge(context, it, 4) }
-    }
-
-    Scaffold(
-        topBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Navy)
-                    .padding(horizontal = 8.dp, vertical = 14.dp)
-            ) {
-                IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = GoldLight)
-                }
-                Text(
-                    "Settings",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    color = GoldLight,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-        }
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // ── Company Logo ──────────────────────────────────────────────────
-            item {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(2.dp)
-                ) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("Company Logo", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-                        Text("Appears on the PDF cover page", fontSize = 13.sp, color = Color.Gray)
-                        if (settings.companyLogoPath.isNotBlank() && File(settings.companyLogoPath).exists()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(120.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFFF5F5F5)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                AsyncImage(
-                                    model = ImageRequest.Builder(context)
-                                        .data(File(settings.companyLogoPath))
-                                        .size(800)
-                                        .crossfade(true)
-                                        .build(),
-                                    contentDescription = "Company Logo",
-                                    modifier = Modifier.fillMaxSize().padding(8.dp),
-                                    contentScale = ContentScale.Fit
-                                )
-                            }
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(
-                                    onClick = { logoLauncher.launch("image/*") },
-                                    modifier = Modifier.weight(1f)
-                                ) { Text("Replace") }
-                                OutlinedButton(
-                                    onClick = { viewModel.updateSettings(settings.copy(companyLogoPath = "")) },
-                                    modifier = Modifier.weight(1f),
-                                    border = BorderStroke(1.dp, Color.Red)
-                                ) { Text("Remove", color = Color.Red) }
-                            }
-                        } else {
-                            Button(
-                  onClick = { logoLauncher.launch("image/*") },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(containerColor = Navy)
-                            ) {
-                                Icon(Icons.Default.Add, null)
-                                Spacer(Modifier.width(8.dp))
-                                Text("Upload Company Logo")
-                            }
-                        }
-                    }
-                }
-            }
-
-            // ── Certification Badges ──────────────────────────────────────────
-            item {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(2.dp)
-                ) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("Certification Badges", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-                        Text("Displayed in the bottom third of your PDF report", fontSize = 13.sp, color = Color.Gray)
-                        val badgePaths = listOf(
-                            settings.badge1Path, settings.badge2Path,
-                            settings.badge3Path, settings.badge4Path
-                        )
-                        val badgeLaunchers = listOf(badge1Launcher, badge2Launcher, badge3Launcher, badge4Launcher)
-                        val badgeLabels = listOf("Badge 1", "Badge 2", "Badge 3", "Badge 4")
-                        badgePaths.forEachIndexed { index, path ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(72.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(Color(0xFFF5F5F5))
-                                        .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(8.dp)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    if (path.isNotBlank() && File(path).exists()) {
-                                        AsyncImage(
-                                            model = ImageRequest.Builder(context)
-                                                .data(File(path))
-                                                .size(200)
-                                                .crossfade(true)
-                                                .build(),
-                                            contentDescription = badgeLabels[index],
-                                            modifier = Modifier.fillMaxSize().padding(4.dp),
-                                            contentScale = ContentScale.Fit
-                                        )
-                                    } else {
-                                        Text("🏅", fontSize = 28.sp)
-                                    }
-                                }
-                                Column(Modifier.weight(1f)) {
-                                    Text(badgeLabels[index], fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                                    if (path.isNotBlank()) {
-                                        Text("Tap to replace", fontSize = 12.sp, color = Color.Gray)
-                                    } else {
-                                        Text("Not set", fontSize = 12.sp, color = Color.Gray)
-                                    }
-                                }
-                                if (path.isNotBlank()) {
-                                    IconButton(onClick = { viewModel.clearBadge(index + 1) }) {
-                                        Icon(Icons.Default.Delete, null, tint = Color(0xFFEF4444))
-                                    }
-                                }
-                                IconButton(onClick = { badgeLaunchers[index].launch("image/*") }) {
-                                    Icon(
-                                        if (path.isNotBlank()) Icons.Default.Edit else Icons.Default.Add,
-                                        null, tint = Navy
-                                    )
-                                }
-                            }
-                            if (index < 3) Divider(color = Color(0xFFEEEEEE))
-                        }
-                    }
-                }
-            }
-
-            // ── API Key ───────────────────────────────────────────────────────
-            item {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(2.dp)
-                ) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("🔑 Anthropic API Key", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-                        Text("Required for AI serial number decoder", fontSize = 13.sp, color = Color.Gray)
-                        var apiKeyInput by remember { mutableStateOf(settings.anthropicApiKey) }
-                        OutlinedTextField(
-                            value = apiKeyInput,
-                            onValueChange = { apiKeyInput = it },
-                            placeholder = { Text("sk-ant-api03-...", fontSize = 12.sp) },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            visualTransformation = PasswordVisualTransformation(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Gold,
-                                unfocusedBorderColor = Color(0xFFD1D5DB)
-                            )
-                        )
-                        Button(
-                            onClick = { viewModel.updateSettings(settings.copy(anthropicApiKey = apiKeyInput)) },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Navy)
-                        ) {
-                            Text("Save API Key")
-                        }
-                    }
-                }
-            }
-
-            // ── Backup & Restore ──────────────────────────────────────────────
-            item {
-                var isExporting by remember { mutableStateOf(false) }
-                var showRestoreConfirm by remember { mutableStateOf(false) }
-                var restoreMessage by remember { mutableStateOf("") }
-
-                val restoreLauncher = rememberLauncherForActivityResult(
-                    ActivityResultContracts.GetContent()
-                ) { uri ->
-                    uri?.let {
-                        viewModel.restoreBackup(context, it) { count ->
-                            restoreMessage = if (count >= 0)
-                                "✅ Restored $count report(s) successfully"
-                            else
-                                "❌ Restore failed — invalid backup file"
-                            showRestoreConfirm = true
-                        }
-                    }
-                }
-
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(2.dp)
-                ) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("💾 Backup & Restore", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-                        Text(
-                            "Export all reports to a JSON file. Share or save it to Google Drive for safekeeping.",
-                            fontSize = 13.sp,
-                            color = Color.Gray
-                        )
-                        Button(
-                            onClick = {
-                                isExporting = true
-                                viewModel.exportBackup(context) { uri ->
-                                    isExporting = false
-                                    uri?.let {
-                                        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                                            type = "application/json"
-                                            putExtra(android.content.Intent.EXTRA_STREAM, it)
-                                            putExtra(android.content.Intent.EXTRA_SUBJECT, "ProInspect Backup")
-                                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                        }
-                                        context.startActivity(android.content.Intent.createChooser(intent, "Save Backup"))
-                                    }
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Navy),
-                            enabled = !isExporting
-                        ) {
-                            if (isExporting) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    color = Color.White,
-                                    strokeWidth = 2.dp
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text("Exporting...")
-                            } else {
-                                Icon(Icons.Default.Upload, null, modifier = Modifier.size(18.dp))
-                                Spacer(Modifier.width(8.dp))
-                                Text("Export Backup")
-                            }
-                        }
-                        OutlinedButton(
-                            onClick = { restoreLauncher.launch("application/json") },
-                            modifier = Modifier.fillMaxWidth(),
-                            border = BorderStroke(1.5.dp, Navy)
-                        ) {
-                            Icon(Icons.Default.Download, null, tint = Navy, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Restore from Backup", color = Navy)
-                        }
-                        Text(
-                            "⚠ Restore adds reports — it does not overwrite existing ones.",
-                            fontSize = 11.sp,
-                            color = Color.Gray
-                        )
-                    }
-                }
-
-                if (showRestoreConfirm) {
-                    AlertDialog(
-                        onDismissRequest = { showRestoreConfirm = false },
-                        title = { Text("Restore Complete") },
-                        text = { Text(restoreMessage) },
-                        confirmButton = {
-                            TextButton(onClick = { showRestoreConfirm = false }) {
-                                Text("OK")
-                            }
-                        }
+    fun addPhotoFromGallery(context: Context, uri: Uri, section: String, itemId: String?) {
+        viewModelScope.launch {
+            val reportId = _currentReportId.value ?: return@launch
+            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+            
+            val photoDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+            val destFile = File(photoDir, "gallery_${timestamp}.jpg")
+            
+            try {
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    // Decode and compress gallery images too
+                    val bitmap = android.graphics.BitmapFactory.decodeStream(input)
+                    val maxSize = 1920 // Max dimension for photos
+                    val scale = minOf(
+                        maxSize.toFloat() / bitmap.width,
+                        maxSize.toFloat() / bitmap.height,
+                        1f
                     )
+                    val scaledBitmap = if (scale < 1f) {
+                        android.graphics.Bitmap.createScaledBitmap(
+                            bitmap,
+                            (bitmap.width * scale).toInt(),
+                            (bitmap.height * scale).toInt(),
+                            true
+                        )
+                    } else bitmap
+                    
+                    destFile.outputStream().use { output ->
+                        scaledBitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, output)
+                    }
+                    scaledBitmap.recycle()
+                    if (scaledBitmap != bitmap) bitmap.recycle()
                 }
+                photoDao.insertPhoto(
+                    InspectionPhoto(
+                        reportId = reportId,
+                        filePath = destFile.absolutePath,
+                        section = section,
+                        itemId = itemId
+                    )
+                )
+            } catch (e: Exception) {
+                android.util.Log.e("InspectionViewModel", "Error adding photo from gallery", e)
             }
+        }
+    }
 
-            item { Spacer(Modifier.height(20.dp)) }
+    fun deletePhoto(photo: InspectionPhoto) {
+        viewModelScope.launch {
+            try { File(photo.filePath).delete() } catch (_: Exception) {}
+            photoDao.deletePhoto(photo)
+        }
+    }
+
+    fun updateSettings(settings: AppSettings) {
+        viewModelScope.launch { 
+            settingsDao.insertSettings(settings.copy(id = 1)) 
+        }
+    }
+
+    fun saveCompanyLogo(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val dest = File(context.filesDir, "company_logo.jpg")
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    // Decode and compress the image
+                    val bitmap = android.graphics.BitmapFactory.decodeStream(input)
+                    val maxSize = 1024 // Max width/height
+                    val scale = minOf(
+                        maxSize.toFloat() / bitmap.width,
+                        maxSize.toFloat() / bitmap.height,
+                        1f
+                    )
+                    val scaledBitmap = if (scale < 1f) {
+                        android.graphics.Bitmap.createScaledBitmap(
+                            bitmap,
+                            (bitmap.width * scale).toInt(),
+                            (bitmap.height * scale).toInt(),
+                            true
+                        )
+                    } else bitmap
+                    
+                    dest.outputStream().use { output ->
+                        scaledBitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, output)
+                    }
+                    scaledBitmap.recycle()
+                    if (scaledBitmap != bitmap) bitmap.recycle()
+                }
+                val current = appSettings.value
+                updateSettings(current.copy(companyLogoPath = dest.absolutePath))
+            } catch (e: Exception) {
+                android.util.Log.e("InspectionViewModel", "Error saving logo", e)
+            }
+        }
+    }
+
+    fun saveBadge(context: Context, uri: Uri, slot: Int) {
+        viewModelScope.launch {
+            try {
+                val dest = File(context.filesDir, "badge_${slot}.jpg")
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    // Decode and compress the image
+                    val bitmap = android.graphics.BitmapFactory.decodeStream(input)
+                    val maxSize = 512 // Smaller for badges
+                    val scale = minOf(
+                        maxSize.toFloat() / bitmap.width,
+                        maxSize.toFloat() / bitmap.height,
+                        1f
+                    )
+                    val scaledBitmap = if (scale < 1f) {
+                        android.graphics.Bitmap.createScaledBitmap(
+                            bitmap,
+                            (bitmap.width * scale).toInt(),
+                            (bitmap.height * scale).toInt(),
+                            true
+                        )
+                    } else bitmap
+                    
+                    dest.outputStream().use { output ->
+                        scaledBitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, output)
+                    }
+                    scaledBitmap.recycle()
+                    if (scaledBitmap != bitmap) bitmap.recycle()
+                }
+                val current = appSettings.value
+                val updated = when (slot) {
+                    1 -> current.copy(badge1Path = dest.absolutePath)
+                    2 -> current.copy(badge2Path = dest.absolutePath)
+                    3 -> current.copy(badge3Path = dest.absolutePath)
+                    4 -> current.copy(badge4Path = dest.absolutePath)
+                    else -> current
+                }
+                updateSettings(updated)
+            } catch (e: Exception) {
+                android.util.Log.e("InspectionViewModel", "Error saving badge", e)
+            }
+        }
+    }
+
+    fun clearBadge(slot: Int) {
+        viewModelScope.launch {
+            val current = appSettings.value
+            val updated = when (slot) {
+                1 -> current.copy(badge1Path = "")
+                2 -> current.copy(badge2Path = "")
+                3 -> current.copy(badge3Path = "")
+                4 -> current.copy(badge4Path = "")
+                else -> current
+            }
+            updateSettings(updated)
+        }
+    }
+    
+    fun saveAgreementPath(reportId: Long, path: String, isSigned: Boolean) {
+        viewModelScope.launch {
+            val r = reportDao.getReport(reportId) ?: return@launch
+            val updated = if (isSigned) r.copy(signedAgreementPath = path)
+                          else r.copy(agreementSentPath = path)
+            reportDao.insertReport(updated)
+        }
+    }
+    
+    fun exportBackup(context: Context, onComplete: (Uri?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val reports = allReports.value
+                val jsonReports = org.json.JSONArray()
+                reports.forEach { report ->
+                    val items = itemDao.getItemsForReport(report.id).first()
+                    val photos = photoDao.getPhotosForReport(report.id).first()
+                    val reportJson = org.json.JSONObject().apply {
+                        put("id", report.id)
+                        put("reportNumber", report.reportNumber)
+                        put("propertyAddress", report.propertyAddress)
+                        put("propertyCity", report.propertyCity)
+                        put("clientName", report.clientName)
+                        put("clientEmail", report.clientEmail)
+                        put("inspectorName", report.inspectorName)
+                        put("inspectorCert", report.inspectorCert)
+                        put("inspectorCompany", report.inspectorCompany)
+                        put("inspectorPhone", report.inspectorPhone)
+                        put("inspectionDate", report.inspectionDate)
+                        put("inspectionTime", report.inspectionTime)
+                        put("weatherConditions", report.weatherConditions)
+                        put("yearBuilt", report.yearBuilt)
+                        put("squareFootage", report.squareFootage)
+                        put("propertyType", report.propertyType)
+                        put("limitations", report.limitations)
+                        put("overviewNarrative", report.overviewNarrative)
+                        put("roofType", report.roofType)
+                        put("roofAge", report.roofAge)
+                        put("roofMethod", report.roofMethod)
+                        put("roofingNarrative", report.roofingNarrative)
+                        put("sidingType", report.sidingType)
+                        put("drivewayType", report.drivewayType)
+                        put("exteriorNarrative", report.exteriorNarrative)
+                        put("foundationType", report.foundationType)
+                        put("framingType", report.framingType)
+                        put("structureNarrative", report.structureNarrative)
+                        put("panelBrand", report.panelBrand)
+                        put("panelAmps", report.panelAmps)
+                        put("panelType", report.panelType)
+                        put("wiringType", report.wiringType)
+                        put("serviceEntrance", report.serviceEntrance)
+                        put("electricalNarrative", report.electricalNarrative)
+                        put("heatType", report.heatType)
+                        put("heatBrand", report.heatBrand)
+                        put("heatAge", report.heatAge)
+                        put("acType", report.acType)
+                        put("acBrand", report.acBrand)
+                        put("acAge", report.acAge)
+                        put("fuelType", report.fuelType)
+                        put("filterDate", report.filterDate)
+                        put("hvacNarrative", report.hvacNarrative)
+                        put("supplyMaterial", report.supplyMaterial)
+                        put("drainMaterial", report.drainMaterial)
+                        put("whType", report.whType)
+                        put("whAge", report.whAge)
+                        put("whCapacity", report.whCapacity)
+                        put("plumbingNarrative", report.plumbingNarrative)
+                        put("interiorNarrative", report.interiorNarrative)
+                        put("atticInsulation", report.atticInsulation)
+                        put("atticRValue", report.atticRValue)
+                        put("crawlInsulation", report.crawlInsulation)
+                        put("insulationNarrative", report.insulationNarrative)
+                        put("garageType", report.garageType)
+                        put("garageCars", report.garageCars)
+                        put("garageNarrative", report.garageNarrative)
+                        put("agreementSentPath", report.agreementSentPath)
+                        put("signedAgreementPath", report.signedAgreementPath)
+                        put("createdAt", report.createdAt)
+                        put("updatedAt", report.updatedAt)
+                        
+                        // Payment fields
+                        put("inspectionAmount", report.inspectionAmount)
+                        put("inspectionService", report.inspectionService)
+                        put("ancillaryServices", report.ancillaryServices)
+                        put("ancillaryAmount", report.ancillaryAmount)
+                        put("paymentStatus", report.paymentStatus)
+                        put("paymentMethod", report.paymentMethod)
+                        put("paymentNotes", report.paymentNotes)
+                        
+                        // Items
+                        val itemsJson = org.json.JSONArray()
+                        items.forEach { item ->
+                            itemsJson.put(org.json.JSONObject().apply {
+                                put("itemId", item.itemId)
+                                put("section", item.section)
+                                put("ratingName", item.ratingName)
+                                put("narrative", item.narrative)
+                            })
+                        }
+                        put("items", itemsJson)
+                        
+                        // Photos
+                        val photosJson = org.json.JSONArray()
+                        photos.forEach { photo ->
+                            photosJson.put(org.json.JSONObject().apply {
+                                put("filePath", photo.filePath)
+                                put("section", photo.section)
+                                put("itemId", photo.itemId ?: "")
+                                put("caption", photo.caption)
+                                put("createdAt", photo.createdAt)
+                            })
+                        }
+                        put("photos", photosJson)
+                    }
+                    jsonReports.put(reportJson)
+                }
+                
+                val settings = appSettings.value
+                val settingsJson = org.json.JSONObject().apply {
+                    put("companyLogoPath", settings.companyLogoPath)
+                    put("badge1Path", settings.badge1Path)
+                    put("badge2Path", settings.badge2Path)
+                    put("badge3Path", settings.badge3Path)
+                    put("badge4Path", settings.badge4Path)
+                    put("anthropicApiKey", settings.anthropicApiKey)
+                    put("ircState", settings.ircState)
+                }
+                
+                val backup = org.json.JSONObject().apply {
+                    put("version", 1)
+                    put("exportDate", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date()))
+                    put("reportCount", reports.size)
+                    put("reports", jsonReports)
+                    put("settings", settingsJson)
+                }
+                
+                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                val backupFile = File(
+                    context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOCUMENTS),
+                    "ProInspect_Backup_$timestamp.json"
+                )
+                backupFile.writeText(backup.toString(2))
+                
+                val uri = FileProvider.getUriForFile(
+                    context, "${context.packageName}.fileprovider", backupFile
+                )
+                onComplete(uri)
+            } catch (e: Exception) {
+                android.util.Log.e("InspectionViewModel", "Error exporting backup", e)
+                onComplete(null)
+            }
+        }
+    }
+
+    fun restoreBackup(context: Context, uri: Uri, onComplete: (Int) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val json = context.contentResolver.openInputStream(uri)?.use {
+                    it.bufferedReader().readText()
+                } ?: throw Exception("Could not read file")
+                
+                val backup = org.json.JSONObject(json)
+                val reportsJson = backup.getJSONArray("reports")
+                var restoredCount = 0
+                
+                for (i in 0 until reportsJson.length()) {
+                    val r = reportsJson.getJSONObject(i)
+                    val report = Report(
+                        reportNumber = r.optString("reportNumber"),
+                        propertyAddress = r.optString("propertyAddress"),
+                        propertyCity = r.optString("propertyCity"),
+                        clientName = r.optString("clientName"),
+                        clientEmail = r.optString("clientEmail"),
+                        inspectorName = r.optString("inspectorName"),
+                        inspectorCert = r.optString("inspectorCert"),
+                        inspectorCompany = r.optString("inspectorCompany"),
+                        inspectorPhone = r.optString("inspectorPhone"),
+                        inspectionDate = r.optString("inspectionDate"),
+                        inspectionTime = r.optString("inspectionTime"),
+                        weatherConditions = r.optString("weatherConditions"),
+                        yearBuilt = r.optString("yearBuilt"),
+                        squareFootage = r.optString("squareFootage"),
+                        propertyType = r.optString("propertyType", "Single Family"),
+                        limitations = r.optString("limitations"),
+                        overviewNarrative = r.optString("overviewNarrative"),
+                        roofType = r.optString("roofType", "Asphalt Shingles"),
+                        roofAge = r.optString("roofAge"),
+                        roofMethod = r.optString("roofMethod", "Walked"),
+                        roofingNarrative = r.optString("roofingNarrative"),
+                        sidingType = r.optString("sidingType", "Vinyl"),
+                        drivewayType = r.optString("drivewayType", "Concrete"),
+                        exteriorNarrative = r.optString("exteriorNarrative"),
+                        foundationType = r.optString("foundationType", "Poured Concrete"),
+                        framingType = r.optString("framingType", "Wood Frame"),
+                        structureNarrative = r.optString("structureNarrative"),
+                        panelBrand = r.optString("panelBrand"),
+                        panelAmps = r.optString("panelAmps", "200 Amp"),
+                        panelType = r.optString("panelType", "Circuit Breaker"),
+                        wiringType = r.optString("wiringType", "Copper"),
+                        serviceEntrance = r.optString("serviceEntrance", "Overhead"),
+                        electricalNarrative = r.optString("electricalNarrative"),
+                        heatType = r.optString("heatType", "Gas Forced Air"),
+                        heatBrand = r.optString("heatBrand"),
+                        heatAge = r.optString("heatAge"),
+                        acType = r.optString("acType", "Central AC"),
+                        acBrand = r.optString("acBrand"),
+                        acAge = r.optString("acAge"),
+                        fuelType = r.optString("fuelType", "Natural Gas"),
+                        filterDate = r.optString("filterDate"),
+                        hvacNarrative = r.optString("hvacNarrative"),
+                        supplyMaterial = r.optString("supplyMaterial", "Copper"),
+                        drainMaterial = r.optString("drainMaterial", "PVC"),
+                        whType = r.optString("whType", "Tank — Gas"),
+                        whAge = r.optString("whAge"),
+                        whCapacity = r.optString("whCapacity"),
+                        plumbingNarrative = r.optString("plumbingNarrative"),
+                        interiorNarrative = r.optString("interiorNarrative"),
+                        atticInsulation = r.optString("atticInsulation", "Fiberglass Batt"),
+                        atticRValue = r.optString("atticRValue"),
+                        crawlInsulation = r.optString("crawlInsulation", "None"),
+                        insulationNarrative = r.optString("insulationNarrative"),
+                        garageType = r.optString("garageType", "Attached"),
+                        garageCars = r.optString("garageCars", "2 Car"),
+                        garageNarrative = r.optString("garageNarrative"),
+                        agreementSentPath = r.optString("agreementSentPath"),
+                        signedAgreementPath = r.optString("signedAgreementPath"),
+                        
+                        // Payment fields
+                        inspectionAmount = r.optString("inspectionAmount", ""),
+                        inspectionService = r.optString("inspectionService", "Standard Home Inspection"),
+                        ancillaryServices = r.optString("ancillaryServices", ""),
+                        ancillaryAmount = r.optString("ancillaryAmount", ""),
+                        paymentStatus = r.optString("paymentStatus", "Amount Due"),
+                        paymentMethod = r.optString("paymentMethod", ""),
+                        paymentNotes = r.optString("paymentNotes", ""),
+                        
+                        createdAt = r.optLong("createdAt", System.currentTimeMillis()),
+                        updatedAt = r.optLong("updatedAt", System.currentTimeMillis())
+                    )
+                    
+                    val newReportId = reportDao.insertReport(report)
+                    
+                    // Restore items
+                    val itemsJson = r.optJSONArray("items")
+                    if (itemsJson != null) {
+                        for (j in 0 until itemsJson.length()) {
+                            val item = itemsJson.getJSONObject(j)
+                            itemDao.insertItem(InspectionItem(
+                                reportId = newReportId,
+                                itemId = item.optString("itemId"),
+                                section = item.optString("section"),
+                                ratingName = item.optString("ratingName", Rating.NOT_RATED.name),
+                                narrative = item.optString("narrative")
+                            ))
+                        }
+                    }
+                    
+                    // Restore photos (paths only — files must still exist on device)
+                    val photosJson = r.optJSONArray("photos")
+                    if (photosJson != null) {
+                        for (j in 0 until photosJson.length()) {
+                            val photo = photosJson.getJSONObject(j)
+                            val filePath = photo.optString("filePath")
+                            if (filePath.isNotBlank() && File(filePath).exists()) {
+                                photoDao.insertPhoto(InspectionPhoto(
+                                    reportId = newReportId,
+                                    filePath = filePath,
+                                    section = photo.optString("section"),
+                                    itemId = photo.optString("itemId").ifBlank { null },
+                                    caption = photo.optString("caption"),
+                                    createdAt = photo.optLong("createdAt", System.currentTimeMillis())
+                                ))
+                            }
+                        }
+                    }
+                    restoredCount++
+                }
+                
+                // Restore settings
+                if (backup.has("settings")) {
+                    val s = backup.getJSONObject("settings")
+                    updateSettings(AppSettings(
+                        id = 1,
+                        companyLogoPath = s.optString("companyLogoPath"),
+                        badge1Path = s.optString("badge1Path"),
+                        badge2Path = s.optString("badge2Path"),
+                        badge3Path = s.optString("badge3Path"),
+                        badge4Path = s.optString("badge4Path"),
+                        anthropicApiKey = s.optString("anthropicApiKey"),
+                        ircState = s.optString("ircState")
+                    ))
+                }
+                onComplete(restoredCount)
+            } catch (e: Exception) {
+                android.util.Log.e("InspectionViewModel", "Error restoring backup", e)
+                onComplete(-1)
+            }
         }
     }
 }
