@@ -3,6 +3,7 @@ package com.proinspect.app.ui
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import com.proinspect.app.data.Rating  // ← ADD THIS IMPORT
 
 val Navy       = Color(0xFF1A2744)
 val NavyLight  = Color(0xFF243358)
@@ -38,6 +39,6 @@ fun ratingColor(rating: Rating) = when (rating) {
     Rating.MAJOR -> RatingOrange
     Rating.MONITOR -> RatingYellow
     Rating.GOOD -> RatingGreen
-    Rating.NOT_RATED -> Color.Gray
-    Rating.NOT_PRESENT -> Color.Gray  // ADD THIS LINE
+    Rating.NOT_RATED -> RatingGray
+    Rating.NOT_PRESENT -> RatingGray
 }
