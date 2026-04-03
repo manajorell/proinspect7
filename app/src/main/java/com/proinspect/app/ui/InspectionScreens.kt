@@ -1097,22 +1097,22 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
         }
 
         // ── Standard checklist items ──
-        items(sectionItemsList) { checklistItem ->
-            val itemState = itemsMap[checklistItem.id]
-            ChecklistItemCard(
-                item = checklistItem,
-                rating = itemState?.rating ?: Rating.NOT_RATED,
-                narrative = itemState?.narrative ?: "",
-                photos = photos.filter { it.itemId == checklistItem.id },
-                onRatingChanged = { rating -> viewModel.setItemRating(checklistItem.id, section, rating) },
-                onNarrativeChanged = { text -> viewModel.setItemNarrative(checklistItem.id, section, text) },
-                onCameraClick = { launchCamera(section, checklistItem.id) },
-                onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, section, checklistItem.id) },
-                onDeletePhoto = { photo -> viewModel.deletePhoto(photo) },
-                onVoiceInput = { startVoiceInput(checklistItem.id, false) },
-                apiKey = settings.anthropicApiKey
-            )
-        }
+      items(sectionItemsList) { checklistItem ->
+    val itemState = itemsMap[checklistItem.id]
+    ChecklistItemCard(
+        item = checklistItem,
+        rating = itemState?.rating ?: Rating.NOT_RATED,
+        narrative = itemState?.narrative ?: "",
+        photos = photos.filter { it.itemId == checklistItem.id },
+        onRatingChanged = { rating -> viewModel.setItemRating(checklistItem.id, section, rating) },
+        onNarrativeChanged = { text -> viewModel.setItemNarrative(checklistItem.id, section, text) },
+        onCameraClick = { launchCamera(section, checklistItem.id) },
+        onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, section, checklistItem.id) },
+        onDeletePhoto = { photo -> viewModel.deletePhoto(photo) },
+        onVoiceInput = { startVoiceInput(checklistItem.id, false) },
+        apiKey = settings.anthropicApiKey
+    )
+}
 
         // ── Custom checklist items ──
         items(customItems) { customItem ->
