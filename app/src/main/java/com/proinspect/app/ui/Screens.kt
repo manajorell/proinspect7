@@ -1,590 +1,451 @@
-package com.proinspect.app.ui
-
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import com.proinspect.app.data.*
-import java.io.File
-
 // ══════════════════════════════════════════════════════════════════════════════
-// REPORTS LIST SCREEN
+// PROPERTY INFO SCREEN
 // ══════════════════════════════════════════════════════════════════════════════
 
 @Composable
-fun ReportsListScreen(
-    reports: List<Report>,
-    onNewReport: () -> Unit,
-    onOpenReport: (Long) -> Unit,
-    onDeleteReport: (Report) -> Unit,
-    onSettings: () -> Unit
-) {
-    Scaffold(
-        topBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Navy)
-                    .padding(horizontal = 16.dp, vertical = 14.dp)
-            ) {
-                Text(
-                    "ProInspect",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp,
-                    color = GoldLight,
-                    modifier = Modifier.align(Alignment.CenterStart)
-                )
-                IconButton(
-                    onClick = onSettings,
-                    modifier = Modifier.align(Alignment.CenterEnd)
-                ) {
-                    Icon(Icons.Default.Settings, contentDescription = "Settings", tint = GoldLight)
-                }
-            }
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onNewReport,
-                containerColor = Gold,
-                contentColor = Navy
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "New Report")
-            }
-        }
-    ) { padding ->
-        if (reports.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("🏠", fontSize = 48.sp)
-                    Spacer(Modifier.height(12.dp))
-                    Text("No inspections yet", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Navy)
-                    Text("Tap + to start a new report", color = Color.Gray, fontSize = 14.sp)
-                }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(reports) { report ->
-                    var showDelete by remember { mutableStateOf(false) }
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        elevation = CardDefaults.cardElevation(3.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        onClick = { onOpenReport(report.id) }
-                    ) {
-                        Row(
-                            Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .background(Navy, RoundedCornerShape(10.dp)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text("🏠", fontSize = 22.sp)
-                            }
-                            Spacer(Modifier.width(14.dp))
-                            Column(Modifier.weight(1f)) {
-                                Text(
-                                    report.propertyAddress.ifBlank { "New Inspection" },
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp,
-                                    color = Navy,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Text(
-                                    report.clientName.ifBlank { "No client" },
-                                    fontSize = 13.sp,
-                                    color = Color.Gray
-                                )
-                                Text(
-                                    report.inspectionDate,
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF9CA3AF)
-                                )
-                            }
-                            IconButton(onClick = { showDelete = true }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFEF4444))
-                            }
-                        }
-                    }
-                    if (showDelete) {
-                        AlertDialog(
-                            onDismissRequest = { showDelete = false },
-                            title = { Text("Delete Inspection?") },
-                            text = { Text("This will permanently delete the report and all photos.") },
-                            confirmButton = {
-                                TextButton(onClick = { onDeleteReport(report); showDelete = false }) {
-                                    Text("Delete", color = Color.Red)
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = { showDelete = false }) { Text("Cancel") }
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// REPORT SCREEN (WITH TABS)
-// ══════════════════════════════════════════════════════════════════════════════
-
-@Composable
-fun ReportScreen(
-    report: Report?,
-    currentTab: Int,
-    onTabChange: (Int) -> Unit,
-    onBack: () -> Unit,
-    content: @Composable () -> Unit
-) {
-    val tabs = listOf("Info","Roof","Exterior","Structure","Electrical","HVAC","Plumbing","Interior","Insulation","Garage","Summary")
-    val tabIcons = listOf("📋","🏠","🏡","🏗","⚡","🌡","🚿","🛋","🌿","🚗","📊")
-
-    Scaffold(
-        topBar = {
-            Column {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Navy)
-                        .padding(horizontal = 8.dp, vertical = 10.dp)
-                ) {
-                    IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = GoldLight)
-                    }
-                    Column(modifier = Modifier.align(Alignment.Center)) {
-                        Text(
-                            report?.propertyAddress?.ifBlank { "New Inspection" } ?: "New Inspection",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            color = Color.White,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            report?.inspectionDate ?: "",
-                            fontSize = 11.sp,
-                            color = Color.White.copy(alpha = 0.6f)
-                        )
-                    }
-                }
-                ScrollableTabRow(
-                    selectedTabIndex = currentTab,
-                    containerColor = Color(0xFF1A2744),
-                    contentColor = GoldLight,
-                    edgePadding = 4.dp
-                ) {
-                    tabs.forEachIndexed { i, tab ->
-                        Tab(
-                            selected = currentTab == i,
-                            onClick = { onTabChange(i) },
-                            selectedContentColor = GoldLight,
-                            unselectedContentColor = Color.White.copy(alpha = 0.5f)
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-                            ) {
-                                Text(tabIcons[i], fontSize = 16.sp)
-                                Text(
-                                    tab,
-                                    fontSize = 10.sp,
-                                    fontWeight = if (currentTab == i) FontWeight.Bold else FontWeight.Normal
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) { content() }
-    }
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// SETTINGS SCREEN
-// ══════════════════════════════════════════════════════════════════════════════
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
-    val context = LocalContext.current
-    val settings by viewModel.appSettings.collectAsState()
-
-    val logoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { viewModel.saveCompanyLogo(context, it) }
-    }
-    val badge1Launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { viewModel.saveBadge(context, it, 1) }
-    }
-    val badge2Launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { viewModel.saveBadge(context, it, 2) }
-    }
-    val badge3Launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { viewModel.saveBadge(context, it, 3) }
-    }
-    val badge4Launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { viewModel.saveBadge(context, it, 4) }
-    }
-
-    Scaffold(
-        topBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Navy)
-                    .padding(horizontal = 8.dp, vertical = 14.dp)
-            ) {
-                IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = GoldLight)
-                }
-                Text(
-                    "Settings",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    color = GoldLight,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-        }
-    ) { padding ->
+fun PropertyInfoScreen(viewModel: InspectionViewModel) {
+    val report by viewModel.currentReport.collectAsState()
+    val settings by viewModel.settings.collectAsState()
+    
+    report?.let { currentReport ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // ── Company Logo ──────────────────────────────────────────────────
             item {
                 Card(
+                    modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     elevation = CardDefaults.cardElevation(2.dp)
                 ) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("Company Logo", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-                        Text("Appears on the PDF cover page", fontSize = 13.sp, color = Color.Gray)
-                        if (settings.companyLogoPath.isNotBlank() && File(settings.companyLogoPath).exists()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(120.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFFF5F5F5)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                AsyncImage(
-                                    model = ImageRequest.Builder(context)
-                                        .data(File(settings.companyLogoPath))
-                                        .size(800)
-                                        .crossfade(true)
-                                        .build(),
-                                    contentDescription = "Company Logo",
-                                    modifier = Modifier.fillMaxSize().padding(8.dp),
-                                    contentScale = ContentScale.Fit
-                                )
-                            }
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(
-                                    onClick = { logoLauncher.launch("image/*") },
-                                    modifier = Modifier.weight(1f)
-                                ) { Text("Replace") }
-                                OutlinedButton(
-                                    onClick = { viewModel.updateSettings(settings.copy(companyLogoPath = "")) },
-                                    modifier = Modifier.weight(1f),
-                                    border = BorderStroke(1.dp, Color.Red)
-                                ) { Text("Remove", color = Color.Red) }
-                            }
-                        } else {
-                            Button(
-                                onClick = { logoLauncher.launch("image/*") },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(containerColor = Navy)
-                            ) {
-                                Icon(Icons.Default.Add, null)
-                                Spacer(Modifier.width(8.dp))
-                                Text("Upload Company Logo")
-                            }
-                        }
-                    }
-                }
-            }
-
-            // ── Certification Badges ──────────────────────────────────────────
-            item {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(2.dp)
-                ) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("Certification Badges", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-                        Text("Displayed in the bottom third of your PDF report", fontSize = 13.sp, color = Color.Gray)
-                        val badgePaths = listOf(
-                            settings.badge1Path, settings.badge2Path,
-                            settings.badge3Path, settings.badge4Path
+                    Column(Modifier.padding(16.dp)) {
+                        Text(
+                            "Property Information",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Navy
                         )
-                        val badgeLaunchers = listOf(badge1Launcher, badge2Launcher, badge3Launcher, badge4Launcher)
-                        val badgeLabels = listOf("Badge 1", "Badge 2", "Badge 3", "Badge 4")
-                        badgePaths.forEachIndexed { index, path ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(72.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(Color(0xFFF5F5F5))
-                                        .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(8.dp)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    if (path.isNotBlank() && File(path).exists()) {
-                                        AsyncImage(
-                                            model = ImageRequest.Builder(context)
-                                                .data(File(path))
-                                                .size(200)
-                                                .crossfade(true)
-                                                .build(),
-                                            contentDescription = badgeLabels[index],
-                                            modifier = Modifier.fillMaxSize().padding(4.dp),
-                                            contentScale = ContentScale.Fit
-                                        )
-                                    } else {
-                                        Text("🏅", fontSize = 28.sp)
-                                    }
-                                }
-                                Column(Modifier.weight(1f)) {
-                                    Text(badgeLabels[index], fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                                    if (path.isNotBlank()) {
-                                        Text("Tap to replace", fontSize = 12.sp, color = Color.Gray)
-                                    } else {
-                                        Text("Not set", fontSize = 12.sp, color = Color.Gray)
-                                    }
-                                }
-                                if (path.isNotBlank()) {
-                                    IconButton(onClick = { viewModel.clearBadge(index + 1) }) {
-                                        Icon(Icons.Default.Delete, null, tint = Color(0xFFEF4444))
-                                    }
-                                }
-                                IconButton(onClick = { badgeLaunchers[index].launch("image/*") }) {
-                                    Icon(
-                                        if (path.isNotBlank()) Icons.Default.Edit else Icons.Default.Add,
-                                        null, tint = Navy
-                                    )
-                                }
-                            }
-                            if (index < 3) HorizontalDivider(color = Color(0xFFEEEEEE))
-                        }
-                    }
-                }
-            }
-
-            // ── API Key ───────────────────────────────────────────────────────
-            item {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(2.dp)
-                ) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("🔑 Anthropic API Key", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-                        Text("Required for AI serial number decoder", fontSize = 13.sp, color = Color.Gray)
-                        var apiKeyInput by remember { mutableStateOf(settings.anthropicApiKey) }
+                        Spacer(Modifier.height(16.dp))
+                        
                         OutlinedTextField(
-                            value = apiKeyInput,
-                            onValueChange = { apiKeyInput = it },
-                            placeholder = { Text("sk-ant-api03-...", fontSize = 12.sp) },
+                            value = currentReport.propertyAddress,
+                            onValueChange = { viewModel.updatePropertyAddress(it) },
+                            label = { Text("Property Address") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                        
+                        Spacer(Modifier.height(12.dp))
+                        
+                        OutlinedTextField(
+                            value = currentReport.clientName,
+                            onValueChange = { viewModel.updateClientName(it) },
+                            label = { Text("Client Name") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                        
+                        Spacer(Modifier.height(12.dp))
+                        
+                        OutlinedTextField(
+                            value = currentReport.inspectorName,
+                            onValueChange = { viewModel.updateInspectorName(it) },
+                            label = { Text("Inspector Name") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            visualTransformation = PasswordVisualTransformation(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Gold,
-                                unfocusedBorderColor = Color(0xFFD1D5DB)
-                            )
+                            placeholder = { Text(settings.inspectorName) }
                         )
-                        Button(
-                            onClick = { viewModel.updateSettings(settings.copy(anthropicApiKey = apiKeyInput)) },
+                        
+                        Spacer(Modifier.height(12.dp))
+                        
+                        OutlinedTextField(
+                            value = currentReport.inspectionDate,
+                            onValueChange = { viewModel.updateInspectionDate(it) },
+                            label = { Text("Inspection Date") },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Navy)
-                        ) {
-                            Text("Save API Key")
-                        }
+                            singleLine = true,
+                            placeholder = { Text("MM/DD/YYYY") }
+                        )
                     }
                 }
             }
-
-            // ── IRC Code Version ──────────────────────────────────────────────
+            
             item {
                 Card(
+                    modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     elevation = CardDefaults.cardElevation(2.dp)
                 ) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("📖 IRC Code Version", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-                        Text("Select your state's adopted IRC version for code references", fontSize = 13.sp, color = Color.Gray)
+                    Column(Modifier.padding(16.dp)) {
+                        Text(
+                            "Property Details",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Navy
+                        )
+                        Spacer(Modifier.height(16.dp))
                         
-                        var expanded by remember { mutableStateOf(false) }
-                        val versions = IrcCodes.getAvailableVersions()
+                        OutlinedTextField(
+                            value = currentReport.yearBuilt,
+                            onValueChange = { viewModel.updateYearBuilt(it) },
+                            label = { Text("Year Built") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
                         
-                        ExposedDropdownMenuBox(
-                            expanded = expanded,
-                            onExpandedChange = { expanded = !expanded }
-                        ) {
-                            OutlinedTextField(
-                                value = settings.ircState.ifBlank { "2021 IRC" },
-                                onValueChange = {},
-                                readOnly = true,
-                                label = { Text("IRC Version") },
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                                modifier = Modifier.fillMaxWidth().menuAnchor(),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Gold,
-                                    unfocusedBorderColor = Color(0xFFD1D5DB)
-                                )
+                        Spacer(Modifier.height(12.dp))
+                        
+                        OutlinedTextField(
+                            value = currentReport.squareFootage,
+                            onValueChange = { viewModel.updateSquareFootage(it) },
+                            label = { Text("Square Footage") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                        
+                        Spacer(Modifier.height(12.dp))
+                        
+                        OutlinedTextField(
+                            value = currentReport.propertyType,
+                            onValueChange = { viewModel.updatePropertyType(it) },
+                            label = { Text("Property Type") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            placeholder = { Text("Single Family, Condo, etc.") }
+                        )
+                    }
+                }
+            }
+            
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Gold.copy(alpha = 0.1f)),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.Info,
+                                contentDescription = null,
+                                tint = Gold,
+                                modifier = Modifier.size(24.dp)
                             )
-                            ExposedDropdownMenu(
-                                expanded = expanded,
-                                onDismissRequest = { expanded = false }
-                            ) {
-                                versions.forEach { version ->
-                                    DropdownMenuItem(
-                                        text = { Text(version) },
-                                        onClick = {
-                                            viewModel.updateSettings(settings.copy(ircState = version))
-                                            expanded = false
-                                        }
-                                    )
-                                }
+                            Spacer(Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    "IRC Code Version",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Navy
+                                )
+                                Text(
+                                    currentReport.ircVersion,
+                                    fontSize = 14.sp,
+                                    color = Color.Gray
+                                )
                             }
                         }
                     }
                 }
             }
+        }
+    }
+}
 
-            // ── Backup & Restore ──────────────────────────────────────────────
-            item {
-                var isExporting by remember { mutableStateOf(false) }
-                var showRestoreConfirm by remember { mutableStateOf(false) }
-                var restoreMessage by remember { mutableStateOf("") }
+// ══════════════════════════════════════════════════════════════════════════════
+// INSPECTION SECTION SCREEN
+// ══════════════════════════════════════════════════════════════════════════════
 
-                val restoreLauncher = rememberLauncherForActivityResult(
-                    ActivityResultContracts.GetContent()
-                ) { uri ->
-                    uri?.let {
-                        viewModel.restoreBackup(context, it) { success ->
-                            restoreMessage = if (success)
-                                "✅ Backup restored successfully"
-                            else
-                                "❌ Restore failed — invalid backup file"
-                            showRestoreConfirm = true
-                        }
-                    }
+@Composable
+fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
+    val report by viewModel.currentReport.collectAsState()
+    val items by viewModel.currentItems.collectAsState()
+    val photos by viewModel.currentPhotos.collectAsState()
+    val currentItemId by viewModel.currentItemId.collectAsState()
+    
+    report?.let { currentReport ->
+        val checklist = InspectionSections.getChecklistForSection(section)
+        
+        if (currentItemId != null) {
+            // Camera screen
+            CameraScreen(
+                onPhotoCaptured = { uri ->
+                    viewModel.addPhoto(currentItemId!!, uri)
+                    viewModel.clearCurrentItem()
+                },
+                onCancel = { viewModel.clearCurrentItem() }
+            )
+        } else {
+            // Section inspection screen
+            GenericSectionScreen(
+                section = section,
+                checklist = checklist,
+                items = items,
+                photos = photos,
+                ircVersion = currentReport.ircVersion,
+                onRatingChange = { itemId, rating ->
+                    viewModel.updateRating(itemId, rating)
+                },
+                onNarrativeChange = { itemId, narrative ->
+                    viewModel.updateNarrative(itemId, narrative)
+                },
+                onCameraClick = { itemId ->
+                    viewModel.setCurrentItem(itemId)
+                },
+                onGalleryPick = { itemId, uri ->
+                    viewModel.addPhoto(itemId, uri)
+                },
+                onDeletePhoto = { photo ->
+                    viewModel.deletePhoto(photo)
                 }
+            )
+        }
+    }
+}
 
+// ══════════════════════════════════════════════════════════════════════════════
+// SUMMARY SCREEN
+// ══════════════════════════════════════════════════════════════════════════════
+
+@Composable
+fun SummaryScreen(viewModel: InspectionViewModel) {
+    val report by viewModel.currentReport.collectAsState()
+    val items by viewModel.currentItems.collectAsState()
+    val photos by viewModel.currentPhotos.collectAsState()
+    val context = LocalContext.current
+    var isGeneratingPdf by remember { mutableStateOf(false) }
+    var showEmailDialog by remember { mutableStateOf(false) }
+    
+    report?.let { currentReport ->
+        val itemsByRating = items.values.groupBy { it.rating }
+        val safetyCount = itemsByRating[Rating.SAFETY]?.size ?: 0
+        val majorCount = itemsByRating[Rating.MAJOR]?.size ?: 0
+        val monitorCount = itemsByRating[Rating.MONITOR]?.size ?: 0
+        val goodCount = itemsByRating[Rating.GOOD]?.size ?: 0
+        val totalInspected = items.values.count { it.rating != Rating.NOT_RATED }
+        
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Summary Card
+            item {
                 Card(
+                    modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     elevation = CardDefaults.cardElevation(2.dp)
                 ) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("💾 Backup & Restore", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
+                    Column(Modifier.padding(16.dp)) {
                         Text(
-                            "Export all reports to a database file. Share or save it to Google Drive for safekeeping.",
-                            fontSize = 13.sp,
-                            color = Color.Gray
+                            "Inspection Summary",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Navy
                         )
+                        Spacer(Modifier.height(16.dp))
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            SummaryStatItem("Total Items", totalInspected.toString(), Navy)
+                            SummaryStatItem("Photos", photos.size.toString(), Navy)
+                        }
+                    }
+                }
+            }
+            
+            // Ratings Breakdown
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text(
+                            "Findings Breakdown",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Navy
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        
+                        if (safetyCount > 0) {
+                            RatingSummaryRow("Safety Issues", safetyCount, RatingRed)
+                            Spacer(Modifier.height(8.dp))
+                        }
+                        if (majorCount > 0) {
+                            RatingSummaryRow("Major Issues", majorCount, RatingOrange)
+                            Spacer(Modifier.height(8.dp))
+                        }
+                        if (monitorCount > 0) {
+                            RatingSummaryRow("Monitor Items", monitorCount, RatingYellow)
+                            Spacer(Modifier.height(8.dp))
+                        }
+                        if (goodCount > 0) {
+                            RatingSummaryRow("Good Condition", goodCount, RatingGreen)
+                        }
+                        
+                        if (totalInspected == 0) {
+                            Text(
+                                "No items inspected yet",
+                                fontSize = 14.sp,
+                                color = Color.Gray,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            }
+            
+            // Actions
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            "Actions",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Navy
+                        )
+                        
                         Button(
                             onClick = {
-                                isExporting = true
-                                viewModel.exportBackup(context) { uri ->
-                                    isExporting = false
-                                    uri?.let {
-                                        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                                            type = "application/octet-stream"
-                                            putExtra(android.content.Intent.EXTRA_STREAM, it)
-                                            putExtra(android.content.Intent.EXTRA_SUBJECT, "ProInspect Backup")
-                                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                        }
-                                        context.startActivity(android.content.Intent.createChooser(intent, "Save Backup"))
+                                isGeneratingPdf = true
+                                viewModel.generatePdf(context) { success ->
+                                    isGeneratingPdf = false
+                                    if (success) {
+                                        android.widget.Toast.makeText(
+                                            context,
+                                            "PDF generated successfully",
+                                            android.widget.Toast.LENGTH_SHORT
+                                        ).show()
                                     }
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = Navy),
-                            enabled = !isExporting
+                            enabled = !isGeneratingPdf
                         ) {
-                            if (isExporting) {
+                            if (isGeneratingPdf) {
                                 CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
+                                    modifier = Modifier.size(20.dp),
                                     color = Color.White,
                                     strokeWidth = 2.dp
                                 )
                                 Spacer(Modifier.width(8.dp))
-                                Text("Exporting...")
+                                Text("Generating PDF...")
                             } else {
-                                Icon(Icons.Default.Upload, null, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.PictureAsPdf, contentDescription = null)
                                 Spacer(Modifier.width(8.dp))
-                                Text("Export Backup")
+                                Text("Generate PDF Report")
                             }
                         }
+                        
                         OutlinedButton(
-                            onClick = { restoreLauncher.launch("*/*") },
+                            onClick = { showEmailDialog = true },
                             modifier = Modifier.fillMaxWidth(),
-                            border = BorderStroke(1.5.dp, Navy)
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Navy),
+                            border = BorderStroke(1.dp, Navy)
                         ) {
-                            Icon(Icons.Default.Download, null, tint = Navy, modifier = Modifier.size(18.dp))
+                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
-                            Text("Restore from Backup", color = Navy)
+                            Text("Email Report")
                         }
-                        Text(
-                            "⚠ Restoring will replace all current data with the backup.",
-                            fontSize = 11.sp,
-                            color = Color.Gray
-                        )
                     }
                 }
-
-                if (showRestoreConfirm) {
-                    AlertDialog(
-                        onDismissRequest = { showRestoreConfirm = false },
-                        title = { Text("Restore Complete") },
-                        text = { Text(restoreMessage) },
-                        confirmButton = {
-                            TextButton(onClick = { showRestoreConfirm = false }) {
-                                Text("OK")
-                            }
-                        }
+            }
+        }
+    }
+    
+    if (showEmailDialog) {
+        var emailAddress by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showEmailDialog = false },
+            title = { Text("Email Report") },
+            text = {
+                Column {
+                    Text("Enter recipient email address:")
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = emailAddress,
+                        onValueChange = { emailAddress = it },
+                        label = { Text("Email") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.emailReport(context, emailAddress)
+                        showEmailDialog = false
+                    },
+                    enabled = emailAddress.isNotBlank()
+                ) {
+                    Text("Send")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEmailDialog = false }) {
+                    Text("Cancel")
+                }
             }
+        )
+    }
+}
 
-            item { Spacer(Modifier.height(20.dp)) }
+@Composable
+fun SummaryStatItem(label: String, value: String, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            value,
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+        Text(
+            label,
+            fontSize = 14.sp,
+            color = Color.Gray
+        )
+    }
+}
+
+@Composable
+fun RatingSummaryRow(label: String, count: Int, color: Color) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .background(color, shape = androidx.compose.foundation.shape.CircleShape)
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(label, fontSize = 15.sp, color = Color(0xFF374151))
         }
+        Text(
+            count.toString(),
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
     }
 }
