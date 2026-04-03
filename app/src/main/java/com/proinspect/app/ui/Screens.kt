@@ -516,7 +516,7 @@ item {
                     }
                 }
 
-                if (showRestoreConfirm) {
+               if (showRestoreConfirm) {
                     AlertDialog(
                         onDismissRequest = { showRestoreConfirm = false },
                         title = { Text("Restore Complete") },
@@ -529,7 +529,35 @@ item {
                     )
                 }
             }
-
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("📋 IRC Code Version", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
+                        Text("Select the IRC version used in your jurisdiction", fontSize = 13.sp, color = Color.Gray)
+                        val ircVersions = listOf("2021 IRC", "2018 IRC", "2015 IRC", "2012 IRC")
+                        ircVersions.forEach { version ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { viewModel.updateSettings(settings.copy(ircState = version)) }
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = settings.ircState == version,
+                                    onClick = { viewModel.updateSettings(settings.copy(ircState = version)) },
+                                    colors = RadioButtonDefaults.colors(selectedColor = Gold)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(version, fontSize = 15.sp, color = Navy)
+                            }
+                        }
+                    }
+                }
+            }
             item { Spacer(Modifier.height(20.dp)) }
         }
     }
