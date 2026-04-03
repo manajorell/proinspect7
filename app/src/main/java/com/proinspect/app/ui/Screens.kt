@@ -192,7 +192,7 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
     val currentItemId by viewModel.currentItemId.collectAsState()
     
     report?.let { currentReport ->
-        val checklist = InspectionSections.getChecklistForSection(section)
+     val checklist = InspectionSections.items[section] ?: emptyList()
         
         if (currentItemId != null) {
             // Camera screen
