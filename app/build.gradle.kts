@@ -3,12 +3,11 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp") version "2.0.0-1.0.21"
+    id("com.google.gms.google-services")
 }
-
 android {
     namespace = "com.proinspect.app"
     compileSdk = 35
-
     defaultConfig {
         applicationId = "com.proinspect.app"
         minSdk = 26
@@ -16,7 +15,6 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
-
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -47,7 +45,6 @@ android {
         }
     }
 }
-
 dependencies {
     implementation(libs.coil.compose)    
     implementation(libs.androidx.core.ktx)
@@ -79,6 +76,13 @@ dependencies {
     
     // Google Vision API for local OCR
     implementation("com.google.android.gms:play-services-vision:20.1.3")
+
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
     
     debugImplementation(libs.androidx.ui.tooling)
 }
