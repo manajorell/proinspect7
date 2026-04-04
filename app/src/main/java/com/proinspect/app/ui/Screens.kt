@@ -1,7 +1,11 @@
 package com.proinspect.app.ui
 
+import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -34,6 +38,7 @@ fun ReportsListScreen(
     onDeleteReport: (Report) -> Unit,
     onSettings: () -> Unit
 ) {
+    
     Scaffold(
         topBar = {
             Box(
@@ -235,7 +240,37 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
     val badge4Launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { viewModel.saveBadge(context, it, 4) }
     }
+val scope = rememberCoroutineScope()
+var isSyncing by remember { mutableStateOf(false) }
+var syncMessage by remember { mutableStateOf("") }
+var isSignedIn by remember { mutableStateOf(FirebaseSync.isSignedIn) }
+var userEmail by remember { mutableStateOf(FirebaseSync.currentUser?.email ?: "") }
 
+val googleSignInLauncher = rememberLauncherForActivityResult(
+    ActivityResultContracts.StartActivityForResult()
+) { result ->
+    if (result.resultCode == Activity.RESULT_OK) {
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            val idToken = account.idToken
+            if (idToken != null) {
+                scope.launch {
+                    val success = FirebaseSync.signInWithGoogle(idToken)
+                    if (success) {
+                        isSignedIn = true
+                        userEmail = FirebaseSync.currentUser?.email ?: ""
+                        syncMessage = "✅ Signed in successfully"
+                    } else {
+                        syncMessage = "❌ Sign in failed"
+                    }
+                }
+            }
+        } catch (e: ApiException) {
+            syncMessage = "❌ Sign in error: ${e.message}"
+        }
+    }
+}
     Scaffold(
         topBar = {
             Box(
