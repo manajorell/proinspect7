@@ -2,11 +2,7 @@ package com.proinspect.app.ui
 
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
-import android.graphics.Color as AndroidColor
 import android.net.Uri
-import android.text.Editable
-import android.text.TextWatcher
-import android.widget.EditText
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
@@ -25,7 +21,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import com.proinspect.app.data.DefectLibrary
 import com.proinspect.app.data.*
@@ -75,48 +70,25 @@ fun ProTextField(
     singleLine: Boolean = true,
     minLines: Int = 1
 ) {
-    Box(
-        modifier = modifier
-            .background(Color(0xFFF3F4F6), RoundedCornerShape(8.dp))
-            .border(
-                1.5.dp,
-                if (value.isNotBlank()) Gold.copy(alpha = 0.5f) else Color(0xFFE5E7EB),
-                RoundedCornerShape(8.dp)
-            )
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-    ) {
-        AndroidView(
-            factory = { ctx ->
-                EditText(ctx).apply {
-                    background = null
-                    textSize = 14f
-                    setTextColor(AndroidColor.parseColor("#1F2937"))
-                    setHintTextColor(AndroidColor.parseColor("#9CA3AF"))
-                    hint = placeholder
-                    isSingleLine = singleLine
-                    if (!singleLine) setLines(minLines)
-                    setPadding(0, 8, 0, 8)
-                    setText(value)
-                    setSelection(value.length)
-                    addTextChangedListener(object : TextWatcher {
-                        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-                        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-                        override fun afterTextChanged(s: Editable?) {
-                            val newText = s?.toString() ?: ""
-                            if (newText != value) onValueChange(newText)
-                        }
-                    })
-                }
-            },
-            update = { editText ->
-                if (!editText.isFocused && editText.text.toString() != value) {
-                    editText.setText(value)
-                    editText.setSelection(value.length)
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier.fillMaxWidth(),
+        placeholder = { Text(placeholder, fontSize = 14.sp, color = Color(0xFF9CA3AF)) },
+        singleLine = singleLine,
+        minLines = if (singleLine) 1 else minLines,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Gold,
+            unfocusedBorderColor = Color(0xFFE5E7EB),
+            focusedContainerColor = Color(0xFFF3F4F6),
+            unfocusedContainerColor = Color(0xFFF3F4F6)
+        ),
+        shape = RoundedCornerShape(8.dp),
+        textStyle = androidx.compose.ui.text.TextStyle(
+            fontSize = 14.sp,
+            color = Color(0xFF1F2937)
         )
-    }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
