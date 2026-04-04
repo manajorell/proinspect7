@@ -12,7 +12,20 @@
           "package_name": "com.proinspect.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "46463119184-0shdidu6mtoe6eoisb38e37m4h1c82qt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.proinspect.app",
+            "certificate_hash": "7b006d67dcecbef4fca20a6bd3411a49bb2a0423"
+          }
+        },
+        {
+          "client_id": "46463119184-eup99cndgeg9vd5blimhqfrukktvhq5t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAf41O2t0eHWd_dDa0VEb8M-GDp4_bja9g"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "46463119184-eup99cndgeg9vd5blimhqfrukktvhq5t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
