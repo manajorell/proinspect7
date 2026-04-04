@@ -251,6 +251,7 @@ var userEmail by remember { mutableStateOf(FirebaseSync.currentUser?.email ?: ""
 val googleSignInLauncher = rememberLauncherForActivityResult(
     ActivityResultContracts.StartActivityForResult()
 ) { result ->
+    android.util.Log.d("GoogleSignIn", "Result code: ${result.resultCode}, data: ${result.data}")
     if (result.resultCode == Activity.RESULT_OK) {
         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
         try {
@@ -269,8 +270,10 @@ val googleSignInLauncher = rememberLauncherForActivityResult(
                 }
             }
         } catch (e: ApiException) {
-            syncMessage = "❌ Sign in error: ${e.message}"
+            syncMessage = "❌ Error code: ${e.statusCode} - ${e.message}"
         }
+    } else {
+        syncMessage = "❌ Result code: ${result.resultCode}"
     }
 }
     Scaffold(
