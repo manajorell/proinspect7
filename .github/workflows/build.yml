@@ -12,14 +12,11 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Generate Fixed Keystore
+      - name: Restore Fixed Keystore
         run: |
           mkdir -p ~/.android
-          keytool -genkey -v -keystore ~/proinspect.keystore -alias proinspect -storepass proinspect123 -keypass proinspect123 -keyalg RSA -keysize 2048 -validity 36500 -dname "CN=ProInspect,O=ProInspect,C=US"
-          echo "=== SHA1 ==="
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > ~/proinspect.keystore
           keytool -list -v -keystore ~/proinspect.keystore -alias proinspect -storepass proinspect123 | grep SHA1
-          echo "=== BASE64 ==="
-          base64 ~/proinspect.keystore
       - name: Install Gradle
         run: |
           wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip
