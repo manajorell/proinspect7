@@ -420,7 +420,91 @@ val googleSignInLauncher = rememberLauncherForActivityResult(
                     }
                 }
             }
+item {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("☁️ Cloud Sync", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
+            Text(
+                "Sign in with Google to sync your reports across devices",
+                fontSize = 13.sp, color = Color.Gray
+            )
 
+            if (isSignedIn) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.CheckCircle, null, tint = RatingGreen, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(userEmail, fontSize = 13.sp, color = RatingGreen, fontWeight = FontWeight.SemiBold)
+                }
+
+                Button(
+                    onClick = {
+                        isSyncing = true
+                        syncMessage = ""
+                        scope.launch {
+                            val reports = viewModel.allReports.value
+                            var successCount = 0
+                            reports.forEach { report ->
+                                if (FirebaseSync.syncReport(report)) successCount++
+                            }
+                            syncMessage = "✅ Synced $successCount of ${reports.size} reports"
+                            isSyncing = false
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Navy),
+                    enabled = !isSyncing
+                ) {
+                    if (isSyncing) {
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Syncing...")
+                    } else {
+                        Icon(Icons.Default.CloudUpload, null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Sync Reports to Cloud")
+                    }
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        FirebaseSync.signOut()
+                        isSignedIn = false
+                        userEmail = ""
+                        syncMessage = ""
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(1.dp, Color.Gray)
+                ) {
+                    Text("Sign Out", color = Color.Gray)
+                }
+            } else {
+                Button(
+                    onClick = {
+                        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                            .requestIdToken("46463119184-eup99cndgeg9vd5blimhqfrukktvhq5t.apps.googleusercontent.com")
+                            .requestEmail()
+                            .build()
+                        val googleSignInClient = GoogleSignIn.getClient(context, gso)
+                        googleSignInLauncher.launch(googleSignInClient.signInIntent)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Navy)
+                ) {
+                    Icon(Icons.Default.AccountCircle, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Sign in with Google")
+                }
+            }
+
+            if (syncMessage.isNotBlank()) {
+                Text(syncMessage, fontSize = 13.sp, color = if (syncMessage.startsWith("✅")) RatingGreen else RatingRed)
+            }
+        }
+    }
+}
             // ── IRC Code Version ──────────────────────────────────────────────
             item {
                 Card(
