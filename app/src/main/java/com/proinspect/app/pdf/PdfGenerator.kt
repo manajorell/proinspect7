@@ -477,16 +477,54 @@ pageScopeAndPurpose(doc)
             agreementHdr.addCell(hdrCell)
             doc.add(agreementHdr)
 
-            val bmp = if (report.signedAgreementPath.startsWith("content://")) {
-                val uri = android.net.Uri.parse(report.signedAgreementPath)
-                val inputStream = context.contentResolver.openInputStream(uri)
-                BitmapFactory.decodeStream(inputStream)
-            } else {
-                val filePath = if (report.signedAgreementPath.startsWith("file://"))
-                    report.signedAgreementPath.removePrefix("file://")
-                else report.signedAgreementPath
-                BitmapFactory.decodeFile(filePath)
-            }
+      val bmp = if (report.signedAgreementPath.startsWith("content://")) {
+    val uri = android.net.Uri.parse(report.signedAgreementPath)
+    val inputStream = context.contentResolver.openInputStream(uri)
+    // Try as image first, then try PDF first page
+    val decoded = BitmapFactory.decodeStream(inputStream)
+    inputStream?.close()
+    if (decoded == null) {
+        // Try rendering first page of PDF
+        try {
+            val uri2 = android.net.Uri.parse(report.signedAgreementPath)
+            val fd = context.contentResolver.openFileDescriptor(uri2, "r")
+            if (fd != null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                val renderer = android.graphics.pdf.PdfRenderer(fd)
+                val page = renderer.openPage(0)
+                val bmp2 = android.graphics.Bitmap.createBitmap(page.width * 2, page.height * 2, android.graphics.Bitmap.Config.ARGB_8888)
+                bmp2.eraseColor(android.graphics.Color.WHITE)
+                page.render(bmp2, null, null, android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                page.close()
+                renderer.close()
+                fd.close()
+                bmp2
+            } else null
+        } catch (_: Exception) { null }
+    } else decoded
+} else {
+    val filePath = if (report.signedAgreementPath.startsWith("file://"))
+        report.signedAgreementPath.removePrefix("file://")
+    else report.signedAgreementPath
+    val decoded = BitmapFactory.decodeFile(filePath)
+    if (decoded == null) {
+        // Try rendering PDF file
+        try {
+            val file = java.io.File(filePath)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                val fd = android.os.ParcelFileDescriptor.open(file, android.os.ParcelFileDescriptor.MODE_READ_ONLY)
+                val renderer = android.graphics.pdf.PdfRenderer(fd)
+                val page = renderer.openPage(0)
+                val bmp2 = android.graphics.Bitmap.createBitmap(page.width * 2, page.height * 2, android.graphics.Bitmap.Config.ARGB_8888)
+                bmp2.eraseColor(android.graphics.Color.WHITE)
+                page.render(bmp2, null, null, android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                page.close()
+                renderer.close()
+                fd.close()
+                bmp2
+            } else null
+        } catch (_: Exception) { null }
+    } else decoded
+}
 
             if (bmp != null) {
                 val stream = java.io.ByteArrayOutputStream()
