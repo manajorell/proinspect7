@@ -1461,48 +1461,7 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
     }
 }
         
-        // ── NEW: Payment & Receipt Card ──
-        item {
-            PaymentCard(
-                report = report,
-                onReportUpdate = { updatedReport ->
-                    viewModel.saveReport(updatedReport)
-                }
-            )
-        }
-        
-        item {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(2.dp)
-            ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Property Photos", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-                    PhotoStrip(
-                        photos = photos.filter { it.section == "info" && it.itemId == null },
-                        onCameraClick = {
-                            val uri = viewModel.prepareCameraUri(context, "info", null)
-                            cameraLauncher.launch(uri)
-                        },
-                        onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, "info", null) },
-                        onDeletePhoto = { photo -> viewModel.deletePhoto(photo) }
-                    )
-                    NarrativeBox(
-                        value = report?.overviewNarrative ?: "",
-                        onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(overviewNarrative = v)) } },
-                        label = "📝 Property Overview Notes"
-                    )
-                    FormField(
-                        label = "Access Limitations",
-                        value = report?.limitations ?: "",
-                        onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(limitations = v)) } },
-                        singleLine = false
-                    )
-                }
-            }
-        }
-    }
-}
+     
 
 // ─── Summary Screen ────────────────────────────────────────────────────────────
 @Composable
