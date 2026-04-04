@@ -330,6 +330,76 @@ fun deleteReport(report: Report) {
         }
     }
 }
+  fun restoreFromCloud(onComplete: (Int) -> Unit) {
+    viewModelScope.launch {
+        try {
+            val cloudReports = FirebaseSync.fetchAllReports()
+            var count = 0
+            cloudReports.forEach { data ->
+                try {
+                    val report = Report(
+                        id = (data["id"] as? Long) ?: 0L,
+                        reportNumber = data["reportNumber"] as? String ?: "",
+                        propertyAddress = data["propertyAddress"] as? String ?: "",
+                        propertyCity = data["propertyCity"] as? String ?: "",
+                        clientName = data["clientName"] as? String ?: "",
+                        clientEmail = data["clientEmail"] as? String ?: "",
+                        inspectorName = data["inspectorName"] as? String ?: "",
+                        inspectorCert = data["inspectorCert"] as? String ?: "",
+                        inspectorCompany = data["inspectorCompany"] as? String ?: "",
+                        inspectorPhone = data["inspectorPhone"] as? String ?: "",
+                        inspectionDate = data["inspectionDate"] as? String ?: "",
+                        inspectionTime = data["inspectionTime"] as? String ?: "",
+                        weatherConditions = data["weatherConditions"] as? String ?: "",
+                        yearBuilt = data["yearBuilt"] as? String ?: "",
+                        squareFootage = data["squareFootage"] as? String ?: "",
+                        overviewNarrative = data["overviewNarrative"] as? String ?: "",
+                        limitations = data["limitations"] as? String ?: "",
+                        roofingNarrative = data["roofingNarrative"] as? String ?: "",
+                        exteriorNarrative = data["exteriorNarrative"] as? String ?: "",
+                        structureNarrative = data["structureNarrative"] as? String ?: "",
+                        electricalNarrative = data["electricalNarrative"] as? String ?: "",
+                        hvacNarrative = data["hvacNarrative"] as? String ?: "",
+                        plumbingNarrative = data["plumbingNarrative"] as? String ?: "",
+                        interiorNarrative = data["interiorNarrative"] as? String ?: "",
+                        insulationNarrative = data["insulationNarrative"] as? String ?: "",
+                        garageNarrative = data["garageNarrative"] as? String ?: "",
+                        inspectionService = data["inspectionService"] as? String ?: "",
+                        inspectionAmount = data["inspectionAmount"] as? String ?: "",
+                        ancillaryServices = data["ancillaryServices"] as? String ?: "",
+                        ancillaryAmount = data["ancillaryAmount"] as? String ?: "",
+                        paymentStatus = data["paymentStatus"] as? String ?: "Amount Due",
+                        paymentMethod = data["paymentMethod"] as? String ?: "",
+                        paymentNotes = data["paymentNotes"] as? String ?: "",
+                        propertyType = data["propertyType"] as? String ?: "",
+                        roofType = data["roofType"] as? String ?: "",
+                        roofAge = data["roofAge"] as? String ?: "",
+                        heatType = data["heatType"] as? String ?: "",
+                        heatBrand = data["heatBrand"] as? String ?: "",
+                        heatAge = data["heatAge"] as? String ?: "",
+                        acType = data["acType"] as? String ?: "",
+                        acBrand = data["acBrand"] as? String ?: "",
+                        acAge = data["acAge"] as? String ?: "",
+                        panelBrand = data["panelBrand"] as? String ?: "",
+                        panelAmps = data["panelAmps"] as? String ?: "",
+                        whType = data["whType"] as? String ?: "",
+                        whAge = data["whAge"] as? String ?: "",
+                        whCapacity = data["whCapacity"] as? String ?: "",
+                        createdAt = (data["createdAt"] as? Long) ?: System.currentTimeMillis()
+                    )
+                    reportDao.insertReport(report)
+                    count++
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            onComplete(count)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            onComplete(-1)
+        }
+    }
+}
     // Add these methods to InspectionViewModel class
 
 fun getCodeForItem(itemId: String): String {
