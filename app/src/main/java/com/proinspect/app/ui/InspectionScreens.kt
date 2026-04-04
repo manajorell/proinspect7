@@ -861,11 +861,11 @@ fun InspectionSectionScreen(section: String, viewModel: InspectionViewModel) {
     val settings by viewModel.appSettings.collectAsState()
 
     // Custom items state (session only)
-    var customItems by remember { mutableStateOf(listOf<CustomChecklistItem>()) }
-    var customItemRatings by remember { mutableStateOf(mapOf<String, Rating>()) }
-    var customItemNarratives by remember { mutableStateOf(mapOf<String, String>()) }
-    var showAddCustomDialog by remember { mutableStateOf(false) }
-    var customItemCounter by remember { mutableStateOf(0) }
+var customItems by remember(section) { mutableStateOf(listOf<CustomChecklistItem>()) }
+var customItemRatings by remember(section) { mutableStateOf(mapOf<String, Rating>()) }
+var customItemNarratives by remember(section) { mutableStateOf(mapOf<String, String>()) }
+var showAddCustomDialog by remember(section) { mutableStateOf(false) }
+var customItemCounter by remember(section) { mutableStateOf(0) }
 
     var pendingCameraSection by remember { mutableStateOf<String?>(null) }
     var pendingCameraItemId by remember { mutableStateOf<String?>(null) }
