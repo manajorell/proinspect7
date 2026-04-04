@@ -54,32 +54,43 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
     private var pendingSection: String = ""
     private var pendingItemId: String? = null
 
-    fun createNewReport() {
-        viewModelScope.launch {
-            val report = Report(
-                inspectionDate = SimpleDateFormat("MM/dd/yyyy", Locale.US).format(Date())
-            )
-            val id = reportDao.insertReport(report)
-            _currentReportId.value = id
-            _navigateToReport.emit(Unit)
+ fun createNewReport() {
+    viewModelScope.launch {
+        val report = Report(
+            inspectionDate = SimpleDateFormat("MM/dd/yyyy", Locale.US).format(Date())
+        )
+        val id = reportDao.insertReport(report)
+        _currentReportId.value = id
+        _navigateToReport.emit(Unit)
+        if (FirebaseSync.isSignedIn) {
+            FirebaseSync.syncReport(report.copy(id = id))
         }
     }
+}
 
     fun loadReport(id: Long) {
         _currentReportId.value = id
     }
 
-    fun saveReport(report: Report) {
-        viewModelScope.launch { reportDao.insertReport(report) }
-    }
-
-    fun deleteReport(report: Report) {
-        viewModelScope.launch {
-            itemDao.deleteItemsForReport(report.id)
-            photoDao.deletePhotosForReport(report.id)
-            reportDao.deleteReport(report)
+fun saveReport(report: Report) {
+    viewModelScope.launch {
+        reportDao.insertReport(report)
+        if (FirebaseSync.isSignedIn) {
+            FirebaseSync.syncReport(report)
         }
     }
+}
+
+fun deleteReport(report: Report) {
+    viewModelScope.launch {
+        itemDao.deleteItemsForReport(report.id)
+        photoDao.deletePhotosForReport(report.id)
+        reportDao.deleteReport(report)
+        if (FirebaseSync.isSignedIn) {
+            FirebaseSync.deleteReport(report.id)
+        }
+    }
+}
 
     fun setItemRating(itemId: String, section: String, rating: Rating) {
         viewModelScope.launch {
