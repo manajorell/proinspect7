@@ -1,6 +1,5 @@
 package com.proinspect.app.ui
 
-import com.proinspect.app.ui.FirebaseSync
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import android.app.Activity
