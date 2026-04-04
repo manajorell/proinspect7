@@ -1310,6 +1310,21 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
 
     if (report == null) return
 
+    var propertyAddress by remember(report?.propertyAddress) { mutableStateOf(report?.propertyAddress ?: "") }
+    var propertyCity by remember(report?.propertyCity) { mutableStateOf(report?.propertyCity ?: "") }
+    var yearBuilt by remember(report?.yearBuilt) { mutableStateOf(report?.yearBuilt ?: "") }
+    var squareFootage by remember(report?.squareFootage) { mutableStateOf(report?.squareFootage ?: "") }
+    var inspectionDate by remember(report?.inspectionDate) { mutableStateOf(report?.inspectionDate ?: "") }
+    var weatherConditions by remember(report?.weatherConditions) { mutableStateOf(report?.weatherConditions ?: "") }
+    var clientName by remember(report?.clientName) { mutableStateOf(report?.clientName ?: "") }
+    var clientEmail by remember(report?.clientEmail) { mutableStateOf(report?.clientEmail ?: "") }
+    var inspectorName by remember(report?.inspectorName) { mutableStateOf(report?.inspectorName ?: "") }
+    var inspectorCert by remember(report?.inspectorCert) { mutableStateOf(report?.inspectorCert ?: "") }
+    var inspectorCompany by remember(report?.inspectorCompany) { mutableStateOf(report?.inspectorCompany ?: "") }
+    var inspectorPhone by remember(report?.inspectorPhone) { mutableStateOf(report?.inspectorPhone ?: "") }
+    var overviewNarrative by remember(report?.overviewNarrative) { mutableStateOf(report?.overviewNarrative ?: "") }
+    var limitations by remember(report?.limitations) { mutableStateOf(report?.limitations ?: "") }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -1326,39 +1341,39 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
                     Text("Property Information", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
                     FormField(
                         label = "Property Address",
-                        value = report?.propertyAddress ?: "",
-                        onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(propertyAddress = v)) } }
+                        value = propertyAddress,
+                        onValueChange = { propertyAddress = it; report?.let { r -> viewModel.saveReport(r.copy(propertyAddress = it)) } }
                     )
                     FormField(
                         label = "City, State, ZIP",
-                        value = report?.propertyCity ?: "",
-                        onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(propertyCity = v)) } }
+                        value = propertyCity,
+                        onValueChange = { propertyCity = it; report?.let { r -> viewModel.saveReport(r.copy(propertyCity = it)) } }
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         FormField(
                             label = "Year Built",
-                            value = report?.yearBuilt ?: "",
-                            onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(yearBuilt = v)) } },
+                            value = yearBuilt,
+                            onValueChange = { yearBuilt = it; report?.let { r -> viewModel.saveReport(r.copy(yearBuilt = it)) } },
                             modifier = Modifier.weight(1f)
                         )
                         FormField(
                             label = "Sq Ft",
-                            value = report?.squareFootage ?: "",
-                            onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(squareFootage = v)) } },
+                            value = squareFootage,
+                            onValueChange = { squareFootage = it; report?.let { r -> viewModel.saveReport(r.copy(squareFootage = it)) } },
                             modifier = Modifier.weight(1f)
                         )
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         FormField(
                             label = "Inspection Date",
-                            value = report?.inspectionDate ?: "",
-                            onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(inspectionDate = v)) } },
+                            value = inspectionDate,
+                            onValueChange = { inspectionDate = it; report?.let { r -> viewModel.saveReport(r.copy(inspectionDate = it)) } },
                             modifier = Modifier.weight(1f)
                         )
                         FormField(
                             label = "Weather",
-                            value = report?.weatherConditions ?: "",
-                            onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(weatherConditions = v)) } },
+                            value = weatherConditions,
+                            onValueChange = { weatherConditions = it; report?.let { r -> viewModel.saveReport(r.copy(weatherConditions = it)) } },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -1374,37 +1389,77 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
                     Text("Client & Inspector", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
                     FormField(
                         label = "Client Name",
-                        value = report?.clientName ?: "",
-                        onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(clientName = v)) } }
+                        value = clientName,
+                        onValueChange = { clientName = it; report?.let { r -> viewModel.saveReport(r.copy(clientName = it)) } }
                     )
                     FormField(
                         label = "Client Email",
-                        value = report?.clientEmail ?: "",
-                        onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(clientEmail = v)) } }
+                        value = clientEmail,
+                        onValueChange = { clientEmail = it; report?.let { r -> viewModel.saveReport(r.copy(clientEmail = it)) } }
                     )
                     FormField(
                         label = "Inspector Name",
-                        value = report?.inspectorName ?: "",
-                        onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(inspectorName = v)) } }
+                        value = inspectorName,
+                        onValueChange = { inspectorName = it; report?.let { r -> viewModel.saveReport(r.copy(inspectorName = it)) } }
                     )
                     FormField(
                         label = "InterNACHI Cert #",
-                        value = report?.inspectorCert ?: "",
-                        onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(inspectorCert = v)) } }
+                        value = inspectorCert,
+                        onValueChange = { inspectorCert = it; report?.let { r -> viewModel.saveReport(r.copy(inspectorCert = it)) } }
                     )
                     FormField(
                         label = "Company",
-                        value = report?.inspectorCompany ?: "",
-                        onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(inspectorCompany = v)) } }
+                        value = inspectorCompany,
+                        onValueChange = { inspectorCompany = it; report?.let { r -> viewModel.saveReport(r.copy(inspectorCompany = it)) } }
                     )
                     FormField(
                         label = "Phone",
-                        value = report?.inspectorPhone ?: "",
-                        onValueChange = { v -> report?.let { viewModel.saveReport(it.copy(inspectorPhone = v)) } }
+                        value = inspectorPhone,
+                        onValueChange = { inspectorPhone = it; report?.let { r -> viewModel.saveReport(r.copy(inspectorPhone = it)) } }
                     )
                 }
             }
         }
+
+        item {
+            PaymentCard(
+                report = report,
+                onReportUpdate = { updatedReport -> viewModel.saveReport(updatedReport) }
+            )
+        }
+
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(2.dp)
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Property Photos", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
+                    PhotoStrip(
+                        photos = photos.filter { it.section == "info" && it.itemId == null },
+                        onCameraClick = {
+                            val uri = viewModel.prepareCameraUri(context, "info", null)
+                            cameraLauncher.launch(uri)
+                        },
+                        onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, "info", null) },
+                        onDeletePhoto = { photo -> viewModel.deletePhoto(photo) }
+                    )
+                    NarrativeBox(
+                        value = overviewNarrative,
+                        onValueChange = { overviewNarrative = it; report?.let { r -> viewModel.saveReport(r.copy(overviewNarrative = it)) } },
+                        label = "📝 Property Overview Notes"
+                    )
+                    FormField(
+                        label = "Access Limitations",
+                        value = limitations,
+                        onValueChange = { limitations = it; report?.let { r -> viewModel.saveReport(r.copy(limitations = it)) } },
+                        singleLine = false
+                    )
+                }
+            }
+        }
+    }
+}
         
         // ── NEW: Payment & Receipt Card ──
         item {
