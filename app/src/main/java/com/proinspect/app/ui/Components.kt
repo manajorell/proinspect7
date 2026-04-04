@@ -284,6 +284,8 @@ fun NarrativeBox(
     modifier: Modifier = Modifier,
     onVoiceInput: (() -> Unit)? = null
 ) {
+    var localValue by remember(value) { mutableStateOf(value) }
+
     Column(modifier = modifier) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -304,8 +306,11 @@ fun NarrativeBox(
         }
         Spacer(Modifier.height(4.dp))
         OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
+            value = localValue,
+            onValueChange = {
+                localValue = it
+                onValueChange(it)
+            },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(placeholder, fontSize = 13.sp, color = Color(0xFF9CA3AF)) },
             minLines = 3,
