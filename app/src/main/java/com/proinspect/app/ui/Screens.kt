@@ -296,12 +296,101 @@ val googleSignInLauncher = rememberLauncherForActivityResult(
                 )
             }
         }
-    ) { padding ->
+   ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("👤 Inspector Profile", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
+                        Text("Auto-fills inspector info on every new report", fontSize = 13.sp, color = Color.Gray)
+                        var nameInput by remember { mutableStateOf(settings.inspectorName) }
+                        var licenseInput by remember { mutableStateOf(settings.inspectorLicense) }
+                        var companyInput by remember { mutableStateOf(settings.inspectorCompany) }
+                        var phoneInput by remember { mutableStateOf(settings.inspectorPhone) }
+                        var emailInput by remember { mutableStateOf(settings.inspectorEmail) }
+
+            OutlinedTextField(
+                value = nameInput,
+                onValueChange = { nameInput = it },
+                label = { Text("Inspector Name") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Gold,
+                    unfocusedBorderColor = Color(0xFFD1D5DB)
+                )
+            )
+            OutlinedTextField(
+                value = licenseInput,
+                onValueChange = { licenseInput = it },
+                label = { Text("License / Cert Number") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Gold,
+                    unfocusedBorderColor = Color(0xFFD1D5DB)
+                )
+            )
+            OutlinedTextField(
+                value = companyInput,
+                onValueChange = { companyInput = it },
+                label = { Text("Company Name") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Gold,
+                    unfocusedBorderColor = Color(0xFFD1D5DB)
+                )
+            )
+            OutlinedTextField(
+                value = phoneInput,
+                onValueChange = { phoneInput = it },
+                label = { Text("Phone Number") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Gold,
+                    unfocusedBorderColor = Color(0xFFD1D5DB)
+                )
+            )
+            OutlinedTextField(
+                value = emailInput,
+                onValueChange = { emailInput = it },
+                label = { Text("Email Address") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Gold,
+                    unfocusedBorderColor = Color(0xFFD1D5DB)
+                )
+            )
+            Button(
+                onClick = {
+                    viewModel.updateSettings(settings.copy(
+                        inspectorName = nameInput,
+                        inspectorLicense = licenseInput,
+                        inspectorCompany = companyInput,
+                        inspectorPhone = phoneInput,
+                        inspectorEmail = emailInput
+                    ))
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Navy)
+            ) {
+                Icon(Icons.Default.Save, null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Save Profile")
+            }
+        }
+    }
+}
             // ── Company Logo ──────────────────────────────────────────────────
             item {
                 Card(
