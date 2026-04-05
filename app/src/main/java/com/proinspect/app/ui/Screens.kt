@@ -40,7 +40,6 @@ fun ReportsListScreen(
     onDeleteReport: (Report) -> Unit,
     onSettings: () -> Unit
 ) {
-    
     Scaffold(
         topBar = {
             Box(
@@ -56,120 +55,66 @@ fun ReportsListScreen(
                     color = GoldLight,
                     modifier = Modifier.align(Alignment.CenterStart)
                 )
-                       
-                  Row(
-    modifier = Modifier.align(Alignment.CenterEnd),
-    horizontalArrangement = Arrangement.spacedBy(4.dp),
-    verticalAlignment = Alignment.CenterVertically
-) {
-    var showTutorial by remember { mutableStateOf(false) }
-
-    TextButton(
-        onClick = { showTutorial = true },
-        colors = ButtonDefaults.textButtonColors(contentColor = GoldLight)
-    ) {
-        Text("Tutorial", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-    }
-
-    IconButton(onClick = onSettings) {
-        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = GoldLight)
-    }
-
-    if (showTutorial) {
-        AlertDialog(
-            onDismissRequest = { showTutorial = false },
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Info, null, tint = Gold, modifier = Modifier.size(24.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("ProInspect Tutorial", fontWeight = FontWeight.Bold, color = Navy)
-                }
-            },
-            text = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 500.dp)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                var showTutorial by remember { mutableStateOf(false) }
+                Row(
+                    modifier = Modifier.align(Alignment.CenterEnd),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TutorialSection(
-                        icon = "👤",
-                        title = "Inspector Profile — Start Here",
-                        description = "Go to Settings and fill in your name, license number, company, and phone. This auto-fills every new inspection report so you never have to type it again."
-                    )
-                    TutorialSection(
-                        icon = "🏠",
-                        title = "Creating a Report",
-                        description = "Tap the + button to start a new inspection. Fill in the property address and client info on the Info tab. Inspector fields will already be filled from your profile."
-                    )
-                    TutorialSection(
-                        icon = "📋",
-                        title = "Inspection Sections",
-                        description = "Use the tabs at the top to navigate sections — Roof, Exterior, Structure, Electrical, HVAC, Plumbing, Interior, Insulation, and Garage. Tap any checklist item to expand it and rate it."
-                    )
-                    TutorialSection(
-                        icon = "⭐",
-                        title = "Rating Items",
-                        description = "Each item can be rated Safety (immediate fix), Major (fix before closing), Monitor (watch it), Good (no issues), or N/A (not present). Items rated Safety or Major appear prominently in the report."
-                    )
-                    TutorialSection(
-                        icon = "📷",
-                        title = "Photos & Narratives",
-                        description = "Expand any checklist item to add photos from your camera or gallery, use the Quick Defect dropdown for pre-written descriptions, or type your own notes. Voice input is also available."
-                    )
-                    TutorialSection(
-                        icon = "📖",
-                        title = "IRC Code Reference",
-                        description = "Each checklist item has an IRC button showing the relevant building code standard. Set your IRC version in Settings to match your jurisdiction (2021, 2018, 2015, or 2012)."
-                    )
-                    TutorialSection(
-                        icon = "🖼️",
-                        title = "Company Logo & Badges",
-                        description = "In Settings, upload your company logo to appear on the PDF cover page. Add up to 4 certification badge images to display your credentials."
-                    )
-                    TutorialSection(
-                        icon = "💳",
-                        title = "Payment & Receipt",
-                        description = "On the Info tab, fill in the inspection service and amount. Mark as Paid or Amount Due. A receipt page is automatically included in the PDF report."
-                    )
-                    TutorialSection(
-                        icon = "🤖",
-                        title = "AI Serial Number Decoder",
-                        description = "For HVAC, water heater, and electrical panel items, tap 'Decode Serial Number' to photograph the data plate. The app reads manufacturer, model, age, and capacity automatically. Add your Anthropic API key in Settings for AI-powered decoding."
-                    )
-                    TutorialSection(
-                        icon = "📄",
-                        title = "Generating the PDF Report",
-                        description = "Go to the Summary tab and tap 'Export PDF Report'. The report includes a cover page, executive summary, full section details with photos, receipt, and scope of inspection. You can also email it directly to your client."
-                    )
-                    TutorialSection(
-                        icon = "☁️",
-                        title = "Cloud Sync",
-                        description = "In Settings, tap 'Sign in with Google' to sync all your reports to the cloud. Reports sync automatically when saved. Use 'Restore from Cloud' on a new device to get all your reports back."
-                    )
-                    TutorialSection(
-                        icon = "💾",
-                        title = "Backup & Restore",
-                        description = "Use Export Backup in Settings to save a copy of all your reports to Google Drive or email. Use Restore from Backup to bring them back if needed."
-                    )
+                    TextButton(
+                        onClick = { showTutorial = true },
+                        colors = ButtonDefaults.textButtonColors(contentColor = GoldLight)
+                    ) {
+                        Text("Tutorial", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                    IconButton(onClick = onSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = GoldLight)
+                    }
                 }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { showTutorial = false },
-                    colors = ButtonDefaults.buttonColors(containerColor = Navy)
-                ) {
-                    Text("Got it!")
+                if (showTutorial) {
+                    AlertDialog(
+                        onDismissRequest = { showTutorial = false },
+                        title = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Info, null, tint = Gold, modifier = Modifier.size(24.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("ProInspect Tutorial", fontWeight = FontWeight.Bold, color = Navy)
+                            }
+                        },
+                        text = {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 500.dp)
+                                    .verticalScroll(rememberScrollState()),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                TutorialSection("👤", "Inspector Profile — Start Here", "Go to Settings and fill in your name, license number, company, and phone. This auto-fills every new inspection report so you never have to type it again.")
+                                TutorialSection("🏠", "Creating a Report", "Tap the + button to start a new inspection. Fill in the property address and client info on the Info tab. Inspector fields will already be filled from your profile.")
+                                TutorialSection("📋", "Inspection Sections", "Use the tabs at the top to navigate sections — Roof, Exterior, Structure, Electrical, HVAC, Plumbing, Interior, Insulation, and Garage. Tap any checklist item to expand it and rate it.")
+                                TutorialSection("⭐", "Rating Items", "Each item can be rated Safety (immediate fix), Major (fix before closing), Monitor (watch it), Good (no issues), or N/A (not present). Items rated Safety or Major appear prominently in the report.")
+                                TutorialSection("📷", "Photos & Narratives", "Expand any checklist item to add photos from your camera or gallery, use the Quick Defect dropdown for pre-written descriptions, or type your own notes. Voice input is also available.")
+                                TutorialSection("📖", "IRC Code Reference", "Each checklist item has an IRC button showing the relevant building code standard. Set your IRC version in Settings to match your jurisdiction (2021, 2018, 2015, or 2012).")
+                                TutorialSection("🖼️", "Company Logo & Badges", "In Settings, upload your company logo to appear on the PDF cover page. Add up to 4 certification badge images to display your credentials.")
+                                TutorialSection("💳", "Payment & Receipt", "On the Info tab, fill in the inspection service and amount. Mark as Paid or Amount Due. A receipt page is automatically included in the PDF report.")
+                                TutorialSection("🤖", "AI Serial Number Decoder", "For HVAC, water heater, and electrical panel items, tap 'Decode Serial Number' to photograph the data plate. The app reads manufacturer, model, age, and capacity automatically. Add your Anthropic API key in Settings for AI-powered decoding.")
+                                TutorialSection("📄", "Generating the PDF Report", "Go to the Summary tab and tap 'Export PDF Report'. The report includes a cover page, executive summary, full section details with photos, receipt, and scope of inspection. You can also email it directly to your client.")
+                                TutorialSection("☁️", "Cloud Sync", "In Settings, tap 'Sign in with Google' to sync all your reports to the cloud. Reports sync automatically when saved. Use 'Restore from Cloud' on a new device to get all your reports back.")
+                                TutorialSection("💾", "Backup & Restore", "Use Export Backup in Settings to save a copy of all your reports to Google Drive or email. Use Restore from Backup to bring them back if needed.")
+                            }
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = { showTutorial = false },
+                                colors = ButtonDefaults.buttonColors(containerColor = Navy)
+                            ) {
+                                Text("Got it!")
+                            }
+                        }
+                    )
                 }
             }
-        )
-    }
-}
-                ) {
-                    Icon(Icons.Default.Settings, contentDescription = "Settings", tint = GoldLight)
-                }
-                    },
+        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onNewReport,
@@ -348,40 +293,42 @@ fun SettingsScreen(viewModel: InspectionViewModel, onBack: () -> Unit) {
     val badge4Launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { viewModel.saveBadge(context, it, 4) }
     }
-val scope = rememberCoroutineScope()
-var isSyncing by remember { mutableStateOf(false) }
-var syncMessage by remember { mutableStateOf("") }
-var isSignedIn by remember { mutableStateOf(FirebaseSync.isSignedIn) }
-var userEmail by remember { mutableStateOf(FirebaseSync.currentUser?.email ?: "") }
 
-val googleSignInLauncher = rememberLauncherForActivityResult(
-    ActivityResultContracts.StartActivityForResult()
-) { result ->
-    android.util.Log.d("GoogleSignIn", "Result code: ${result.resultCode}, data: ${result.data}")
-    if (result.resultCode == Activity.RESULT_OK) {
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        try {
-            val account = task.getResult(ApiException::class.java)
-            val idToken = account.idToken
-            if (idToken != null) {
-                scope.launch {
-                    val success = FirebaseSync.signInWithGoogle(idToken)
-                    if (success) {
-                        isSignedIn = true
-                        userEmail = FirebaseSync.currentUser?.email ?: ""
-                        syncMessage = "✅ Signed in successfully"
-                    } else {
-                        syncMessage = "❌ Sign in failed"
+    val scope = rememberCoroutineScope()
+    var isSyncing by remember { mutableStateOf(false) }
+    var syncMessage by remember { mutableStateOf("") }
+    var isSignedIn by remember { mutableStateOf(FirebaseSync.isSignedIn) }
+    var userEmail by remember { mutableStateOf(FirebaseSync.currentUser?.email ?: "") }
+
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        android.util.Log.d("GoogleSignIn", "Result code: ${result.resultCode}, data: ${result.data}")
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                val idToken = account.idToken
+                if (idToken != null) {
+                    scope.launch {
+                        val success = FirebaseSync.signInWithGoogle(idToken)
+                        if (success) {
+                            isSignedIn = true
+                            userEmail = FirebaseSync.currentUser?.email ?: ""
+                            syncMessage = "✅ Signed in successfully"
+                        } else {
+                            syncMessage = "❌ Sign in failed"
+                        }
                     }
                 }
+            } catch (e: ApiException) {
+                syncMessage = "❌ Error code: ${e.statusCode} - ${e.message}"
             }
-        } catch (e: ApiException) {
-            syncMessage = "❌ Error code: ${e.statusCode} - ${e.message}"
+        } else {
+            syncMessage = "❌ Result code: ${result.resultCode}"
         }
-    } else {
-        syncMessage = "❌ Result code: ${result.resultCode}"
     }
-}
+
     Scaffold(
         topBar = {
             Box(
@@ -402,12 +349,13 @@ val googleSignInLauncher = rememberLauncherForActivityResult(
                 )
             }
         }
-   ) { padding ->
+    ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // ── Inspector Profile ─────────────────────────────────────────────
             item {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -421,82 +369,82 @@ val googleSignInLauncher = rememberLauncherForActivityResult(
                         var companyInput by remember { mutableStateOf(settings.inspectorCompany) }
                         var phoneInput by remember { mutableStateOf(settings.inspectorPhone) }
                         var emailInput by remember { mutableStateOf(settings.inspectorEmail) }
-
-            OutlinedTextField(
-                value = nameInput,
-                onValueChange = { nameInput = it },
-                label = { Text("Inspector Name") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Gold,
-                    unfocusedBorderColor = Color(0xFFD1D5DB)
-                )
-            )
-            OutlinedTextField(
-                value = licenseInput,
-                onValueChange = { licenseInput = it },
-                label = { Text("License / Cert Number") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Gold,
-                    unfocusedBorderColor = Color(0xFFD1D5DB)
-                )
-            )
-            OutlinedTextField(
-                value = companyInput,
-                onValueChange = { companyInput = it },
-                label = { Text("Company Name") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Gold,
-                    unfocusedBorderColor = Color(0xFFD1D5DB)
-                )
-            )
-            OutlinedTextField(
-                value = phoneInput,
-                onValueChange = { phoneInput = it },
-                label = { Text("Phone Number") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Gold,
-                    unfocusedBorderColor = Color(0xFFD1D5DB)
-                )
-            )
-            OutlinedTextField(
-                value = emailInput,
-                onValueChange = { emailInput = it },
-                label = { Text("Email Address") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Gold,
-                    unfocusedBorderColor = Color(0xFFD1D5DB)
-                )
-            )
-            Button(
-                onClick = {
-                    viewModel.updateSettings(settings.copy(
-                        inspectorName = nameInput,
-                        inspectorLicense = licenseInput,
-                        inspectorCompany = companyInput,
-                        inspectorPhone = phoneInput,
-                        inspectorEmail = emailInput
-                    ))
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Navy)
-            ) {
-                Icon(Icons.Default.Save, null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Save Profile")
+                        OutlinedTextField(
+                            value = nameInput,
+                            onValueChange = { nameInput = it },
+                            label = { Text("Inspector Name") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Gold,
+                                unfocusedBorderColor = Color(0xFFD1D5DB)
+                            )
+                        )
+                        OutlinedTextField(
+                            value = licenseInput,
+                            onValueChange = { licenseInput = it },
+                            label = { Text("License / Cert Number") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Gold,
+                                unfocusedBorderColor = Color(0xFFD1D5DB)
+                            )
+                        )
+                        OutlinedTextField(
+                            value = companyInput,
+                            onValueChange = { companyInput = it },
+                            label = { Text("Company Name") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Gold,
+                                unfocusedBorderColor = Color(0xFFD1D5DB)
+                            )
+                        )
+                        OutlinedTextField(
+                            value = phoneInput,
+                            onValueChange = { phoneInput = it },
+                            label = { Text("Phone Number") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Gold,
+                                unfocusedBorderColor = Color(0xFFD1D5DB)
+                            )
+                        )
+                        OutlinedTextField(
+                            value = emailInput,
+                            onValueChange = { emailInput = it },
+                            label = { Text("Email Address") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Gold,
+                                unfocusedBorderColor = Color(0xFFD1D5DB)
+                            )
+                        )
+                        Button(
+                            onClick = {
+                                viewModel.updateSettings(settings.copy(
+                                    inspectorName = nameInput,
+                                    inspectorLicense = licenseInput,
+                                    inspectorCompany = companyInput,
+                                    inspectorPhone = phoneInput,
+                                    inspectorEmail = emailInput
+                                ))
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = Navy)
+                        ) {
+                            Icon(Icons.Default.Save, null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Save Profile")
+                        }
+                    }
+                }
             }
-        }
-    }
-}
+
             // ── Company Logo ──────────────────────────────────────────────────
             item {
                 Card(
@@ -620,91 +568,87 @@ val googleSignInLauncher = rememberLauncherForActivityResult(
                     }
                 }
             }
-item {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(2.dp)
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("☁️ Cloud Sync", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
-            Text(
-                "Sign in with Google to sync your reports across devices",
-                fontSize = 13.sp, color = Color.Gray
-            )
 
-            if (isSignedIn) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.CheckCircle, null, tint = RatingGreen, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(userEmail, fontSize = 13.sp, color = RatingGreen, fontWeight = FontWeight.SemiBold)
-                }
-
-                Button(
-                    onClick = {
-                        isSyncing = true
-                        syncMessage = ""
-                        scope.launch {
-                            val reports = viewModel.allReports.value
-                            var successCount = 0
-                            reports.forEach { report ->
-                                if (FirebaseSync.syncReport(report)) successCount++
-                            }
-                            syncMessage = "✅ Synced $successCount of ${reports.size} reports"
-                            isSyncing = false
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Navy),
-                    enabled = !isSyncing
+            // ── Cloud Sync ────────────────────────────────────────────────────
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(2.dp)
                 ) {
-                    if (isSyncing) {
-                        CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Syncing...")
-                    } else {
-                        Icon(Icons.Default.CloudUpload, null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Sync Reports to Cloud")
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("☁️ Cloud Sync", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
+                        Text("Sign in with Google to sync your reports across devices", fontSize = 13.sp, color = Color.Gray)
+                        if (isSignedIn) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.CheckCircle, null, tint = RatingGreen, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text(userEmail, fontSize = 13.sp, color = RatingGreen, fontWeight = FontWeight.SemiBold)
+                            }
+                            Button(
+                                onClick = {
+                                    isSyncing = true
+                                    syncMessage = ""
+                                    scope.launch {
+                                        val reports = viewModel.allReports.value
+                                        var successCount = 0
+                                        reports.forEach { report ->
+                                            if (FirebaseSync.syncReport(report)) successCount++
+                                        }
+                                        syncMessage = "✅ Synced $successCount of ${reports.size} reports"
+                                        isSyncing = false
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = Navy),
+                                enabled = !isSyncing
+                            ) {
+                                if (isSyncing) {
+                                    CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Syncing...")
+                                } else {
+                                    Icon(Icons.Default.CloudUpload, null, modifier = Modifier.size(18.dp))
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Sync Reports to Cloud")
+                                }
+                            }
+                            OutlinedButton(
+                                onClick = {
+                                    FirebaseSync.signOut()
+                                    isSignedIn = false
+                                    userEmail = ""
+                                    syncMessage = ""
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                border = BorderStroke(1.dp, Color.Gray)
+                            ) {
+                                Text("Sign Out", color = Color.Gray)
+                            }
+                        } else {
+                            Button(
+                                onClick = {
+                                    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                                        .requestIdToken("46463119184-eup99cndgeg9vd5blimhqfrukktvhq5t.apps.googleusercontent.com")
+                                        .requestEmail()
+                                        .build()
+                                    val googleSignInClient = GoogleSignIn.getClient(context, gso)
+                                    googleSignInLauncher.launch(googleSignInClient.signInIntent)
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = Navy)
+                            ) {
+                                Icon(Icons.Default.AccountCircle, null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Sign in with Google")
+                            }
+                        }
+                        if (syncMessage.isNotBlank()) {
+                            Text(syncMessage, fontSize = 13.sp, color = if (syncMessage.startsWith("✅")) RatingGreen else RatingRed)
+                        }
                     }
                 }
-
-                OutlinedButton(
-                    onClick = {
-                        FirebaseSync.signOut()
-                        isSignedIn = false
-                        userEmail = ""
-                        syncMessage = ""
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    border = BorderStroke(1.dp, Color.Gray)
-                ) {
-                    Text("Sign Out", color = Color.Gray)
-                }
-            } else {
-                Button(
-                    onClick = {
-                        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                            .requestIdToken("46463119184-eup99cndgeg9vd5blimhqfrukktvhq5t.apps.googleusercontent.com")
-                            .requestEmail()
-                            .build()
-                        val googleSignInClient = GoogleSignIn.getClient(context, gso)
-                        googleSignInLauncher.launch(googleSignInClient.signInIntent)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Navy)
-                ) {
-                    Icon(Icons.Default.AccountCircle, null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Sign in with Google")
-                }
             }
 
-            if (syncMessage.isNotBlank()) {
-                Text(syncMessage, fontSize = 13.sp, color = if (syncMessage.startsWith("✅")) RatingGreen else RatingRed)
-            }
-        }
-    }
-}
             // ── IRC Code Version ──────────────────────────────────────────────
             item {
                 Card(
@@ -797,8 +741,7 @@ item {
                         Text("💾 Backup & Restore", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Navy)
                         Text(
                             "Export all reports to a JSON file. Share or save it to Google Drive for safekeeping.",
-                            fontSize = 13.sp,
-                            color = Color.Gray
+                            fontSize = 13.sp, color = Color.Gray
                         )
                         Button(
                             onClick = {
@@ -821,11 +764,7 @@ item {
                             enabled = !isExporting
                         ) {
                             if (isExporting) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    color = Color.White,
-                                    strokeWidth = 2.dp
-                                )
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
                                 Spacer(Modifier.width(8.dp))
                                 Text("Exporting...")
                             } else {
@@ -845,8 +784,7 @@ item {
                         }
                         Text(
                             "⚠ Restore adds reports — it does not overwrite existing ones.",
-                            fontSize = 11.sp,
-                            color = Color.Gray
+                            fontSize = 11.sp, color = Color.Gray
                         )
                     }
                 }
@@ -865,7 +803,7 @@ item {
                 }
             }
 
-          item { Spacer(Modifier.height(20.dp)) }
+            item { Spacer(Modifier.height(20.dp)) }
         }
     }
 }
