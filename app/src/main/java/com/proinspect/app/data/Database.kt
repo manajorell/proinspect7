@@ -6,7 +6,6 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.room.migration.Migration
 import kotlinx.coroutines.flow.Flow
 
-
 @Dao
 interface ReportDao {
     @Query("SELECT * FROM reports ORDER BY createdAt DESC")
@@ -85,10 +84,8 @@ class Converters {
         Rating.values().find { it.name == value } ?: Rating.NOT_RATED
 }
 
-// Migration from version 7 to 8 - adds payment fields and app_settings table
 val MIGRATION_7_8 = object : Migration(7, 8) {
     override fun migrate(database: SupportSQLiteDatabase) {
-        // Add payment fields to reports table
         database.execSQL("ALTER TABLE reports ADD COLUMN inspectionAmount TEXT NOT NULL DEFAULT ''")
         database.execSQL("ALTER TABLE reports ADD COLUMN inspectionService TEXT NOT NULL DEFAULT 'Standard Home Inspection'")
         database.execSQL("ALTER TABLE reports ADD COLUMN ancillaryServices TEXT NOT NULL DEFAULT ''")
@@ -96,8 +93,6 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
         database.execSQL("ALTER TABLE reports ADD COLUMN paymentStatus TEXT NOT NULL DEFAULT 'Amount Due'")
         database.execSQL("ALTER TABLE reports ADD COLUMN paymentMethod TEXT NOT NULL DEFAULT ''")
         database.execSQL("ALTER TABLE reports ADD COLUMN paymentNotes TEXT NOT NULL DEFAULT ''")
-        
-        // Create app_settings table
         database.execSQL("""
             CREATE TABLE IF NOT EXISTS app_settings (
                 id INTEGER PRIMARY KEY NOT NULL,
@@ -110,16 +105,12 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
                 ircState TEXT NOT NULL DEFAULT ''
             )
         """)
-        
-        // Insert default settings row
         database.execSQL("INSERT OR REPLACE INTO app_settings (id, companyLogoPath, badge1Path, badge2Path, badge3Path, badge4Path, anthropicApiKey, ircState) VALUES (1, '', '', '', '', '', '', '')")
     }
 }
 
-// Migration from version 8 to 9 - adds serial_decode_patterns table
 val MIGRATION_8_9 = object : Migration(8, 9) {
     override fun migrate(database: SupportSQLiteDatabase) {
-        // Create serial_decode_patterns table
         database.execSQL("""
             CREATE TABLE IF NOT EXISTS serial_decode_patterns (
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -133,6 +124,16 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
     }
 }
 
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("ALTER TABLE app_settings ADD COLUMN inspectorName TEXT NOT NULL DEFAULT ''")
+        database.execSQL("ALTER TABLE app_settings ADD COLUMN inspectorLicense TEXT NOT NULL DEFAULT ''")
+        database.execSQL("ALTER TABLE app_settings ADD COLUMN inspectorCompany TEXT NOT NULL DEFAULT ''")
+        database.execSQL("ALTER TABLE app_settings ADD COLUMN inspectorPhone TEXT NOT NULL DEFAULT ''")
+        database.execSQL("ALTER TABLE app_settings ADD COLUMN inspectorEmail TEXT NOT NULL DEFAULT ''")
+    }
+}
+
 @Database(
     entities = [
         Report::class, 
@@ -141,7 +142,7 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
         AppSettings::class,
         SerialDecodePattern::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 @TypeConverters(Converters::class) 
@@ -158,12 +159,11 @@ abstract class ProInspectDatabase : RoomDatabase() {
         fun getInstance(context: Context): ProInspectDatabase =
             INSTANCE ?: synchronized(this) {
                 Room.databaseBuilder(context, ProInspectDatabase::class.java, "proinspect.db")
-                    .addMigrations(MIGRATION_7_8, MIGRATION_8_9)  // Add both migrations
+                    .addMigrations(MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
                     .fallbackToDestructiveMigration()
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
-                            // Insert default settings when database is created
                             db.execSQL("INSERT OR REPLACE INTO app_settings (id, companyLogoPath, badge1Path, badge2Path, badge3Path, badge4Path, anthropicApiKey, ircState) VALUES (1, '', '', '', '', '', '', '')")
                         }
                     })
