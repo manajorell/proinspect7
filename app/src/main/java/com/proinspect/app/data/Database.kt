@@ -158,16 +158,15 @@ abstract class ProInspectDatabase : RoomDatabase() {
         
         fun getInstance(context: Context): ProInspectDatabase =
             INSTANCE ?: synchronized(this) {
-                Room.databaseBuilder(context, ProInspectDatabase::class.java, "proinspect.db")
-                    .addMigrations(MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
-                    .fallbackToDestructiveMigration()
-                    .addCallback(object : RoomDatabase.Callback() {
-                        override fun onCreate(db: SupportSQLiteDatabase) {
-                            super.onCreate(db)
-                            db.execSQL("INSERT OR REPLACE INTO app_settings (id, companyLogoPath, badge1Path, badge2Path, badge3Path, badge4Path, anthropicApiKey, ircState) VALUES (1, '', '', '', '', '', '', '')")
-                        }
-                    })
-                    .build().also { INSTANCE = it }
+   Room.databaseBuilder(context, ProInspectDatabase::class.java, "proinspect.db")
+    .fallbackToDestructiveMigration()
+    .addCallback(object : RoomDatabase.Callback() {
+        override fun onCreate(db: SupportSQLiteDatabase) {
+            super.onCreate(db)
+            db.execSQL("INSERT OR REPLACE INTO app_settings (id, companyLogoPath, badge1Path, badge2Path, badge3Path, badge4Path, anthropicApiKey, ircState) VALUES (1, '', '', '', '', '', '', '')")
+        }
+    })
+    .build().also { INSTANCE = it }
             }
     }
 }
