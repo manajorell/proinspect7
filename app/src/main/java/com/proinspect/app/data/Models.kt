@@ -347,9 +347,13 @@ data class AppSettings(
     val badge3Path: String = "",
     val badge4Path: String = "",
     val anthropicApiKey: String = "",
-    val ircState: String = "2021 IRC"
+    val ircState: String = "2021 IRC",
+    val inspectorName: String = "",
+    val inspectorLicense: String = "",
+    val inspectorCompany: String = "",
+    val inspectorPhone: String = "",
+    val inspectorEmail: String = ""
 )
-
 // ══════════════════════════════════════════════════════════════════════════════
 // CHECKLIST DATA
 // ══════════════════════════════════════════════════════════════════════════════
