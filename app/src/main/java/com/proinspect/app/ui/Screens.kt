@@ -56,9 +56,116 @@ fun ReportsListScreen(
                     color = GoldLight,
                     modifier = Modifier.align(Alignment.CenterStart)
                 )
-                IconButton(
-                    onClick = onSettings,
-                    modifier = Modifier.align(Alignment.CenterEnd)
+                       
+                  Row(
+    modifier = Modifier.align(Alignment.CenterEnd),
+    horizontalArrangement = Arrangement.spacedBy(4.dp),
+    verticalAlignment = Alignment.CenterVertically
+) {
+    var showTutorial by remember { mutableStateOf(false) }
+
+    TextButton(
+        onClick = { showTutorial = true },
+        colors = ButtonDefaults.textButtonColors(contentColor = GoldLight)
+    ) {
+        Text("Tutorial", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+    }
+
+    IconButton(onClick = onSettings) {
+        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = GoldLight)
+    }
+
+    if (showTutorial) {
+        AlertDialog(
+            onDismissRequest = { showTutorial = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Info, null, tint = Gold, modifier = Modifier.size(24.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("ProInspect Tutorial", fontWeight = FontWeight.Bold, color = Navy)
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 500.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    TutorialSection(
+                        icon = "👤",
+                        title = "Inspector Profile — Start Here",
+                        description = "Go to Settings and fill in your name, license number, company, and phone. This auto-fills every new inspection report so you never have to type it again."
+                    )
+                    TutorialSection(
+                        icon = "🏠",
+                        title = "Creating a Report",
+                        description = "Tap the + button to start a new inspection. Fill in the property address and client info on the Info tab. Inspector fields will already be filled from your profile."
+                    )
+                    TutorialSection(
+                        icon = "📋",
+                        title = "Inspection Sections",
+                        description = "Use the tabs at the top to navigate sections — Roof, Exterior, Structure, Electrical, HVAC, Plumbing, Interior, Insulation, and Garage. Tap any checklist item to expand it and rate it."
+                    )
+                    TutorialSection(
+                        icon = "⭐",
+                        title = "Rating Items",
+                        description = "Each item can be rated Safety (immediate fix), Major (fix before closing), Monitor (watch it), Good (no issues), or N/A (not present). Items rated Safety or Major appear prominently in the report."
+                    )
+                    TutorialSection(
+                        icon = "📷",
+                        title = "Photos & Narratives",
+                        description = "Expand any checklist item to add photos from your camera or gallery, use the Quick Defect dropdown for pre-written descriptions, or type your own notes. Voice input is also available."
+                    )
+                    TutorialSection(
+                        icon = "📖",
+                        title = "IRC Code Reference",
+                        description = "Each checklist item has an IRC button showing the relevant building code standard. Set your IRC version in Settings to match your jurisdiction (2021, 2018, 2015, or 2012)."
+                    )
+                    TutorialSection(
+                        icon = "🖼️",
+                        title = "Company Logo & Badges",
+                        description = "In Settings, upload your company logo to appear on the PDF cover page. Add up to 4 certification badge images to display your credentials."
+                    )
+                    TutorialSection(
+                        icon = "💳",
+                        title = "Payment & Receipt",
+                        description = "On the Info tab, fill in the inspection service and amount. Mark as Paid or Amount Due. A receipt page is automatically included in the PDF report."
+                    )
+                    TutorialSection(
+                        icon = "🤖",
+                        title = "AI Serial Number Decoder",
+                        description = "For HVAC, water heater, and electrical panel items, tap 'Decode Serial Number' to photograph the data plate. The app reads manufacturer, model, age, and capacity automatically. Add your Anthropic API key in Settings for AI-powered decoding."
+                    )
+                    TutorialSection(
+                        icon = "📄",
+                        title = "Generating the PDF Report",
+                        description = "Go to the Summary tab and tap 'Export PDF Report'. The report includes a cover page, executive summary, full section details with photos, receipt, and scope of inspection. You can also email it directly to your client."
+                    )
+                    TutorialSection(
+                        icon = "☁️",
+                        title = "Cloud Sync",
+                        description = "In Settings, tap 'Sign in with Google' to sync all your reports to the cloud. Reports sync automatically when saved. Use 'Restore from Cloud' on a new device to get all your reports back."
+                    )
+                    TutorialSection(
+                        icon = "💾",
+                        title = "Backup & Restore",
+                        description = "Use Export Backup in Settings to save a copy of all your reports to Google Drive or email. Use Restore from Backup to bring them back if needed."
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showTutorial = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = Navy)
+                ) {
+                    Text("Got it!")
+                }
+            }
+        )
+    }
+}
                 ) {
                     Icon(Icons.Default.Settings, contentDescription = "Settings", tint = GoldLight)
                 }
