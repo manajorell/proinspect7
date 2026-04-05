@@ -169,8 +169,7 @@ fun ReportsListScreen(
                 ) {
                     Icon(Icons.Default.Settings, contentDescription = "Settings", tint = GoldLight)
                 }
-            }
-        },
+                    },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onNewReport,
