@@ -275,20 +275,20 @@ object PdfGenerator {
     private fun addTableOfContents(doc: Document, items: List<InspectionItem>) {
         addSectionHeader(doc, "📋", "Table of Contents", "Click any section to jump to that page")
 
-        val tocSections = listOf(
-            Triple("📷", "Property Photos", "property_photos"),
-            Triple("📋", "Executive Summary", "executive_summary"),
-            Triple("🔍", "Full Inspection Details", "full_details")
-        ) + InspectionSections.sections.map { section ->
-            Triple(
-                InspectionSections.sectionIcons[section] ?: "",
-                InspectionSections.sectionNames[section] ?: section,
-                "section_$section"
-            )
-        } + listOf(
-            Triple("💳", "Receipt Summary", "receipt_summary"),
-            Triple("📜", "Scope & Purpose", "scope_purpose")
-        )
+ val tocSections = listOf(
+    Triple("Photo", "Property Photos", "property_photos"),
+    Triple("Summary", "Executive Summary", "executive_summary"),
+    Triple("Details", "Full Inspection Details", "full_details")
+) + InspectionSections.sections.map { section ->
+    Triple(
+        InspectionSections.sectionNames[section] ?: section,
+        InspectionSections.sectionNames[section] ?: section,
+        "section_$section"
+    )
+} + listOf(
+    Triple("Receipt", "Receipt Summary", "receipt_summary"),
+    Triple("Scope", "Scope & Purpose", "scope_purpose")
+)
 
         val tocTbl = PdfPTable(1).apply { widthPercentage = 100f; spacingAfter = 16f }
 
@@ -315,8 +315,8 @@ object PdfGenerator {
 
             // Left side — icon + name + badges
             val leftCell = PdfPCell().apply { border = Rectangle.NO_BORDER }
-            val linkChunk = Chunk("$icon  $name",
-                Font(Font.FontFamily.HELVETICA, 10f, if (isSection) Font.BOLD else Font.NORMAL, cNavy))
+           val linkChunk = Chunk(name,
+    Font(Font.FontFamily.HELVETICA, 10f, if (isSection) Font.BOLD else Font.NORMAL, cNavy))
             linkChunk.setLocalGoto(anchor)
             val linkPara = Paragraph()
             linkPara.add(linkChunk)
@@ -876,14 +876,22 @@ object PdfGenerator {
             paddingTop = 36f; paddingBottom = 36f
             paddingLeft = 30f; paddingRight = 30f
         }
-        divCell.addElement(Paragraph("$icon  ${sectionName.uppercase()}",
-            Font(Font.FontFamily.HELVETICA, 28f, Font.BOLD, cGold)))
-        divCell.addElement(Paragraph(" "))
-        divCell.addElement(Paragraph("$totalCount items inspected",
-            Font(Font.FontFamily.HELVETICA, 12f, Font.NORMAL, BaseColor(180, 190, 210))))
-        divTbl.addCell(divCell)
-        doc.add(divTbl)
-        doc.add(Chunk(LineSeparator(4f, 100f, cGold, Element.ALIGN_CENTER, 0f)))
+     divCell.addElement(Paragraph(sectionName.uppercase(),
+    Font(Font.FontFamily.HELVETICA, 28f, Font.BOLD, cGold)))
+ divCell.addElement(Paragraph("$totalCount items inspected",
+    Font(Font.FontFamily.HELVETICA, 12f, Font.NORMAL, BaseColor(180, 190, 210))))
+
+val badgePara = Paragraph()
+if (safetyCount > 0) badgePara.add(Chunk("  $safetyCount SAFETY  ",
+    Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cRed)))
+if (majorCount > 0) badgePara.add(Chunk("  $majorCount MAJOR  ",
+    Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cOrange)))
+if (monitorCount > 0) badgePara.add(Chunk("  $monitorCount MONITOR  ",
+    Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cBlue)))
+if (goodCount > 0) badgePara.add(Chunk("  $goodCount GOOD  ",
+    Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cGreen)))
+divCell.addElement(Paragraph(" "))
+divCell.addElement(badgePara)
 
         // Findings summary bar
         if (safetyCount > 0 || majorCount > 0 || monitorCount > 0 || goodCount > 0) {
