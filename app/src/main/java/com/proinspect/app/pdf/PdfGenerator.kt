@@ -727,7 +727,6 @@ object PdfGenerator {
             doc.add(Chunk(LineSeparator(2f, 100f, cGold, Element.ALIGN_CENTER, 0f)))
             doc.add(Paragraph(" "))
 
-            addSectionStatsBar(doc, sectionItems.map { it.second })
             addSectionSpecificFields(doc, section, report)
 
             val tbl = PdfPTable(3).apply {
