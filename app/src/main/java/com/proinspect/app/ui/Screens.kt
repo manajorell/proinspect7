@@ -866,7 +866,26 @@ item {
                 }
             }
 
-            item { Spacer(Modifier.height(20.dp)) }
+          item { Spacer(Modifier.height(20.dp)) }
         }
+    }
+}
+
+@Composable
+private fun TutorialSection(icon: String, title: String, description: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(icon, fontSize = 18.sp)
+            Spacer(Modifier.width(8.dp))
+            Text(title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Navy)
+        }
+        Text(
+            description,
+            fontSize = 13.sp,
+            color = Color(0xFF374151),
+            lineHeight = 19.sp,
+            modifier = Modifier.padding(start = 26.dp)
+        )
+        HorizontalDivider(color = Color(0xFFE5E7EB))
     }
 }
