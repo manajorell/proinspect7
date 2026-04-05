@@ -54,10 +54,16 @@ class InspectionViewModel(application: android.app.Application) : AndroidViewMod
     private var pendingSection: String = ""
     private var pendingItemId: String? = null
 
- fun createNewReport() {
+fun createNewReport() {
     viewModelScope.launch {
+        val s = appSettings.value
         val report = Report(
-            inspectionDate = SimpleDateFormat("MM/dd/yyyy", Locale.US).format(Date())
+            inspectionDate = SimpleDateFormat("MM/dd/yyyy", Locale.US).format(Date()),
+            inspectorName = s.inspectorName,
+            inspectorCert = s.inspectorLicense,
+            inspectorCompany = s.inspectorCompany,
+            inspectorPhone = s.inspectorPhone,
+            clientEmail = s.inspectorEmail
         )
         val id = reportDao.insertReport(report)
         _currentReportId.value = id
