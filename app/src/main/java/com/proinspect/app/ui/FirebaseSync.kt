@@ -9,8 +9,8 @@ import kotlinx.coroutines.tasks.await
 
 object FirebaseSync {
 
-    private val auth = FirebaseAuth.getInstance()
-    private val db = FirebaseFirestore.getInstance()
+private val auth by lazy { FirebaseAuth.getInstance() }
+private val db by lazy { FirebaseFirestore.getInstance() }
 
     val currentUser get() = auth.currentUser
     val isSignedIn get() = auth.currentUser != null
