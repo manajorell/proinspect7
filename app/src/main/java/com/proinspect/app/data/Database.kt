@@ -134,6 +134,13 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
     }
 }
 
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("ALTER TABLE inspection_items ADD COLUMN systemOperated INTEGER NOT NULL DEFAULT 0")
+        database.execSQL("ALTER TABLE inspection_items ADD COLUMN notInspectedReason TEXT NOT NULL DEFAULT ''")
+    }
+}
+
 @Database(
     entities = [
         Report::class, 
@@ -142,7 +149,7 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
         AppSettings::class,
         SerialDecodePattern::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 @TypeConverters(Converters::class) 
@@ -159,6 +166,12 @@ abstract class ProInspectDatabase : RoomDatabase() {
         fun getInstance(context: Context): ProInspectDatabase =
             INSTANCE ?: synchronized(this) {
                 Room.databaseBuilder(context, ProInspectDatabase::class.java, "proinspect.db")
+                    .addMigrations(
+                        MIGRATION_7_8,
+                        MIGRATION_8_9,
+                        MIGRATION_9_10,
+                        MIGRATION_10_11
+                    )
                     .fallbackToDestructiveMigration()
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
