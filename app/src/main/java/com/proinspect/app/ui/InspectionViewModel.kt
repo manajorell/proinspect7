@@ -129,6 +129,24 @@ fun deleteReport(report: Report) {
             itemDao.insertItem(item)
         }
     }
+     fun setItemSystemOperated(itemId: String, section: String, operated: Boolean) {
+    viewModelScope.launch {
+        val reportId = _currentReportId.value ?: return@launch
+        val existing = items.value[itemId]
+        val item = existing?.copy(systemOperated = operated)
+            ?: InspectionItem(reportId = reportId, itemId = itemId, section = section, systemOperated = operated)
+        itemDao.insertItem(item)
+    }
+}
+fun setItemNotInspectedReason(itemId: String, section: String, reason: String) {
+    viewModelScope.launch {
+        val reportId = _currentReportId.value ?: return@launch
+        val existing = items.value[itemId]
+        val item = existing?.copy(notInspectedReason = reason)
+            ?: InspectionItem(reportId = reportId, itemId = itemId, section = section, notInspectedReason = reason)
+        itemDao.insertItem(item)
+    }
+}
 fun saveItem(item: InspectionItem) {
     viewModelScope.launch {
         itemDao.insertItem(item)
