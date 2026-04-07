@@ -535,7 +535,11 @@ fun ChecklistItemCard(
     onGalleryPick: (Uri) -> Unit,
     onDeletePhoto: (InspectionPhoto) -> Unit,
     onVoiceInput: (() -> Unit)? = null,
-    apiKey: String = ""
+    apiKey: String = "",
+    systemOperated: Boolean = false,
+    onSystemOperatedChanged: (Boolean) -> Unit = {},
+    notInspectedReason: String = "",
+    onNotInspectedReasonChanged: (String) -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(false) }
     val rColor = ratingColor(rating)
@@ -597,10 +601,99 @@ fun ChecklistItemCard(
                 onRatingChanged(r)
                 if (r != Rating.NOT_RATED && r != Rating.GOOD) expanded = true
             })
+
             if (expanded) {
                 Spacer(Modifier.height(12.dp))
 
-                // ── Camera / Gallery / IRC buttons ──
+                // ── System Operated Checkbox ──────────────────────────────────
+                val showOperatedCheck = item.section in listOf("hvac", "electrical", "plumbing")
+                if (showOperatedCheck) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSystemOperatedChanged(!systemOperated) }
+                            .background(
+                                if (systemOperated) Color(0xFFECFDF5) else Color(0xFFF9FAFB),
+                                RoundedCornerShape(8.dp)
+                            )
+                            .border(
+                                1.dp,
+                                if (systemOperated) RatingGreen else Color(0xFFE5E7EB),
+                                RoundedCornerShape(8.dp)
+                            )
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Checkbox(
+                            checked = systemOperated,
+                            onCheckedChange = { onSystemOperatedChanged(it) },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = RatingGreen,
+                                uncheckedColor = Color(0xFF9CA3AF)
+                            )
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                "System operated during inspection",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (systemOperated) RatingGreen else Color(0xFF374151)
+                            )
+                            Text(
+                                "InterNACHI SOP requires systems to be operated when conditions permit",
+                                fontSize = 11.sp,
+                                color = Color(0xFF9CA3AF)
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+
+                // ── Not Inspected Reason ──────────────────────────────────────
+                if (rating == Rating.NOT_PRESENT) {
+                    var localReason by remember(notInspectedReason) { mutableStateOf(notInspectedReason) }
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFFFF7ED), RoundedCornerShape(8.dp))
+                            .border(1.dp, Color(0xFFF59E0B), RoundedCornerShape(8.dp))
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            "Reason Not Inspected",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF92400E)
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        OutlinedTextField(
+                            value = localReason,
+                            onValueChange = {
+                                localReason = it
+                                onNotInspectedReasonChanged(it)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = {
+                                Text(
+                                    "e.g. Access denied, System not present, Weather conditions...",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF9CA3AF)
+                                )
+                            },
+                            singleLine = false,
+                            minLines = 2,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFFF59E0B),
+                                unfocusedBorderColor = Color(0xFFFCD34D)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+
+                // ── Camera / Gallery / IRC buttons ────────────────────────────
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -644,7 +737,7 @@ fun ChecklistItemCard(
                 }
                 Spacer(Modifier.height(8.dp))
 
-                // ── Photos display ──
+                // ── Photos display ────────────────────────────────────────────
                 if (photos.isNotEmpty()) {
                     Row(
                         modifier = Modifier.horizontalScroll(rememberScrollState()),
@@ -676,7 +769,7 @@ fun ChecklistItemCard(
                     Spacer(Modifier.height(8.dp))
                 }
 
-                // ── Quick Defect ──
+                // ── Quick Defect ──────────────────────────────────────────────
                 if (hasDefects) {
                     DefectDropdown(
                         itemId = item.id,
@@ -691,7 +784,7 @@ fun ChecklistItemCard(
                     Spacer(Modifier.height(10.dp))
                 }
 
-                // ── Narrative ──
+                // ── Narrative ─────────────────────────────────────────────────
                 NarrativeBox(
                     value = narrative,
                     onValueChange = onNarrativeChanged,
@@ -700,7 +793,7 @@ fun ChecklistItemCard(
                     onVoiceInput = onVoiceInput
                 )
 
-                // ── Serial Decoder (HVAC/Plumbing/Electrical) ──
+                // ── Serial Decoder (HVAC/Plumbing/Electrical) ─────────────────
                 if (item.id in listOf("pl3", "hv1", "hv2", "el2")) {
                     val equipmentName = when (item.id) {
                         "pl3" -> "Water Heater"
