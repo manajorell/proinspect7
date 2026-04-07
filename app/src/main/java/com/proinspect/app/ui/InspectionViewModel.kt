@@ -129,7 +129,11 @@ fun deleteReport(report: Report) {
             itemDao.insertItem(item)
         }
     }
-
+fun saveItem(item: InspectionItem) {
+    viewModelScope.launch {
+        itemDao.insertItem(item)
+    }
+}
     fun prepareCameraUri(context: Context, section: String, itemId: String?): Uri {
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         
