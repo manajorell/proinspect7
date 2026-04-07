@@ -31,13 +31,9 @@ object DefectLibrary {
             DefectOption("Good Condition", "Flashing was observed to be properly installed and in good condition at the time of inspection.")
         ),
         "rf4" to listOf(
-            DefectOption("Chimney Cap Missing", "The chimney cap was observed to be missing. A chimney cap prevents water, debris, and animals from entering the flue and should be installed."),
-            DefectOption("Mortar Deterioration", "The mortar joints in the chimney masonry were observed to be deteriorating. Tuckpointing by a qualified mason is recommended to prevent water intrusion."),
-            DefectOption("Chimney Crown Cracked", "The chimney crown was observed to be cracked. The crown should be repaired or replaced to prevent water infiltration into the chimney structure."),
-            DefectOption("Flashing at Chimney Failed", "The flashing at the chimney base was observed to be failing or improperly installed. Proper flashing should be installed by a licensed roofing contractor."),
             DefectOption("Skylight Leaking", "Evidence of water intrusion was observed around one or more skylights. The skylight flashing and seals should be evaluated and repaired by a licensed roofing contractor."),
             DefectOption("Penetration Not Flashed", "One or more roof penetrations were observed to lack proper flashing. Flashing should be installed to prevent water intrusion."),
-            DefectOption("Good Condition", "Skylights, chimneys, and roof penetrations were observed to be in good condition with no evidence of leakage.")
+            DefectOption("Good Condition", "Skylights and roof penetrations were observed to be in good condition with no evidence of leakage.")
         ),
         "rf5" to listOf(
             DefectOption("Rafters Cracked/Broken", "One or more roof rafters or truss members were observed to be cracked or broken. This is a structural concern and should be evaluated by a licensed structural engineer."),
@@ -46,6 +42,15 @@ object DefectLibrary {
             DefectOption("Inadequate Ventilation", "Attic ventilation appeared to be inadequate. Inadequate ventilation can lead to moisture buildup, ice damming, and premature roof deterioration."),
             DefectOption("Evidence of Water Intrusion", "Evidence of water intrusion was observed in the attic. The source should be identified and corrected."),
             DefectOption("Good Condition", "Roof structure and attic were observed to be in good condition with no significant deficiencies noted.")
+        ),
+        "rf6" to listOf(
+            DefectOption("Chimney Cap Missing", "The chimney cap was observed to be missing. A chimney cap prevents water, debris, and animals from entering the flue and should be installed promptly."),
+            DefectOption("Mortar Deterioration", "The mortar joints in the chimney masonry were observed to be deteriorating. Tuckpointing by a qualified mason is recommended to prevent water intrusion and structural damage."),
+            DefectOption("Chimney Crown Cracked", "The chimney crown was observed to be cracked. The crown should be repaired or replaced to prevent water infiltration into the chimney structure."),
+            DefectOption("Flashing Failed at Chimney", "The flashing at the chimney base was observed to be failing or improperly installed. Proper flashing should be installed by a licensed roofing contractor."),
+            DefectOption("Flue Liner Damaged", "The flue liner appeared to be damaged or deteriorating. A damaged flue liner can allow combustion gases and heat to escape into the surrounding structure. Evaluation by a certified chimney sweep is recommended."),
+            DefectOption("Chimney Leaning", "The chimney appeared to be leaning or out of plumb. This is a structural concern and should be evaluated by a licensed mason or structural engineer."),
+            DefectOption("Good Condition", "The chimney was observed to be in good condition with cap present and mortar intact.")
         ),
 
         // ─── EXTERIOR ──────────────────────────────────────────────
@@ -181,6 +186,20 @@ object DefectLibrary {
             DefectOption("Detectors Older Than 10 Years", "Smoke detectors appeared to be older than 10 years. Smoke detectors should be replaced every 10 years per manufacturer recommendations."),
             DefectOption("Detectors Present and Tested", "Smoke and CO detectors were present and operational at the time of inspection.")
         ),
+        "el7" to listOf(
+            DefectOption("Aluminum Wiring Present - Evaluate", "Solid conductor aluminum branch circuit wiring was observed. Aluminum wiring is associated with a higher risk of fire due to its tendency to oxidize and loosen at connections. All devices must be rated AL-CU and connections made with anti-oxidant compound. Evaluation by a licensed electrician is strongly recommended."),
+            DefectOption("Improper Devices for Aluminum", "Aluminum branch circuit wiring was observed connected to devices not rated for aluminum. All devices must be CO/ALR or AL-CU rated. Correction by a licensed electrician is required."),
+            DefectOption("Anti-Oxidant Compound Absent", "Aluminum wiring connections were observed without anti-oxidant compound. Anti-oxidant compound must be applied at all aluminum wiring connections to prevent oxidation and overheating."),
+            DefectOption("Aluminum Wiring - Pigtailed", "Aluminum branch circuit wiring has been pigtailed with copper at device connections. This is an acceptable repair method when properly performed with approved connectors. Verify all connections are properly made."),
+            DefectOption("Not Present", "Aluminum branch circuit wiring was not observed. Standard copper wiring was present throughout.")
+        ),
+        "el8" to listOf(
+            DefectOption("100 Amp Service - Adequate", "The electrical service was observed to be 100 amperes. This meets minimum code requirements and is adequate for most homes without electric heat or EV charging."),
+            DefectOption("100 Amp Service - Upgrade Recommended", "The electrical service was observed to be 100 amperes. Given the size of the home and modern electrical demands, upgrading to 200-amp service is recommended."),
+            DefectOption("200 Amp Service", "The electrical service was observed to be 200 amperes. This is adequate for modern electrical demands including electric appliances and EV charging."),
+            DefectOption("60 Amp Service - Upgrade Required", "The electrical service was observed to be only 60 amperes. This is considered inadequate for modern usage and upgrading to a minimum 100-amp service is strongly recommended."),
+            DefectOption("Service Amperage Not Determined", "The service amperage could not be determined at the time of inspection. Verification with a licensed electrician is recommended.")
+        ),
 
         // ─── HVAC ──────────────────────────────────────────────────
         "hv1" to listOf(
@@ -216,6 +235,13 @@ object DefectLibrary {
             DefectOption("Thermostat Not Functioning", "The thermostat was observed to not function properly. The thermostat should be repaired or replaced."),
             DefectOption("Thermostat Improperly Located", "The thermostat appeared to be improperly located near a heat source or drafty area, which can cause improper system operation."),
             DefectOption("Good Condition", "The thermostat was observed to be functioning properly.")
+        ),
+        "hv6" to listOf(
+            DefectOption("No Heat Source - Room Identified", "One or more habitable rooms were observed to lack an adequate heat source. Each habitable room is required to have a heat source capable of maintaining a minimum temperature of 68°F. A licensed HVAC contractor should evaluate and install appropriate heating."),
+            DefectOption("Inadequate Heat Source", "The heat source in one or more rooms appeared to be inadequate for the size of the space. Evaluation by a licensed HVAC contractor is recommended."),
+            DefectOption("Baseboard Heat Not Functioning", "One or more baseboard heaters were observed to not function. Heaters should be repaired or replaced by a licensed electrician or HVAC contractor."),
+            DefectOption("Register Blocked/Closed", "One or more heating registers were observed to be blocked or closed. Registers should be open and unobstructed to allow proper heat distribution."),
+            DefectOption("Heat Source Present in All Rooms", "A heat source was observed to be present in all habitable rooms inspected.")
         ),
 
         // ─── PLUMBING ──────────────────────────────────────────────
@@ -295,6 +321,16 @@ object DefectLibrary {
             DefectOption("Kitchen Exhaust Not Vented", "The kitchen exhaust fan was observed to recirculate air rather than vent to the exterior. Exterior venting is recommended for better air quality."),
             DefectOption("Good Condition", "Ventilation and exhaust systems appeared to be functioning and venting to the exterior.")
         ),
+        "in7" to listOf(
+            DefectOption("Damper Not Operating", "The fireplace damper was observed to not operate properly. A functional damper is required to control airflow and prevent heat loss when the fireplace is not in use."),
+            DefectOption("Firebox Cracks Observed", "Cracks were observed in the firebox or refractory panels. Cracks can allow heat and combustion gases to escape into the surrounding structure. Evaluation by a certified chimney sweep is recommended."),
+            DefectOption("No Hearth Extension", "The hearth extension appeared to be absent or inadequate. A hearth extension is required to protect combustible flooring from sparks and embers."),
+            DefectOption("Creosote Buildup", "Significant creosote buildup was observed in the fireplace flue. Creosote is highly combustible and a chimney fire hazard. Cleaning by a certified chimney sweep is recommended before use."),
+            DefectOption("Glass Doors Cracked/Broken", "The fireplace glass doors were observed to be cracked or broken. Damaged glass doors should be replaced."),
+            DefectOption("Gas Fireplace Not Igniting", "The gas fireplace was observed to not ignite properly. Evaluation by a qualified gas fireplace technician is recommended."),
+            DefectOption("No Annual Inspection", "No evidence of recent annual chimney inspection was observed. Annual inspection and cleaning by a certified chimney sweep is recommended."),
+            DefectOption("Good Condition", "The fireplace and solid fuel burning systems were observed to be in good condition with no significant deficiencies noted.")
+        ),
 
         // ─── INSULATION ────────────────────────────────────────────
         "is1" to listOf(
@@ -354,6 +390,13 @@ object DefectLibrary {
             DefectOption("Exposed Wiring in Garage", "Exposed wiring was observed in the garage. Wiring should be protected by conduit."),
             DefectOption("No Lighting", "Adequate lighting was not observed in the garage. Proper lighting should be installed for safety."),
             DefectOption("Good Condition", "Garage electrical appeared to be in good condition with GFCI protection present and functional.")
+        ),
+        "gr6" to listOf(
+            DefectOption("Auto-Reverse Failed - Contact Test", "The garage door opener did not reverse within 2 seconds of contacting a 1.5-inch rigid object placed on the floor. This is a safety hazard and should be corrected immediately by a qualified garage door technician."),
+            DefectOption("Auto-Reverse Failed - Photo Eye Test", "The garage door opener did not reverse when the photo eye beam was interrupted during testing. The photo eye sensors should be adjusted or replaced."),
+            DefectOption("Photo Eyes Absent", "Photo eye sensors were not present on the garage door opener. Photo eye sensors are required on all garage door openers manufactured after 1993 and should be installed."),
+            DefectOption("Auto-Reverse Sensitivity Needs Adjustment", "The auto-reverse feature functioned but required multiple attempts or excessive force before reversing. The sensitivity should be adjusted per manufacturer instructions."),
+            DefectOption("Auto-Reverse Passed All Tests", "The garage door auto-reverse feature was tested and functioned properly — reversing upon contact with a solid object and when the photo eye beam was interrupted.")
         )
     )
 
