@@ -1350,7 +1350,7 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
                         value = propertyAddress,
                         onValueChange = { propertyAddress = it; report?.let { r -> viewModel.saveReport(r.copy(propertyAddress = it)) } }
                     )
-                    FormField(
+                  FormField(
                         label = "City, State, ZIP",
                         value = propertyCity,
                         onValueChange = { propertyCity = it; report?.let { r -> viewModel.saveReport(r.copy(propertyCity = it)) } }
@@ -1373,9 +1373,18 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
                         FormField(
                             label = "Inspection Date",
                             value = inspectionDate,
+                            
                             onValueChange = { inspectionDate = it; report?.let { r -> viewModel.saveReport(r.copy(inspectionDate = it)) } },
                             modifier = Modifier.weight(1f)
                         )
+                        FormField(
+                            label = "Inspection Time",
+                            value = inspectionTime,
+                            onValueChange = { inspectionTime = it; report?.let { r -> viewModel.saveReport(r.copy(inspectionTime = it)) } },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         FormField(
                             label = "Weather",
                             value = weatherConditions,
@@ -1383,6 +1392,7 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
                             modifier = Modifier.weight(1f)
                         )
                     }
+                   
                 }
             }
         }
