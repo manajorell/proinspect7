@@ -1288,22 +1288,50 @@ private class HeaderFooterEvent(
     private val report: Report,
     private val reportNumber: String
 ) : PdfPageEventHelper() {
-    private var totalPages = 0
-
-    override fun onCloseDocument(writer: PdfWriter, document: Document) {
-        totalPages = writer.pageNumber - 1
-    }
 
     override fun onEndPage(writer: PdfWriter, document: Document) {
         val cb = writer.directContent
-        val footer = Phrase(
-            "ProInspect  |  ${report.propertyAddress}  |  $reportNumber  |  Page ${writer.pageNumber}",
-            Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, BaseColor(100, 110, 120))
+
+        // Footer left — inspector info
+        val footerLeft = Phrase(
+            "${report.inspectorName}  |  Cert #: ${report.inspectorCert}",
+            Font(Font.FontFamily.HELVETICA, 7f, Font.NORMAL, BaseColor(100, 110, 120))
         )
         ColumnText.showTextAligned(
-            cb, Element.ALIGN_CENTER, footer,
+            cb, Element.ALIGN_LEFT, footerLeft,
+            document.left(),
+            document.bottom() - 15f, 0f
+        )
+
+        // Footer center — address and report number
+        val footerCenter = Phrase(
+            "${report.propertyAddress}  |  $reportNumber",
+            Font(Font.FontFamily.HELVETICA, 7f, Font.NORMAL, BaseColor(100, 110, 120))
+        )
+        ColumnText.showTextAligned(
+            cb, Element.ALIGN_CENTER, footerCenter,
             (document.left() + document.right()) / 2,
             document.bottom() - 15f, 0f
         )
+
+        // Footer right — page number
+        val footerRight = Phrase(
+            "Page ${writer.pageNumber}",
+            Font(Font.FontFamily.HELVETICA, 7f, Font.NORMAL, BaseColor(100, 110, 120))
+        )
+        ColumnText.showTextAligned(
+            cb, Element.ALIGN_RIGHT, footerRight,
+            document.right(),
+            document.bottom() - 15f, 0f
+        )
+
+        // Gold top border line on every page
+        cb.saveState()
+        cb.setColorStroke(BaseColor(201, 151, 58))
+        cb.setLineWidth(1f)
+        cb.moveTo(document.left(), document.top() + 10f)
+        cb.lineTo(document.right(), document.top() + 10f)
+        cb.stroke()
+        cb.restoreState()
     }
 }
