@@ -1343,6 +1343,7 @@ private class HeaderFooterEvent(
         cb.moveTo(document.left(), document.top() + 10f)
         cb.lineTo(document.right(), document.top() + 10f)
         cb.stroke()
-        cb.restoreState()
+       cb.restoreState()
     }
+}
 }
