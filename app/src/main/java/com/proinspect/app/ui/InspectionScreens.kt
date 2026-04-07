@@ -1320,7 +1320,8 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
     var propertyCity by remember(report?.propertyCity) { mutableStateOf(report?.propertyCity ?: "") }
     var yearBuilt by remember(report?.yearBuilt) { mutableStateOf(report?.yearBuilt ?: "") }
     var squareFootage by remember(report?.squareFootage) { mutableStateOf(report?.squareFootage ?: "") }
-    var inspectionDate by remember(report?.inspectionDate) { mutableStateOf(report?.inspectionDate ?: "") }
+var inspectionDate by remember(report?.inspectionDate) { mutableStateOf(report?.inspectionDate ?: "") }
+    var inspectionTime by remember(report?.inspectionTime) { mutableStateOf(report?.inspectionTime ?: "") }
     var weatherConditions by remember(report?.weatherConditions) { mutableStateOf(report?.weatherConditions ?: "") }
     var clientName by remember(report?.clientName) { mutableStateOf(report?.clientName ?: "") }
     var clientEmail by remember(report?.clientEmail) { mutableStateOf(report?.clientEmail ?: "") }
@@ -1369,11 +1370,10 @@ fun PropertyInfoScreen(viewModel: InspectionViewModel) {
                             modifier = Modifier.weight(1f)
                         )
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                   Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         FormField(
                             label = "Inspection Date",
                             value = inspectionDate,
-                            
                             onValueChange = { inspectionDate = it; report?.let { r -> viewModel.saveReport(r.copy(inspectionDate = it)) } },
                             modifier = Modifier.weight(1f)
                         )
