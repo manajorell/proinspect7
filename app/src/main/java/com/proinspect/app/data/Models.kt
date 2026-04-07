@@ -233,7 +233,6 @@ data class Report(
     val garageCars: String = "",
     val createdAt: Long = System.currentTimeMillis()
 )
-
 @Entity(tableName = "inspection_items")
 data class InspectionItem(
     @PrimaryKey(autoGenerate = true)
@@ -242,7 +241,9 @@ data class InspectionItem(
     val itemId: String,
     val section: String,
     val rating: Rating = Rating.NOT_RATED,
-    val narrative: String = ""
+    val narrative: String = "",
+    val systemOperated: Boolean = false,
+    val notInspectedReason: String = ""
 )
 
 @Entity(tableName = "inspection_photos")
