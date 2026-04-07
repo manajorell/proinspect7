@@ -1292,15 +1292,10 @@ private class HeaderFooterEvent(
     override fun onEndPage(writer: PdfWriter, document: Document) {
         val cb = writer.directContent
 
-        // Footer left — inspector info
+ // Footer left — inspector and client info
         val footerLeft = Phrase(
-            "${report.inspectorName}  |  Cert #: ${report.inspectorCert}",
+            "${report.inspectorName}  |  Cert #: ${report.inspectorCert}  |  Client: ${report.clientName}",
             Font(Font.FontFamily.HELVETICA, 7f, Font.NORMAL, BaseColor(100, 110, 120))
-        )
-        ColumnText.showTextAligned(
-            cb, Element.ALIGN_LEFT, footerLeft,
-            document.left(),
-            document.bottom() - 15f, 0f
         )
 
         // Footer center — address and report number
