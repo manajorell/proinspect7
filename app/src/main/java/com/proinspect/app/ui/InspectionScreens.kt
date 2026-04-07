@@ -1097,41 +1097,25 @@ var customItemCounter by remember(section) { mutableStateOf(0) }
         }
 
         // ── Standard checklist items ──
-   items(sectionItemsList) { checklistItem ->
-            val itemState = itemsMap[checklistItem.id]
-            ChecklistItemCard(
-                item = checklistItem,
-                rating = itemState?.rating ?: Rating.NOT_RATED,
-                narrative = itemState?.narrative ?: "",
-                photos = photos.filter { it.itemId == checklistItem.id },
-                ircVersion = settings.ircState,
-                onRatingChanged = { rating -> viewModel.setItemRating(checklistItem.id, section, rating) },
-                onNarrativeChanged = { text -> viewModel.setItemNarrative(checklistItem.id, section, text) },
-                onCameraClick = { launchCamera(section, checklistItem.id) },
-                onGalleryPick = { uri -> viewModel.addPhotoFromGallery(context, uri, section, checklistItem.id) },
-                onDeletePhoto = { photo -> viewModel.deletePhoto(photo) },
-                onVoiceInput = { startVoiceInput(checklistItem.id, false) },
-                apiKey = settings.anthropicApiKey,
-                systemOperated = itemState?.systemOperated ?: false,
-                onSystemOperatedChanged = { operated ->
-                    val current = itemState ?: InspectionItem(
-                        reportId = 0L,
-                        itemId = checklistItem.id,
-                        section = section
-                    )
-                    viewModel.saveItem(current.copy(systemOperated = operated))
-                },
-                notInspectedReason = itemState?.notInspectedReason ?: "",
-                onNotInspectedReasonChanged = { reason ->
-                    val current = itemState ?: InspectionItem(
-                        reportId = 0L,
-                        itemId = checklistItem.id,
-                        section = section
-                    )
-                    viewModel.saveItem(current.copy(notInspectedReason = reason))
-                }
-            )
-        }
+  fun setItemSystemOperated(itemId: String, section: String, operated: Boolean) {
+    viewModelScope.launch {
+        val reportId = _currentReportId.value ?: return@launch
+        val existing = items.value[itemId]
+        val item = existing?.copy(systemOperated = operated)
+            ?: InspectionItem(reportId = reportId, itemId = itemId, section = section, systemOperated = operated)
+        itemDao.insertItem(item)
+    }
+}
+
+fun setItemNotInspectedReason(itemId: String, section: String, reason: String) {
+    viewModelScope.launch {
+        val reportId = _currentReportId.value ?: return@launch
+        val existing = items.value[itemId]
+        val item = existing?.copy(notInspectedReason = reason)
+            ?: InspectionItem(reportId = reportId, itemId = itemId, section = section, notInspectedReason = reason)
+        itemDao.insertItem(item)
+    }
+}
         // ── Custom checklist items ──
         items(customItems) { customItem ->
             CustomItemCard(
