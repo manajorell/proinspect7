@@ -767,14 +767,30 @@ object PdfGenerator {
                 })
                 tbl.addCell(rCell)
 
-                val narrative = found?.narrative?.ifBlank { null }
-                val nCell = PdfPCell(Phrase(narrative ?: "—",
-                    if (narrative != null) fBody else fSmall))
+                        val narrative = found?.narrative?.ifBlank { null }
+                val nCell = PdfPCell()
                 nCell.border = Rectangle.BOTTOM; nCell.borderColorBottom = cBorder
                 nCell.paddingTop = 7f; nCell.paddingBottom = 7f
                 nCell.paddingLeft = 7f; nCell.paddingRight = 7f
+
+                if (narrative != null)
+                    nCell.addElement(Paragraph(narrative, fBody))
+                else
+                    nCell.addElement(Paragraph("—", fSmall))
+
+                if (found?.systemOperated == true) {
+                    nCell.addElement(Paragraph(
+                        "System operated during inspection",
+                        Font(Font.FontFamily.HELVETICA, 7f, Font.ITALIC, cGreen)
+                    ))
+                }
+                if (found?.notInspectedReason?.isNotBlank() == true) {
+                    nCell.addElement(Paragraph(
+                        "Not inspected: ${found.notInspectedReason}",
+                        Font(Font.FontFamily.HELVETICA, 7f, Font.ITALIC, BaseColor(180, 100, 0))
+                    ))
+                }
                 tbl.addCell(nCell)
-            }
             doc.add(tbl)
 
             addFlaggedItemPhotos(doc, section, sectionItemsList, items, photos)
