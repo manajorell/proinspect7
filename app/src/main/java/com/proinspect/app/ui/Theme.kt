@@ -41,4 +41,5 @@ fun ratingColor(rating: Rating) = when (rating) {
     Rating.GOOD -> RatingGreen
     Rating.NOT_RATED -> RatingGray
     Rating.NOT_PRESENT -> RatingGray
+    Rating.NOT_INSPECTED -> Color(0xFF9CA3AF)
 }
