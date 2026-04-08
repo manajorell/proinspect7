@@ -936,11 +936,11 @@ doc.add(divTbl)
                     Font(Font.FontFamily.HELVETICA, 9f, Font.NORMAL, stat.color))
                 labelPara.alignment = Element.ALIGN_CENTER
                 cell.addElement(labelPara)
-               statsTbl.addCell(cell)
+             statsTbl.addCell(cell)
+            }
+            doc.add(statsTbl)
         }
-        doc.add(statsTbl)
     }
-}
 
     private fun addSectionStatsBar(doc: Document, sectionItems: List<InspectionItem?>) {
         val safety  = sectionItems.count { it?.rating == Rating.SAFETY }
