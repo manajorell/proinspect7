@@ -59,7 +59,7 @@ object PdfGenerator {
         Rating.GOOD        -> cGreenLight
         Rating.NOT_RATED   -> cOffWhite
         Rating.NOT_PRESENT -> cOffWhite
-        Rating.NOT_INSPECTED -> cGray
+        Rating.NOT_INSPECTED -> cOffWhite
     }
 
     private fun addSectionHeader(doc: Document, icon: String, title: String, subtitle: String = "") {
