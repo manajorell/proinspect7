@@ -1295,14 +1295,18 @@ doc.add(divTbl)
             doc.add(bodyPara)
         }
 
+      fun yourMethodName(doc: Document) {
         doc.add(Paragraph(" "))
         addThinLine(doc)
         doc.add(Paragraph(
             "This report was prepared in accordance with the InterNACHI Standards of Practice  |  www.nachi.org",
             Font(Font.FontFamily.HELVETICA, 8f, Font.ITALIC, cGray)
-        ).apply { alignment = Element.ALIGN_CENTER; spacingBefore = 8f })
-    }
-}
+        ).apply { 
+            alignment = Element.ALIGN_CENTER
+            spacingBefore = 8f 
+        })
+    } // Closes the method
+} // Closes the Class. NOTHING sho
 
 private class HeaderFooterEvent(
     private val report: Report,
