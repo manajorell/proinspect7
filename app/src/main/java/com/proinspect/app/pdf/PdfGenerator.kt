@@ -30,7 +30,6 @@ object PdfGenerator {
     private val cOrangeLight = BaseColor(255, 247, 237)
     private val cBlueLight   = BaseColor(239, 246, 255)
     private val cGreenLight  = BaseColor(240, 253, 244)
-    private val cOrange2     = BaseColor(249, 115, 22)
 
     private val fH3      = Font(Font.FontFamily.HELVETICA, 11f, Font.BOLD,   BaseColor(26, 39, 68))
     private val fH3White = Font(Font.FontFamily.HELVETICA, 11f, Font.BOLD,   BaseColor.WHITE)
@@ -128,8 +127,7 @@ object PdfGenerator {
             backgroundColor = cNavy; border = Rectangle.NO_BORDER
             paddingTop = 40f; paddingBottom = 36f; paddingLeft = 30f; paddingRight = 16f
         }
-        hCell.addElement(Paragraph("ProInspect",
-            Font(Font.FontFamily.HELVETICA, 32f, Font.BOLD, cGold)))
+        hCell.addElement(Paragraph("ProInspect", Font(Font.FontFamily.HELVETICA, 32f, Font.BOLD, cGold)))
         hCell.addElement(Paragraph("HOME INSPECTION REPORT", fWhiteSm))
         hCell.addElement(Paragraph(" "))
         hCell.addElement(Paragraph(
@@ -141,21 +139,17 @@ object PdfGenerator {
                 Font(Font.FontFamily.HELVETICA, 12f, Font.NORMAL, BaseColor(180, 190, 210))))
         hCell.addElement(Paragraph(" "))
 
-        // Property tags row
         val tagPara = Paragraph()
         if (report.propertyType.isNotBlank()) {
-            tagPara.add(Chunk("  ${report.propertyType}  ",
-                Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, cGold)))
+            tagPara.add(Chunk("  ${report.propertyType}  ", Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, cGold)))
             tagPara.add(Chunk("   "))
         }
         if (report.inspectionDate.isNotBlank()) {
-            tagPara.add(Chunk("  ${report.inspectionDate}  ",
-                Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, BaseColor(180, 190, 210))))
+            tagPara.add(Chunk("  ${report.inspectionDate}  ", Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, BaseColor(180, 190, 210))))
             tagPara.add(Chunk("   "))
         }
         if (report.squareFootage.isNotBlank()) {
-            tagPara.add(Chunk("  ${report.squareFootage} sq ft  ",
-                Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, BaseColor(180, 190, 210))))
+            tagPara.add(Chunk("  ${report.squareFootage} sq ft  ", Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, BaseColor(180, 190, 210))))
         }
         hCell.addElement(tagPara)
         hdr.addCell(hCell)
@@ -182,14 +176,12 @@ object PdfGenerator {
         doc.add(hdr)
         doc.add(Chunk(LineSeparator(3f, 100f, cGold, Element.ALIGN_CENTER, 0f)))
 
-        // Report number bar
         val rnTbl = PdfPTable(1).apply { widthPercentage = 100f; spacingAfter = 12f }
         val rnCell = PdfPCell().apply {
             backgroundColor = cLightBg; border = Rectangle.NO_BORDER
             paddingTop = 6f; paddingBottom = 6f; paddingLeft = 16f; paddingRight = 16f
         }
-        rnCell.addElement(Paragraph("Report Number: $reportNumber",
-            Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, cNavy)))
+        rnCell.addElement(Paragraph("Report Number: $reportNumber", Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, cNavy)))
         rnTbl.addCell(rnCell)
         doc.add(rnTbl)
 
@@ -225,18 +217,15 @@ object PdfGenerator {
         addThinLine(doc)
         addRatingLegendWithCounts(doc, items)
 
-        val badgePaths = listOf(
-            settings.badge1Path, settings.badge2Path,
-            settings.badge3Path, settings.badge4Path
-        ).filter { it.isNotBlank() && File(it).exists() }
+        val badgePaths = listOf(settings.badge1Path, settings.badge2Path, settings.badge3Path, settings.badge4Path)
+            .filter { it.isNotBlank() && File(it).exists() }
 
         if (badgePaths.isNotEmpty()) {
             doc.add(Paragraph(" "))
             addThinLine(doc)
             doc.add(Paragraph(" "))
             val certHdr = PdfPTable(1).apply { widthPercentage = 100f; spacingAfter = 8f }
-            val ch = PdfPCell(Phrase("Inspector Certifications & Credentials",
-                Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cNavy)))
+            val ch = PdfPCell(Phrase("Inspector Certifications & Credentials", Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cNavy)))
             ch.border = Rectangle.NO_BORDER
             ch.horizontalAlignment = Element.ALIGN_CENTER
             ch.paddingBottom = 4f
@@ -275,80 +264,54 @@ object PdfGenerator {
     private fun addTableOfContents(doc: Document, items: List<InspectionItem>) {
         addSectionHeader(doc, "📋", "Table of Contents", "Click any section to jump to that page")
 
- val tocSections = listOf(
-    Triple("Photo", "Property Photos", "property_photos"),
-    Triple("Summary", "Executive Summary", "executive_summary"),
-    Triple("Details", "Full Inspection Details", "full_details")
-) + InspectionSections.sections.map { section ->
-    Triple(
-        InspectionSections.sectionNames[section] ?: section,
-        InspectionSections.sectionNames[section] ?: section,
-        "section_$section"
-    )
-} + listOf(
-    Triple("Receipt", "Receipt Summary", "receipt_summary"),
-    Triple("Scope", "Scope & Purpose", "scope_purpose")
-)
+        val tocSections = listOf(
+            Triple("Photo", "Property Photos", "property_photos"),
+            Triple("Summary", "Executive Summary", "executive_summary"),
+            Triple("Details", "Full Inspection Details", "full_details")
+        ) + InspectionSections.sections.map { section ->
+            Triple(
+                InspectionSections.sectionNames[section] ?: section,
+                InspectionSections.sectionNames[section] ?: section,
+                "section_$section"
+            )
+        } + listOf(
+            Triple("Receipt", "Receipt Summary", "receipt_summary"),
+            Triple("Scope", "Scope & Purpose", "scope_purpose")
+        )
 
         val tocTbl = PdfPTable(1).apply { widthPercentage = 100f; spacingAfter = 16f }
 
         tocSections.forEachIndexed { index, (icon, name, anchor) ->
             val isSection = InspectionSections.sections.any { "section_$it" == anchor }
             val sectionKey = if (isSection) anchor.removePrefix("section_") else null
-            val safetyCount = if (sectionKey != null) items.count { it.section == sectionKey && it.rating == Rating.SAFETY } else 0
-            val majorCount = if (sectionKey != null) items.count { it.section == sectionKey && it.rating == Rating.MAJOR } else 0
+            val safetyCount  = if (sectionKey != null) items.count { it.section == sectionKey && it.rating == Rating.SAFETY } else 0
+            val majorCount   = if (sectionKey != null) items.count { it.section == sectionKey && it.rating == Rating.MAJOR } else 0
             val monitorCount = if (sectionKey != null) items.count { it.section == sectionKey && it.rating == Rating.MONITOR } else 0
 
             val cell = PdfPCell().apply {
-                border = Rectangle.BOTTOM
-                borderColorBottom = cBorder
-                borderWidthBottom = 0.5f
+                border = Rectangle.BOTTOM; borderColorBottom = cBorder; borderWidthBottom = 0.5f
                 backgroundColor = if (index % 2 == 0) cOffWhite else cWhite
-                paddingTop = 8f; paddingBottom = 8f
-                paddingLeft = 12f; paddingRight = 12f
+                paddingTop = 8f; paddingBottom = 8f; paddingLeft = 12f; paddingRight = 12f
             }
 
-            val rowTbl = PdfPTable(2).apply {
-                widthPercentage = 100f
-                setWidths(floatArrayOf(3f, 1f))
-            }
+            val rowTbl = PdfPTable(2).apply { widthPercentage = 100f; setWidths(floatArrayOf(3f, 1f)) }
 
-            // Left side — icon + name + badges
             val leftCell = PdfPCell().apply { border = Rectangle.NO_BORDER }
-           val linkChunk = Chunk(name,
-    Font(Font.FontFamily.HELVETICA, 10f, if (isSection) Font.BOLD else Font.NORMAL, cNavy))
+            val linkChunk = Chunk(name, Font(Font.FontFamily.HELVETICA, 10f, if (isSection) Font.BOLD else Font.NORMAL, cNavy))
             linkChunk.setLocalGoto(anchor)
             val linkPara = Paragraph()
             linkPara.add(linkChunk)
 
-            // Add finding badges for inspection sections
             if (isSection) {
-                if (safetyCount > 0) {
-                    val badge = Chunk("  $safetyCount Safety  ",
-                        Font(Font.FontFamily.HELVETICA, 7f, Font.BOLD, cRed))
-                    linkPara.add(badge)
-                }
-                if (majorCount > 0) {
-                    val badge = Chunk("  $majorCount Major  ",
-                        Font(Font.FontFamily.HELVETICA, 7f, Font.BOLD, cOrange))
-                    linkPara.add(badge)
-                }
-                if (monitorCount > 0) {
-                    val badge = Chunk("  $monitorCount Monitor  ",
-                        Font(Font.FontFamily.HELVETICA, 7f, Font.BOLD, cBlue))
-                    linkPara.add(badge)
-                }
+                if (safetyCount > 0)  linkPara.add(Chunk("  $safetyCount Safety  ",  Font(Font.FontFamily.HELVETICA, 7f, Font.BOLD, cRed)))
+                if (majorCount > 0)   linkPara.add(Chunk("  $majorCount Major  ",    Font(Font.FontFamily.HELVETICA, 7f, Font.BOLD, cOrange)))
+                if (monitorCount > 0) linkPara.add(Chunk("  $monitorCount Monitor  ", Font(Font.FontFamily.HELVETICA, 7f, Font.BOLD, cBlue)))
             }
             leftCell.addElement(linkPara)
             rowTbl.addCell(leftCell)
 
-            // Right side — dotted line effect
-            val rightCell = PdfPCell().apply {
-                border = Rectangle.NO_BORDER
-                horizontalAlignment = Element.ALIGN_RIGHT
-            }
-            val dotsPara = Paragraph("· · · · · · · · · · · · · ·",
-                Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, cBorder))
+            val rightCell = PdfPCell().apply { border = Rectangle.NO_BORDER; horizontalAlignment = Element.ALIGN_RIGHT }
+            val dotsPara = Paragraph("· · · · · · · · · · · · · ·", Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, cBorder))
             dotsPara.alignment = Element.ALIGN_RIGHT
             rightCell.addElement(dotsPara)
             rowTbl.addCell(rightCell)
@@ -363,8 +326,7 @@ object PdfGenerator {
 
     private fun addRatingLegendWithCounts(doc: Document, items: List<InspectionItem>) {
         doc.add(Paragraph("\n"))
-        val legendTitle = Paragraph("Rating Legend",
-            Font(Font.FontFamily.HELVETICA, 11f, Font.BOLD, cNavy))
+        val legendTitle = Paragraph("Rating Legend", Font(Font.FontFamily.HELVETICA, 11f, Font.BOLD, cNavy))
         legendTitle.alignment = Element.ALIGN_CENTER
         legendTitle.spacingAfter = 6f
         doc.add(legendTitle)
@@ -381,11 +343,11 @@ object PdfGenerator {
         legendTable.spacingAfter = 10f
         legendTable.horizontalAlignment = Element.ALIGN_CENTER
 
-        addClickableLegendItem(legendTable, "Safety Issue",   cRed,    "Immediate correction required", "🛑", safetyCount)
-        addClickableLegendItem(legendTable, "Major Concern",  cOrange, "Correct prior to closing",      "🩹", majorCount)
-        addClickableLegendItem(legendTable, "Monitor",        cBlue,   "Repair or maintain",            "🔍", monitorCount)
-        addClickableLegendItem(legendTable, "Good",           cGreen,  "No deficiencies noted",         "👍", goodCount)
-        addClickableLegendItem(legendTable, "Not Rated",      cGray,   "Not inspected or N/A",          "",   notRatedCount)
+        addClickableLegendItem(legendTable, "Safety Issue",  cRed,    "Immediate correction required", "🛑", safetyCount)
+        addClickableLegendItem(legendTable, "Major Concern", cOrange, "Correct prior to closing",      "🩹", majorCount)
+        addClickableLegendItem(legendTable, "Monitor",       cBlue,   "Repair or maintain",            "🔍", monitorCount)
+        addClickableLegendItem(legendTable, "Good",          cGreen,  "No deficiencies noted",         "👍", goodCount)
+        addClickableLegendItem(legendTable, "Not Rated",     cGray,   "Not inspected or N/A",          "",   notRatedCount)
         doc.add(legendTable)
 
         val instructionText = Paragraph("Click on any count above to view detailed findings",
@@ -705,16 +667,12 @@ object PdfGenerator {
             val sectionItemsList = InspectionSections.items[section] ?: return@forEach
             val sectionName = InspectionSections.sectionNames[section] ?: section
             val icon = InspectionSections.sectionIcons[section] ?: ""
-            val sectionItems = sectionItemsList.map { ci ->
-                ci to (items.find { it.itemId == ci.id })
-            }
+            val sectionItems = sectionItemsList.map { ci -> ci to (items.find { it.itemId == ci.id }) }
 
-            // Section anchor for TOC links
             val sectionDest = Chunk(" ")
             sectionDest.setLocalDestination("section_$section")
             doc.add(Paragraph(sectionDest))
 
-            // Section divider page
             addSectionDividerPage(doc, icon, sectionName, section, items)
 
             val sHdr = PdfPTable(1).apply { widthPercentage = 100f; spacingBefore = 16f; spacingAfter = 0f }
@@ -767,7 +725,7 @@ object PdfGenerator {
                 })
                 tbl.addCell(rCell)
 
-                        val narrative = found?.narrative?.ifBlank { null }
+                val narrative = found?.narrative?.ifBlank { null }
                 val nCell = PdfPCell()
                 nCell.border = Rectangle.BOTTOM; nCell.borderColorBottom = cBorder
                 nCell.paddingTop = 7f; nCell.paddingBottom = 7f
@@ -790,7 +748,7 @@ object PdfGenerator {
                         Font(Font.FontFamily.HELVETICA, 7f, Font.ITALIC, BaseColor(180, 100, 0))
                     ))
                 }
-            tbl.addCell(nCell)
+                tbl.addCell(nCell)
             }
             doc.add(tbl)
 
@@ -871,11 +829,8 @@ object PdfGenerator {
     }
 
     private fun addSectionDividerPage(
-        doc: Document,
-        icon: String,
-        sectionName: String,
-        section: String,
-        items: List<InspectionItem>
+        doc: Document, icon: String, sectionName: String,
+        section: String, items: List<InspectionItem>
     ) {
         doc.newPage()
 
@@ -885,33 +840,27 @@ object PdfGenerator {
         val goodCount    = items.count { it.section == section && it.rating == Rating.GOOD }
         val totalCount   = items.count { it.section == section }
 
-        // Full-width navy divider
         val divTbl = PdfPTable(1).apply { widthPercentage = 100f; spacingBefore = 60f }
         val divCell = PdfPCell().apply {
             backgroundColor = cNavy; border = Rectangle.NO_BORDER
             paddingTop = 36f; paddingBottom = 36f
             paddingLeft = 30f; paddingRight = 30f
         }
-     divCell.addElement(Paragraph(sectionName.uppercase(),
-    Font(Font.FontFamily.HELVETICA, 28f, Font.BOLD, cGold)))
- divCell.addElement(Paragraph("$totalCount items inspected",
-    Font(Font.FontFamily.HELVETICA, 12f, Font.NORMAL, BaseColor(180, 190, 210))))
+        divCell.addElement(Paragraph(sectionName.uppercase(),
+            Font(Font.FontFamily.HELVETICA, 28f, Font.BOLD, cGold)))
+        divCell.addElement(Paragraph("$totalCount items inspected",
+            Font(Font.FontFamily.HELVETICA, 12f, Font.NORMAL, BaseColor(180, 190, 210))))
 
-val badgePara = Paragraph()
-if (safetyCount > 0) badgePara.add(Chunk("  $safetyCount SAFETY  ",
-    Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cRed)))
-if (majorCount > 0) badgePara.add(Chunk("  $majorCount MAJOR  ",
-    Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cOrange)))
-if (monitorCount > 0) badgePara.add(Chunk("  $monitorCount MONITOR  ",
-    Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cBlue)))
-if (goodCount > 0) badgePara.add(Chunk("  $goodCount GOOD  ",
-    Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cGreen)))
-divCell.addElement(Paragraph(" "))
-divCell.addElement(badgePara)
-divTbl.addCell(divCell)
-doc.add(divTbl)
+        val badgePara = Paragraph()
+        if (safetyCount > 0)  badgePara.add(Chunk("  $safetyCount SAFETY  ",  Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cRed)))
+        if (majorCount > 0)   badgePara.add(Chunk("  $majorCount MAJOR  ",    Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cOrange)))
+        if (monitorCount > 0) badgePara.add(Chunk("  $monitorCount MONITOR  ", Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cBlue)))
+        if (goodCount > 0)    badgePara.add(Chunk("  $goodCount GOOD  ",       Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cGreen)))
+        divCell.addElement(Paragraph(" "))
+        divCell.addElement(badgePara)
+        divTbl.addCell(divCell)
+        doc.add(divTbl)
 
-        // Findings summary bar
         if (safetyCount > 0 || majorCount > 0 || monitorCount > 0 || goodCount > 0) {
             val statsTbl = PdfPTable(4).apply { widthPercentage = 100f; spacingBefore = 20f }
 
@@ -936,48 +885,9 @@ doc.add(divTbl)
                     Font(Font.FontFamily.HELVETICA, 9f, Font.NORMAL, stat.color))
                 labelPara.alignment = Element.ALIGN_CENTER
                 cell.addElement(labelPara)
-             statsTbl.addCell(cell)
+                statsTbl.addCell(cell)
             }
             doc.add(statsTbl)
-        }
-    }
-
-    private fun addSectionStatsBar(doc: Document, sectionItems: List<InspectionItem?>) {
-        val safety  = sectionItems.count { it?.rating == Rating.SAFETY }
-        val major   = sectionItems.count { it?.rating == Rating.MAJOR }
-        val monitor = sectionItems.count { it?.rating == Rating.MONITOR }
-        val good    = sectionItems.count { it?.rating == Rating.GOOD }
-        val total   = sectionItems.size
-
-        val statsTbl = PdfPTable(5).apply { widthPercentage = 100f; spacingAfter = 10f }
-
-        data class Stat(val label: String, val count: Int, val color: BaseColor, val bg: BaseColor)
-        listOf(
-            Stat("Safety",  safety,  cRed,    cRedLight),
-            Stat("Major",   major,   cOrange, cOrangeLight),
-            Stat("Monitor", monitor, cBlue,   cBlueLight),
-            Stat("Good",    good,    cGreen,  cGreenLight),
-            Stat("Total",   total,   cNavy,   cLightBg)
-        ).forEach { stat ->
-            val cell = PdfPCell()
-            cell.border = Rectangle.BOX; cell.borderColor = stat.color; cell.borderWidth = 1f
-            cell.backgroundColor = stat.bg
-            cell.horizontalAlignment = Element.ALIGN_CENTER
-            cell.paddingTop = 6f; cell.paddingBottom = 6f
-
-            val countPara = Paragraph(stat.count.toString(),
-                Font(Font.FontFamily.HELVETICA, 16f, Font.BOLD, stat.color))
-            countPara.alignment = Element.ALIGN_CENTER
-            cell.addElement(countPara)
-
-            val labelPara = Paragraph(stat.label,
-                Font(Font.FontFamily.HELVETICA, 8f, Font.NORMAL, stat.color))
-            labelPara.alignment = Element.ALIGN_CENTER
-            cell.addElement(labelPara)
-
-            statsTbl.addCell(cell)
-        }
-         doc.add(statsTbl)
         }
     }
 
@@ -1060,10 +970,8 @@ doc.add(divTbl)
             itemCell.paddingLeft = 10f; itemCell.paddingRight = 10f
 
             val titlePara = Paragraph()
-            titlePara.add(Chunk(item.rating.short + "  ",
-                Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, color)))
-            titlePara.add(Chunk(ci.label,
-                Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cNavy)))
+            titlePara.add(Chunk(item.rating.short + "  ", Font(Font.FontFamily.HELVETICA, 9f, Font.BOLD, color)))
+            titlePara.add(Chunk(ci.label, Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cNavy)))
             itemCell.addElement(titlePara)
 
             if (item.narrative.isNotBlank())
@@ -1145,8 +1053,7 @@ doc.add(divTbl)
         }
 
         val headerTbl = PdfPTable(2).apply { widthPercentage = 100f; spacingAfter = 12f }
-        val titleCell = PdfPCell(Phrase("RECEIPT",
-            Font(Font.FontFamily.HELVETICA, 16f, Font.BOLD, cNavy))).apply {
+        val titleCell = PdfPCell(Phrase("RECEIPT", Font(Font.FontFamily.HELVETICA, 16f, Font.BOLD, cNavy))).apply {
             border = Rectangle.NO_BORDER; verticalAlignment = Element.ALIGN_MIDDLE
         }
         headerTbl.addCell(titleCell)
@@ -1199,8 +1106,7 @@ doc.add(divTbl)
         val totalTbl = PdfPTable(2).apply {
             widthPercentage = 100f; setWidths(floatArrayOf(3f, 1.5f)); spacingAfter = 12f
         }
-        totalTbl.addCell(PdfPCell(Phrase("TOTAL",
-            Font(Font.FontFamily.HELVETICA, 14f, Font.BOLD, cNavy))).apply {
+        totalTbl.addCell(PdfPCell(Phrase("TOTAL", Font(Font.FontFamily.HELVETICA, 14f, Font.BOLD, cNavy))).apply {
             border = Rectangle.NO_BORDER; paddingTop = 8f; paddingBottom = 8f
         })
         totalTbl.addCell(PdfPCell(Phrase("$%.2f".format(total),
@@ -1284,8 +1190,7 @@ doc.add(divTbl)
             titleCell.borderWidthLeft = 4f
             titleCell.paddingTop = 8f; titleCell.paddingBottom = 8f
             titleCell.paddingLeft = 12f; titleCell.paddingRight = 12f
-            titleCell.addElement(Paragraph(section.title,
-                Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cNavy)))
+            titleCell.addElement(Paragraph(section.title, Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cNavy)))
             titleTbl.addCell(titleCell)
             doc.add(titleTbl)
 
@@ -1295,18 +1200,15 @@ doc.add(divTbl)
             doc.add(bodyPara)
         }
 
-      fun yourMethodName(doc: Document) {
         doc.add(Paragraph(" "))
         addThinLine(doc)
         doc.add(Paragraph(
             "This report was prepared in accordance with the InterNACHI Standards of Practice  |  www.nachi.org",
             Font(Font.FontFamily.HELVETICA, 8f, Font.ITALIC, cGray)
-        ).apply { 
-            alignment = Element.ALIGN_CENTER
-            spacingBefore = 8f 
-        })
-    } // Closes the method
-} // Closes the Class. NOTHING sho
+        ).apply { alignment = Element.ALIGN_CENTER; spacingBefore = 8f })
+    }
+
+} // end object PdfGenerator
 
 private class HeaderFooterEvent(
     private val report: Report,
@@ -1316,40 +1218,32 @@ private class HeaderFooterEvent(
     override fun onEndPage(writer: PdfWriter, document: Document) {
         val cb = writer.directContent
 
- // Footer left — inspector and client info
         val footerLeft = Phrase(
             "${report.inspectorName}  |  Cert #: ${report.inspectorCert}  |  Client: ${report.clientName}",
             Font(Font.FontFamily.HELVETICA, 7f, Font.NORMAL, BaseColor(100, 110, 120))
         )
-
-        // Footer center — address and report number
         val footerCenter = Phrase(
             "${report.propertyAddress}  |  $reportNumber",
             Font(Font.FontFamily.HELVETICA, 7f, Font.NORMAL, BaseColor(100, 110, 120))
         )
-        ColumnText.showTextAligned(
-            cb, Element.ALIGN_LEFT, footerLeft,
-            document.left(),
-            document.bottom() - 15f, 0f
-        )
-        ColumnText.showTextAligned(
-            cb, Element.ALIGN_CENTER, footerCenter,
-            (document.left() + document.right()) / 2,
-            document.bottom() - 15f, 0f
-        )
-        ColumnText.showTextAligned(
-            cb, Element.ALIGN_RIGHT, footerRight,
-            document.right(),
-            document.bottom() - 15f, 0f
+        val footerRight = Phrase(
+            "Page ${writer.pageNumber}",
+            Font(Font.FontFamily.HELVETICA, 7f, Font.NORMAL, BaseColor(100, 110, 120))
         )
 
-        // Gold top border line on every page
+        ColumnText.showTextAligned(cb, Element.ALIGN_LEFT, footerLeft,
+            document.left(), document.bottom() - 15f, 0f)
+        ColumnText.showTextAligned(cb, Element.ALIGN_CENTER, footerCenter,
+            (document.left() + document.right()) / 2, document.bottom() - 15f, 0f)
+        ColumnText.showTextAligned(cb, Element.ALIGN_RIGHT, footerRight,
+            document.right(), document.bottom() - 15f, 0f)
+
         cb.saveState()
         cb.setColorStroke(BaseColor(201, 151, 58))
         cb.setLineWidth(1f)
         cb.moveTo(document.left(), document.top() + 10f)
         cb.lineTo(document.right(), document.top() + 10f)
         cb.stroke()
-    cb.restoreState()
+        cb.restoreState()
     }
 }
