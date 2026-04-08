@@ -149,7 +149,7 @@ val MIGRATION_11_12 = object : Migration(11, 12) {
         AppSettings::class,
         SerialDecodePattern::class
     ],
-    version = 11,
+  version = 12,
     exportSchema = false
 )
 @TypeConverters(Converters::class) 
