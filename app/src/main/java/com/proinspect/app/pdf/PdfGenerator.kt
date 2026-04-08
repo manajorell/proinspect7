@@ -49,6 +49,7 @@ object PdfGenerator {
         Rating.GOOD        -> cGreen
         Rating.NOT_RATED   -> cGray
         Rating.NOT_PRESENT -> cGray
+        Rating.NOT_INSPECTED -> cGray
     }
 
     private fun rLightBg(r: Rating) = when (r) {
@@ -58,6 +59,7 @@ object PdfGenerator {
         Rating.GOOD        -> cGreenLight
         Rating.NOT_RATED   -> cOffWhite
         Rating.NOT_PRESENT -> cOffWhite
+        Rating.NOT_INSPECTED -> cGray
     }
 
     private fun addSectionHeader(doc: Document, icon: String, title: String, subtitle: String = "") {
