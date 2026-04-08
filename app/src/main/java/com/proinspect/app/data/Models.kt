@@ -2,13 +2,14 @@ package com.proinspect.app.data
 
 import androidx.room.*
 
-enum class Rating(val short: String) {
-    SAFETY("Safety"),
-    MAJOR("Major"),
-    MONITOR("Monitor"),
-    GOOD("Good"),
-    NOT_RATED("N/R"),
-    NOT_PRESENT("N/A")
+enum class Rating(val short: String, val label: String) {
+    SAFETY("SAFETY", "Safety Issue"),
+    MAJOR("MAJOR", "Major Concern"),
+    MONITOR("MONITOR", "Monitor"),
+    GOOD("GOOD", "Good"),
+    NOT_RATED("N/R", "Not Rated"),
+    NOT_PRESENT("N/P", "Not Present"),
+    NOT_INSPECTED("N/I", "Not Inspected")
 }
 
 data class IrcCodeReference(
