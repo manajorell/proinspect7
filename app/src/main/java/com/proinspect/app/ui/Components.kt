@@ -651,7 +651,7 @@ fun ChecklistItemCard(
                 }
 
                 // ── Not Inspected Reason ──────────────────────────────────────
-                if (rating == Rating.NOT_PRESENT) {
+               if (rating == Rating.NOT_PRESENT || rating == Rating.NOT_INSPECTED) {
                     var localReason by remember(notInspectedReason) { mutableStateOf(notInspectedReason) }
                     Column(
                         modifier = Modifier
