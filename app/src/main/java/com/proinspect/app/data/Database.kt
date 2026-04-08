@@ -136,8 +136,7 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
 
 val MIGRATION_11_12 = object : Migration(11, 12) {
     override fun migrate(database: SupportSQLiteDatabase) {
-        database.execSQL("ALTER TABLE inspection_items ADD COLUMN systemOperated INTEGER NOT NULL DEFAULT 0")
-        database.execSQL("ALTER TABLE inspection_items ADD COLUMN notInspectedReason TEXT NOT NULL DEFAULT ''")
+
     }
 }
 
