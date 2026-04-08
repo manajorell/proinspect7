@@ -790,7 +790,8 @@ object PdfGenerator {
                         Font(Font.FontFamily.HELVETICA, 7f, Font.ITALIC, BaseColor(180, 100, 0))
                     ))
                 }
-                tbl.addCell(nCell)
+            tbl.addCell(nCell)
+            }
             doc.add(tbl)
 
             addFlaggedItemPhotos(doc, section, sectionItemsList, items, photos)
@@ -907,6 +908,8 @@ if (goodCount > 0) badgePara.add(Chunk("  $goodCount GOOD  ",
     Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD, cGreen)))
 divCell.addElement(Paragraph(" "))
 divCell.addElement(badgePara)
+divTbl.addCell(divCell)
+doc.add(divTbl)
 
         // Findings summary bar
         if (safetyCount > 0 || majorCount > 0 || monitorCount > 0 || goodCount > 0) {
@@ -974,7 +977,8 @@ divCell.addElement(badgePara)
 
             statsTbl.addCell(cell)
         }
-        doc.add(statsTbl)
+         doc.add(statsTbl)
+        }
     }
 
     private fun addSectionSpecificFields(doc: Document, section: String, report: Report) {
@@ -1320,15 +1324,14 @@ private class HeaderFooterEvent(
             Font(Font.FontFamily.HELVETICA, 7f, Font.NORMAL, BaseColor(100, 110, 120))
         )
         ColumnText.showTextAligned(
+            cb, Element.ALIGN_LEFT, footerLeft,
+            document.left(),
+            document.bottom() - 15f, 0f
+        )
+        ColumnText.showTextAligned(
             cb, Element.ALIGN_CENTER, footerCenter,
             (document.left() + document.right()) / 2,
             document.bottom() - 15f, 0f
-        )
-
-        // Footer right — page number
-        val footerRight = Phrase(
-            "Page ${writer.pageNumber}",
-            Font(Font.FontFamily.HELVETICA, 7f, Font.NORMAL, BaseColor(100, 110, 120))
         )
         ColumnText.showTextAligned(
             cb, Element.ALIGN_RIGHT, footerRight,
@@ -1343,7 +1346,6 @@ private class HeaderFooterEvent(
         cb.moveTo(document.left(), document.top() + 10f)
         cb.lineTo(document.right(), document.top() + 10f)
         cb.stroke()
-       cb.restoreState()
+    cb.restoreState()
     }
-}
 }
