@@ -1016,7 +1016,8 @@ object PdfGenerator {
 
         val text = buildString {
             if (report.limitations.isNotBlank()) { append(report.limitations); append("\n\n") }
-            append("This inspection report was prepared in accordance with the InterNACHI Standards of Practice. ")
+           append("This inspection report was prepared in accordance with the InterNACHI Standards of Practice and Indiana Code IC 25-20.2. ")
+append("This inspection was performed by a licensed Indiana Home Inspector. ")
             append("The inspection is a visual examination of the readily accessible installed systems and components of a home. ")
             append("It is not technically exhaustive.\n\n")
             append("Recommend evaluation and repair by appropriately licensed contractors for all items rated Safety Issue or Major Concern prior to closing.\n\n")
